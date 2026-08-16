@@ -11,26 +11,28 @@ REQUIRED_PHRASES = (
     "29% above year-ago",
     "$63K",
     "$65K",
-    "TrueHold Wellness",
     "Macro Liquidity",
 )
+
+
+def _briefing_blob(briefing) -> str:
+    return " ".join(
+        [
+            briefing.title,
+            briefing.summary,
+            briefing.why_it_matters,
+            briefing.crypto,
+            briefing.watch_next,
+        ]
+    )
 
 
 def test_current_catalyst_loads_required_fields():
     briefing = load_current_catalyst()
     assert briefing.kind == "geopolitical_market_catalyst"
     assert briefing.title == "Alert — geopolitical / market catalyst"
+    blob = _briefing_blob(briefing)
     for phrase in REQUIRED_PHRASES:
-        blob = " ".join(
-            [
-                briefing.title,
-                briefing.summary,
-                briefing.why_it_matters,
-                briefing.crypto,
-                briefing.business,
-                briefing.watch_next,
-            ]
-        )
         assert phrase in blob, f"missing {phrase!r}"
 
 
@@ -40,7 +42,7 @@ def test_geopolitical_alert_is_the_catalyst_briefing():
     )
     text = format_alert(alert)
     assert text.startswith("Alert — geopolitical / market catalyst\n")
-    assert "TrueHold alert —" not in text
+    assert "TrueHold crypto alert —" not in text
     assert "---" not in text
     for phrase in REQUIRED_PHRASES:
         assert phrase in text
@@ -55,21 +57,21 @@ def test_btc_threshold_alert_also_includes_catalyst_data():
         )
     )
     text = format_alert(alert)
-    assert text.startswith("TrueHold alert — BTC threshold")
+    assert text.startswith("TrueHold crypto alert — BTC threshold")
     assert "BTC crossed the $65K watch level." in text
     assert "Alert — geopolitical / market catalyst" in text
     assert "Strait of Hormuz" in text
     assert alert.catalyst.kind == "geopolitical_market_catalyst"
     payload = alert.to_dict()
+    assert payload["agent"] == "truehold-crypto-agent"
     assert payload["catalyst"]["watch_next"].startswith("oil is now particularly important")
-    assert payload["catalyst"]["business"].startswith("No new TrueHold Wellness")
+    assert "business" not in payload["catalyst"]
 
 
-def test_every_trigger_type_attaches_catalyst():
+def test_every_crypto_trigger_type_attaches_catalyst():
     for trigger_type, headline in (
         ("capital_regime", "capital-regime transition"),
         ("macro_liquidity", "Macro Liquidity"),
-        ("business", "TrueHold Wellness business inbox"),
         ("manual", "manual alert"),
     ):
         alert = compose_alert(AlertTrigger(type=trigger_type, headline=headline))
@@ -82,5 +84,5 @@ def test_format_catalyst_uses_money_flow_label():
     text = format_catalyst(load_current_catalyst())
     assert "Why this matters to our money-flow watch:" in text
     assert "Crypto:" in text
-    assert "Business:" in text
     assert "Watch next:" in text
+    assert "Business:" not in text

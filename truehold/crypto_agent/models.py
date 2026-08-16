@@ -10,21 +10,22 @@ TRIGGER_TYPES = (
     "btc_threshold",
     "capital_regime",
     "macro_liquidity",
-    "business",
     "manual",
 )
+
+# TrueHold Wellness (orders, inbox, peptides) is a different bot. Do not add it here.
+WELLNESS_KEYS = frozenset({"business", "wellness", "inbox", "peptide", "order"})
 
 
 @dataclass(frozen=True)
 class CatalystBriefing:
-    """Geopolitical / market catalyst payload attached to every TrueHold alert."""
+    """Geopolitical / market catalyst payload for the TrueHold crypto agent only."""
 
     kind: str
     title: str
     summary: str
     why_it_matters: str
     crypto: str
-    business: str
     watch_next: str
 
     def to_dict(self) -> dict[str, str]:
@@ -40,6 +41,8 @@ class AlertTrigger:
     def __post_init__(self) -> None:
         if self.type not in TRIGGER_TYPES:
             raise ValueError(f"Unknown trigger type: {self.type}")
+        if self.type in WELLNESS_KEYS:
+            raise ValueError("TrueHold crypto agent does not send Wellness/business triggers")
 
     def to_dict(self) -> dict[str, str]:
         return asdict(self)
@@ -56,6 +59,7 @@ class Alert:
         return {
             "source": self.source,
             "created_at": self.created_at.isoformat(),
+            "agent": "truehold-crypto-agent",
             "trigger": self.trigger.to_dict(),
             "catalyst": self.catalyst.to_dict(),
         }

@@ -38,7 +38,8 @@ def test_payload_always_includes_catalyst_and_text():
     assert payload["catalyst"]["kind"] == "geopolitical_market_catalyst"
     assert "Strait of Hormuz" in payload["catalyst"]["summary"]
     assert "Strait of Hormuz" in payload["text"]
-    assert "TrueHold Wellness" in payload["text"]
+    assert "TrueHold Wellness" not in payload["text"]
+    assert "business" not in payload["catalyst"]
     json.dumps(payload)  # must be serializable
 
 

@@ -1,4 +1,4 @@
-"""TrueHold crypto agent: compose and send alerts with catalyst briefings attached."""
+"""TrueHold crypto agent: crypto/macro alerts only. Not TrueHold Wellness."""
 
 from truehold.crypto_agent.catalyst import load_current_catalyst
 from truehold.crypto_agent.compose import compose_alert, format_alert

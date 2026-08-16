@@ -1,13 +1,15 @@
 # Govtools
 
-TrueHold crypto agent lives in `truehold/crypto_agent`. When any alert fires, the outbound message and JSON payload also include the current geopolitical / market catalyst briefing.
+TrueHold **crypto agent** lives in `truehold/crypto_agent`. This is not the TrueHold Wellness bot. Alerts are crypto and macro only: no Wellness orders, inbox, peptides, fulfillment, or other business-email content.
+
+When any crypto alert fires, the outbound message and JSON payload also include the current geopolitical / market catalyst briefing.
 
 ## What gets sent
 
 Every alert contains:
 
-1. The trigger that fired (BTC threshold, capital-regime, Macro Liquidity, business inbox, or a manual/geopolitical catalyst alert).
-2. The current catalyst briefing: Strait of Hormuz / Iran pressure, money-flow implications, crypto status, TrueHold Wellness inbox status, and the oil–yields–DXY watch.
+1. The crypto trigger that fired (BTC threshold, capital-regime, Macro Liquidity, or a manual/geopolitical catalyst alert).
+2. The current catalyst briefing: Strait of Hormuz / Iran pressure, money-flow implications, crypto status, and the oil–yields–DXY watch.
 
 The briefing is stored in `truehold/crypto_agent/data/current_catalyst.json` and is attached automatically. You do not pass it per send.
 
@@ -21,7 +23,7 @@ python -m truehold.crypto_agent send --dry-run
 ALERT_WEBHOOK_URL=https://example.invalid/alerts python -m truehold.crypto_agent send --type btc_threshold
 ```
 
-`send` POSTs JSON with `trigger`, `catalyst`, and `text`. `compose --json` prints that payload without delivering it.
+`send` POSTs JSON with `agent=truehold-crypto-agent`, `trigger`, `catalyst`, and `text`. `compose --json` prints that payload without delivering it.
 
 ## Tests
 

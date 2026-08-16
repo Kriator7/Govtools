@@ -14,8 +14,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="truehold-crypto-agent",
         description=(
-            "Compose and send TrueHold crypto alerts. "
-            "Every alert includes the current geopolitical/market catalyst briefing."
+            "Compose and send TrueHold crypto-agent alerts only "
+            "(not TrueHold Wellness). Every alert includes the current "
+            "geopolitical/market catalyst briefing."
         ),
     )
     sub = parser.add_subparsers(dest="command", required=True)
@@ -53,10 +54,9 @@ def _add_trigger_args(parser: argparse.ArgumentParser) -> None:
             "btc_threshold",
             "capital_regime",
             "macro_liquidity",
-            "business",
             "manual",
         ),
-        help="Alert trigger type. Catalyst briefing is attached regardless of type.",
+        help="Crypto-agent trigger type. Wellness/business inbox is out of scope.",
     )
     parser.add_argument(
         "--headline",
@@ -76,7 +76,6 @@ def _default_headline(trigger_type: str) -> str:
         "btc_threshold": "BTC threshold",
         "capital_regime": "capital-regime transition",
         "macro_liquidity": "Macro Liquidity",
-        "business": "TrueHold Wellness business inbox",
         "manual": "manual alert",
     }
     return defaults[trigger_type]
