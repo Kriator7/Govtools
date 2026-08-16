@@ -1,6 +1,6 @@
-from truehold.crypto_agent.catalyst import load_current_catalyst
-from truehold.crypto_agent.compose import compose_alert, format_alert, format_catalyst
-from truehold.crypto_agent.models import AlertTrigger
+from mr_north.catalyst import load_current_catalyst
+from mr_north.compose import compose_alert, format_alert, format_catalyst
+from mr_north.models import AlertTrigger
 
 
 REQUIRED_PHRASES = (
@@ -42,7 +42,7 @@ def test_geopolitical_alert_is_the_catalyst_briefing():
     )
     text = format_alert(alert)
     assert text.startswith("Alert — geopolitical / market catalyst\n")
-    assert "TrueHold crypto alert —" not in text
+    assert "Mr North alert —" not in text
     assert "---" not in text
     for phrase in REQUIRED_PHRASES:
         assert phrase in text
@@ -57,13 +57,13 @@ def test_btc_threshold_alert_also_includes_catalyst_data():
         )
     )
     text = format_alert(alert)
-    assert text.startswith("TrueHold crypto alert — BTC threshold")
+    assert text.startswith("Mr North alert — BTC threshold")
     assert "BTC crossed the $65K watch level." in text
     assert "Alert — geopolitical / market catalyst" in text
     assert "Strait of Hormuz" in text
     assert alert.catalyst.kind == "geopolitical_market_catalyst"
     payload = alert.to_dict()
-    assert payload["agent"] == "truehold-crypto-agent"
+    assert payload["agent"] == "mr-north"
     assert payload["catalyst"]["watch_next"].startswith("oil is now particularly important")
     assert "business" not in payload["catalyst"]
 

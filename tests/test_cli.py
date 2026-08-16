@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from truehold.crypto_agent.cli import main
+from mr_north.cli import main
 
 
 def test_compose_prints_catalyst(capsys):
@@ -16,6 +16,7 @@ def test_compose_prints_catalyst(capsys):
 def test_compose_json_includes_catalyst_fields(capsys):
     assert main(["compose", "--json"]) == 0
     payload = json.loads(capsys.readouterr().out)
+    assert payload["agent"] == "mr-north"
     assert payload["catalyst"]["kind"] == "geopolitical_market_catalyst"
     assert "business" not in payload["catalyst"]
     assert "TrueHold Wellness" not in json.dumps(payload)
@@ -24,7 +25,7 @@ def test_compose_json_includes_catalyst_fields(capsys):
 def test_compose_btc_alert_still_includes_catalyst(capsys):
     assert main(["compose", "--type", "btc_threshold", "--detail", "BTC crossed $65K"]) == 0
     out = capsys.readouterr().out
-    assert "TrueHold crypto alert — BTC threshold" in out
+    assert "Mr North alert — BTC threshold" in out
     assert "BTC crossed $65K" in out
     assert "Alert — geopolitical / market catalyst" in out
 

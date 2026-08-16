@@ -5,37 +5,36 @@ import json
 import sys
 from typing import Sequence
 
-from truehold.wellness_agent.compose import compose_alert, format_alert
-from truehold.wellness_agent.models import AlertTrigger
-from truehold.wellness_agent.notify import NotifyError, send_alert
+from mr_north.compose import compose_alert, format_alert
+from mr_north.models import AlertTrigger
+from mr_north.notify import NotifyError, send_alert
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="truehold-wellness-agent",
+        prog="mr-north",
         description=(
-            "Compose and send TrueHold Wellness-agent alerts only "
-            "(not the TrueHold crypto agent). Every alert includes the full "
-            "business-inbox snapshot: orders, payments, fulfillment, shipping, "
-            "cancellations/refunds, peptide messages, and other actionable email."
+            "Mr North — TrueHold crypto agent. Compose and send crypto/macro alerts. "
+            "Every alert includes the current geopolitical/market catalyst briefing. "
+            "TrueHold Wellness is a separate agent and is not modified here."
         ),
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    compose = sub.add_parser("compose", help="Print the Wellness alert that would be sent")
+    compose = sub.add_parser("compose", help="Print the alert that would be sent")
     _add_trigger_args(compose)
     compose.add_argument(
         "--json",
         action="store_true",
-        help="Print the structured payload (includes full inbox snapshot) instead of text",
+        help="Print the structured payload (includes catalyst data) instead of text",
     )
 
-    send = sub.add_parser("send", help="Send a Wellness alert, including the inbox snapshot")
+    send = sub.add_parser("send", help="Send an Mr North alert, including catalyst data")
     _add_trigger_args(send)
     send.add_argument(
         "--webhook-url",
         default=None,
-        help="Destination webhook. Defaults to WELLNESS_ALERT_WEBHOOK_URL.",
+        help="Destination webhook. Defaults to ALERT_WEBHOOK_URL.",
     )
     send.add_argument(
         "--dry-run",
@@ -49,18 +48,15 @@ def _add_trigger_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--type",
         dest="trigger_type",
-        default="business",
+        default="geopolitical_catalyst",
         choices=(
-            "business",
-            "order",
-            "payment",
-            "fulfillment",
-            "shipping",
-            "cancellation",
-            "peptide",
+            "geopolitical_catalyst",
+            "btc_threshold",
+            "capital_regime",
+            "macro_liquidity",
             "manual",
         ),
-        help="Wellness-agent trigger type. Crypto/macro triggers are out of scope.",
+        help="Mr North trigger type. TrueHold Wellness inbox triggers are out of scope.",
     )
     parser.add_argument(
         "--headline",
@@ -70,19 +66,16 @@ def _add_trigger_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--detail",
         default="",
-        help="Optional trigger detail shown above the inbox snapshot.",
+        help="Optional trigger detail shown above the catalyst briefing.",
     )
 
 
 def _default_headline(trigger_type: str) -> str:
     defaults = {
-        "business": "business inbox",
-        "order": "order",
-        "payment": "payment",
-        "fulfillment": "fulfillment request",
-        "shipping": "shipping issue",
-        "cancellation": "cancellation/refund",
-        "peptide": "peptide message",
+        "geopolitical_catalyst": "geopolitical / market catalyst",
+        "btc_threshold": "BTC threshold",
+        "capital_regime": "capital-regime transition",
+        "macro_liquidity": "Macro Liquidity",
         "manual": "manual alert",
     }
     return defaults[trigger_type]
@@ -101,7 +94,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     alert = compose_alert(_trigger_from_args(args))
     if args.command == "compose":
         if args.json:
-            from truehold.wellness_agent.notify import alert_payload
+            from mr_north.notify import alert_payload
 
             sys.stdout.write(json.dumps(alert_payload(alert), indent=2) + "\n")
         else:
@@ -118,7 +111,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     if result.dry_run:
         sys.stdout.write(result.text)
-        sys.stderr.write("dry-run: Wellness inbox snapshot included; webhook not called\n")
+        sys.stderr.write("dry-run: Mr North catalyst briefing included; webhook not called\n")
         return 0
     sys.stdout.write(result.text)
     sys.stderr.write(f"sent: {result.destination}\n")

@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from truehold.crypto_agent.compose import compose_alert
-from truehold.crypto_agent.models import AlertTrigger
-from truehold.crypto_agent.notify import NotifyError, alert_payload, send_alert
+from mr_north.compose import compose_alert
+from mr_north.models import AlertTrigger
+from mr_north.notify import NotifyError, alert_payload, send_alert
 
 
 class _FakeResponse:
@@ -33,14 +33,15 @@ def _btc_alert():
 
 def test_payload_always_includes_catalyst_and_text():
     payload = alert_payload(_btc_alert())
-    assert payload["source"] == "truehold-crypto-agent"
+    assert payload["source"] == "mr-north"
+    assert payload["agent"] == "mr-north"
     assert payload["trigger"]["type"] == "btc_threshold"
     assert payload["catalyst"]["kind"] == "geopolitical_market_catalyst"
     assert "Strait of Hormuz" in payload["catalyst"]["summary"]
     assert "Strait of Hormuz" in payload["text"]
     assert "TrueHold Wellness" not in payload["text"]
     assert "business" not in payload["catalyst"]
-    json.dumps(payload)  # must be serializable
+    json.dumps(payload)
 
 
 def test_dry_run_does_not_call_webhook():
@@ -62,14 +63,14 @@ def test_dry_run_does_not_call_webhook():
     assert result.payload["catalyst"]["title"] == "Alert — geopolitical / market catalyst"
 
 
-def test_send_posts_json_including_catalyst(monkeypatch):
+def test_send_posts_json_including_catalyst():
     captured = {}
 
     def opener(request, timeout=15):
         captured["url"] = request.full_url
         captured["body"] = request.data
         captured["content_type"] = request.headers["Content-type"]
-        captured["timeout"] = timeout
+        captured["user_agent"] = request.headers["User-agent"]
         return _FakeResponse()
 
     result = send_alert(
@@ -80,8 +81,10 @@ def test_send_posts_json_including_catalyst(monkeypatch):
     assert result.delivered is True
     assert captured["url"] == "https://example.test/alerts"
     assert captured["content_type"].startswith("application/json")
+    assert captured["user_agent"] == "mr-north/0.1"
     body = json.loads(captured["body"].decode("utf-8"))
     assert body["catalyst"]["kind"] == "geopolitical_market_catalyst"
+    assert body["agent"] == "mr-north"
     assert "Macro Liquidity" in body["text"]
 
 

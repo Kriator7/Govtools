@@ -7,14 +7,14 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from truehold.crypto_agent.compose import format_alert
-from truehold.crypto_agent.models import Alert
+from mr_north.compose import format_alert
+from mr_north.models import AGENT_ID, Alert
 
 DEFAULT_TIMEOUT_SECONDS = 15
 
 
 class NotifyError(RuntimeError):
-    """Raised when an alert could not be delivered."""
+    """Raised when an Mr North alert could not be delivered."""
 
 
 @dataclass(frozen=True)
@@ -28,7 +28,7 @@ class NotifyResult:
 
 
 def alert_payload(alert: Alert) -> dict[str, Any]:
-    """JSON body posted when an alert fires. Always includes the catalyst briefing."""
+    """JSON body posted when Mr North fires an alert. Always includes the catalyst briefing."""
     return {
         **alert.to_dict(),
         "text": format_alert(alert),
@@ -44,7 +44,7 @@ def send_alert(
     timeout: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> NotifyResult:
     """
-    Send an alert.
+    Send an Mr North alert.
 
     When dry_run is true, the payload is returned without network I/O.
     Otherwise the agent POSTs JSON (including catalyst data) to ALERT_WEBHOOK_URL
@@ -73,7 +73,7 @@ def send_alert(
         method="POST",
         headers={
             "Content-Type": "application/json; charset=utf-8",
-            "User-Agent": "truehold-crypto-agent/0.1",
+            "User-Agent": f"{AGENT_ID}/0.1",
         },
     )
     post = opener or urllib.request.urlopen

@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+AGENT_ID = "mr-north"
 
 TRIGGER_TYPES = (
     "geopolitical_catalyst",
@@ -13,13 +14,13 @@ TRIGGER_TYPES = (
     "manual",
 )
 
-# TrueHold Wellness (orders, inbox, peptides) is a different bot. Do not add it here.
-WELLNESS_KEYS = frozenset({"business", "wellness", "inbox", "peptide", "order"})
+# TrueHold Wellness is a separate, already-working agent. Mr North must not send its content.
+FOREIGN_KEYS = frozenset({"business", "wellness", "inbox", "peptide", "order"})
 
 
 @dataclass(frozen=True)
 class CatalystBriefing:
-    """Geopolitical / market catalyst payload for the TrueHold crypto agent only."""
+    """Geopolitical / market catalyst payload attached to every Mr North alert."""
 
     kind: str
     title: str
@@ -40,9 +41,9 @@ class AlertTrigger:
 
     def __post_init__(self) -> None:
         if self.type not in TRIGGER_TYPES:
-            raise ValueError(f"Unknown trigger type: {self.type}")
-        if self.type in WELLNESS_KEYS:
-            raise ValueError("TrueHold crypto agent does not send Wellness/business triggers")
+            raise ValueError(f"Unknown Mr North trigger type: {self.type}")
+        if self.type in FOREIGN_KEYS:
+            raise ValueError("Mr North does not send TrueHold Wellness triggers")
 
     def to_dict(self) -> dict[str, str]:
         return asdict(self)
@@ -53,13 +54,13 @@ class Alert:
     trigger: AlertTrigger
     catalyst: CatalystBriefing
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    source: str = "truehold-crypto-agent"
+    source: str = AGENT_ID
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "source": self.source,
             "created_at": self.created_at.isoformat(),
-            "agent": "truehold-crypto-agent",
+            "agent": AGENT_ID,
             "trigger": self.trigger.to_dict(),
             "catalyst": self.catalyst.to_dict(),
         }

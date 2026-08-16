@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "truehold-agents"
+name = "mr-north"
 version = "0.1.0"
-description = "Separate TrueHold crypto and Wellness agents. Crypto alerts stay crypto/macro; Wellness alerts always include the full business-inbox snapshot."
+description = "Mr North — TrueHold crypto agent. Sends crypto/macro alerts with the current geopolitical/market catalyst briefing. TrueHold Wellness is a separate agent."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
@@ -14,15 +14,13 @@ dependencies = []
 dev = ["pytest>=8.0"]
 
 [project.scripts]
-truehold-crypto-agent = "truehold.crypto_agent.cli:main"
-truehold-wellness-agent = "truehold.wellness_agent.cli:main"
+mr-north = "mr_north.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["truehold*"]
+include = ["mr_north*"]
 
 [tool.setuptools.package-data]
-"truehold.crypto_agent" = ["data/*.json"]
-"truehold.wellness_agent" = ["data/*.json"]
+"mr_north" = ["data/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

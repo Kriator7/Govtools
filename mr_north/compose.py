@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from truehold.crypto_agent.catalyst import load_current_catalyst
-from truehold.crypto_agent.models import Alert, AlertTrigger, CatalystBriefing
+from mr_north.catalyst import load_current_catalyst
+from mr_north.models import Alert, AlertTrigger, CatalystBriefing
 
 
 def compose_alert(
     trigger: AlertTrigger,
     catalyst: CatalystBriefing | None = None,
 ) -> Alert:
-    """Build a TrueHold crypto-only alert that always includes the catalyst briefing."""
+    """Build an Mr North crypto alert that always includes the catalyst briefing."""
     return Alert(
         trigger=trigger,
         catalyst=catalyst or load_current_catalyst(),
@@ -16,7 +16,7 @@ def compose_alert(
 
 
 def format_catalyst(catalyst: CatalystBriefing) -> str:
-    """Render the crypto/macro catalyst briefing. No Wellness/business inbox section."""
+    """Render the crypto/macro catalyst briefing."""
     blocks = [catalyst.title, "", catalyst.summary]
     labeled = (
         ("Why this matters to our money-flow watch", catalyst.why_it_matters),
@@ -29,8 +29,8 @@ def format_catalyst(catalyst: CatalystBriefing) -> str:
 
 
 def format_alert(alert: Alert) -> str:
-    """Human-readable crypto alert: trigger first, then the catalyst briefing."""
-    trigger_lines = [f"TrueHold crypto alert — {alert.trigger.headline}"]
+    """Human-readable Mr North alert: trigger first, then the catalyst briefing."""
+    trigger_lines = [f"Mr North alert — {alert.trigger.headline}"]
     if alert.trigger.detail:
         trigger_lines.extend(["", alert.trigger.detail])
     trigger_block = "\n".join(trigger_lines).rstrip()

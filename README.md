@@ -1,42 +1,27 @@
 # Govtools
 
-Two separate TrueHold agents. Do not mix their alerts, copy, or webhooks.
+This repo contains **Mr North**, the TrueHold crypto agent.
 
-## TrueHold crypto agent
+TrueHold Wellness is a separate, already-working agent. It is not in this repository and must not be modified here.
 
-`truehold/crypto_agent` sends crypto and macro alerts only. When any crypto alert fires, the outbound message and JSON also include the current geopolitical / market catalyst briefing (Hormuz, money-flow, BTC/regime status, oil–yields–DXY).
+## Mr North (TrueHold crypto)
 
-It does **not** send Wellness orders, inbox, peptides, fulfillment, or other business-email content.
+When any Mr North alert fires, the outbound message and JSON payload also include the current geopolitical / market catalyst briefing:
+
+1. The crypto trigger (BTC threshold, capital-regime, Macro Liquidity, or a manual/geopolitical catalyst alert).
+2. The catalyst briefing: Strait of Hormuz / Iran pressure, money-flow implications, crypto status, and the oil–yields–DXY watch.
+
+The briefing is stored in `mr_north/data/current_catalyst.json` and is attached automatically.
 
 ```bash
 python -m pip install -e ".[dev]"
-python -m truehold.crypto_agent compose
-python -m truehold.crypto_agent send --dry-run --type btc_threshold
-ALERT_WEBHOOK_URL=https://example.invalid/crypto python -m truehold.crypto_agent send --type btc_threshold
+python -m mr_north compose
+python -m mr_north compose --type btc_threshold --detail "BTC crossed the $65K watch level."
+python -m mr_north send --dry-run
+ALERT_WEBHOOK_URL=https://example.invalid/alerts python -m mr_north send --type btc_threshold
 ```
 
-## TrueHold Wellness agent
-
-`truehold/wellness_agent` sends business-inbox alerts only. Every Wellness alert includes a **complete** snapshot so none of these are dropped:
-
-- orders
-- payments
-- fulfillment requests
-- shipping issues
-- cancellations/refunds
-- peptide messages
-- other actionable business email
-
-The snapshot is stored in `truehold/wellness_agent/data/current_inbox.json`. Missing categories fail closed.
-
-```bash
-python -m truehold.wellness_agent compose
-python -m truehold.wellness_agent compose --type order --detail "New TrueHold Wellness order received."
-python -m truehold.wellness_agent send --dry-run --type business
-WELLNESS_ALERT_WEBHOOK_URL=https://example.invalid/wellness python -m truehold.wellness_agent send --type order
-```
-
-Wellness uses `WELLNESS_ALERT_WEBHOOK_URL` only. It does not read `ALERT_WEBHOOK_URL`.
+`send` POSTs JSON with `agent=mr-north`, `trigger`, `catalyst`, and `text`.
 
 ## Tests
 
