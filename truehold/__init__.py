@@ -1,1 +1,1 @@
-"""TrueHold crypto agent. This package is not TrueHold Wellness."""
+"""Separate TrueHold agents: crypto and Wellness. Do not mix their alerts."""

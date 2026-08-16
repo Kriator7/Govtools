@@ -1,29 +1,42 @@
 # Govtools
 
-TrueHold **crypto agent** lives in `truehold/crypto_agent`. This is not the TrueHold Wellness bot. Alerts are crypto and macro only: no Wellness orders, inbox, peptides, fulfillment, or other business-email content.
+Two separate TrueHold agents. Do not mix their alerts, copy, or webhooks.
 
-When any crypto alert fires, the outbound message and JSON payload also include the current geopolitical / market catalyst briefing.
+## TrueHold crypto agent
 
-## What gets sent
+`truehold/crypto_agent` sends crypto and macro alerts only. When any crypto alert fires, the outbound message and JSON also include the current geopolitical / market catalyst briefing (Hormuz, money-flow, BTC/regime status, oil–yields–DXY).
 
-Every alert contains:
-
-1. The crypto trigger that fired (BTC threshold, capital-regime, Macro Liquidity, or a manual/geopolitical catalyst alert).
-2. The current catalyst briefing: Strait of Hormuz / Iran pressure, money-flow implications, crypto status, and the oil–yields–DXY watch.
-
-The briefing is stored in `truehold/crypto_agent/data/current_catalyst.json` and is attached automatically. You do not pass it per send.
-
-## Run
+It does **not** send Wellness orders, inbox, peptides, fulfillment, or other business-email content.
 
 ```bash
 python -m pip install -e ".[dev]"
 python -m truehold.crypto_agent compose
-python -m truehold.crypto_agent compose --type btc_threshold --detail "BTC crossed the $65K watch level."
-python -m truehold.crypto_agent send --dry-run
-ALERT_WEBHOOK_URL=https://example.invalid/alerts python -m truehold.crypto_agent send --type btc_threshold
+python -m truehold.crypto_agent send --dry-run --type btc_threshold
+ALERT_WEBHOOK_URL=https://example.invalid/crypto python -m truehold.crypto_agent send --type btc_threshold
 ```
 
-`send` POSTs JSON with `agent=truehold-crypto-agent`, `trigger`, `catalyst`, and `text`. `compose --json` prints that payload without delivering it.
+## TrueHold Wellness agent
+
+`truehold/wellness_agent` sends business-inbox alerts only. Every Wellness alert includes a **complete** snapshot so none of these are dropped:
+
+- orders
+- payments
+- fulfillment requests
+- shipping issues
+- cancellations/refunds
+- peptide messages
+- other actionable business email
+
+The snapshot is stored in `truehold/wellness_agent/data/current_inbox.json`. Missing categories fail closed.
+
+```bash
+python -m truehold.wellness_agent compose
+python -m truehold.wellness_agent compose --type order --detail "New TrueHold Wellness order received."
+python -m truehold.wellness_agent send --dry-run --type business
+WELLNESS_ALERT_WEBHOOK_URL=https://example.invalid/wellness python -m truehold.wellness_agent send --type order
+```
+
+Wellness uses `WELLNESS_ALERT_WEBHOOK_URL` only. It does not read `ALERT_WEBHOOK_URL`.
 
 ## Tests
 
