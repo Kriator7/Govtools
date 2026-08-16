@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "truehold-crypto-agent"
+version = "0.1.0"
+description = "TrueHold crypto alert agent. Every outbound alert includes the current geopolitical/market catalyst briefing."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+truehold-crypto-agent = "truehold.crypto_agent.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["truehold*"]
+
+[tool.setuptools.package-data]
+"truehold.crypto_agent" = ["data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
