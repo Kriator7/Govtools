@@ -1,0 +1,4 @@
+Review populated document fields against the transaction record.
+Never invent earnest money, purchase price, legal names, or dates.
+If a required field is empty, list it as missing and stop.
+Remind the realtor that draft documents require human review.

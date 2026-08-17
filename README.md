@@ -23,6 +23,17 @@ ALERT_WEBHOOK_URL=https://example.invalid/alerts python -m mr_north send --type 
 
 `send` POSTs JSON with `agent=mr-north`, `trigger`, `catalyst`, and `text`.
 
+## Realtor Property Acquisition Automation
+
+A separate, self-contained agent lives in [`realtor-agent/`](realtor-agent/). It is not part of Mr North. Copy that folder to move the realtor system; all of its code, templates, mappings, tests, and Docker files stay together.
+
+```bash
+cd realtor-agent
+python -m pip install -e ".[dev]"
+python -m app.cli demo
+python -m pytest
+```
+
 ## Tests
 
 ```bash

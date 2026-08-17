@@ -1,0 +1,19 @@
+name: sample_purchase_agreement_placeholder
+jurisdiction: NV
+version: v1
+effective_date: 2026-01-01
+expiration_date: null
+source: internal-placeholder
+document_type: purchase_agreement
+review_required: true
+required_fields:
+  - buyer_name
+  - property_address
+  - purchase_price
+  - earnest_money
+  - closing_date
+  - financing_type
+notes: >
+  Placeholder only. This is not a Nevada REALTORS®, MLS, brokerage, or
+  transaction-platform form. Do not use for a live transaction. Confirm
+  reproduction and e-sign rights before adding any proprietary form.

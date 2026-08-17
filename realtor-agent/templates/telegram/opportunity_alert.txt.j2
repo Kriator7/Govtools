@@ -1,0 +1,27 @@
+🔥 NEW INVESTOR MATCH
+{{ address }}
+{{ city }}, {{ state }}
+{{ price }}
+{{ beds }} Bed | {{ baths }} Bath
+{{ sqft }} sq ft
+Investor:
+{{ investor }}
+Match Score:
+{{ score }}
+Why it matched:
+{% for reason in reasons %}
+• {{ reason }}
+{% endfor %}
+{% if issues %}
+Potential issues:
+{% for issue in issues %}
+⚠ {{ issue }}
+{% endfor %}
+{% endif %}
+{{ listing_url }}
+[{{ opportunity_id }}]
+[VIEW LISTING]
+[APPROVE]
+[REJECT]
+[SNOOZE]
+[DETAILS]

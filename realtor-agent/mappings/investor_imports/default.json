@@ -1,0 +1,16 @@
+{
+  "Investor Name": "name",
+  "Phone": "phone",
+  "Email": "email",
+  "Minimum Price": "min_price",
+  "Maximum Price": "max_price",
+  "Cities": "cities",
+  "ZIP Codes": "zip_codes",
+  "Property Types": "property_types",
+  "Bedrooms": "min_bedrooms",
+  "Bathrooms": "min_bathrooms",
+  "Minimum Sq Ft": "min_sqft",
+  "Max HOA": "max_hoa",
+  "Cash / Finance": "financing",
+  "Notes": "notes"
+}
