@@ -1,67 +1,39 @@
-# Intake status — Home Finder Realty / Damian Einbinder
+# Intake status — testing first, Damian later
 
-Updated from `Pirates_IG_LLC_AI_Acquisition_Criteria.numbers` (Acquisition Criteria, Property Screening, Investor Profile).
+The Pirates IG LLC Numbers sheets are **test templates only**. They are not live client data.
 
-The Numbers workbook is the client source of truth. The earlier “20% of ARV” line on the criteria tab is **not** used. The Investor Profile and the screening example both confirm **10% below ARV = max purchase 90% of ARV**.
+Do not contact Damian, Amos, or Home Finder Realty from this environment until testing is confirmed.
 
 ---
 
-## Received and now built into the agent
+## Current test defaults
 
-### Realtor
-
-- Damian Einbinder, Home Finder Realty, license B.0146854 (expires 31 July 2027)
-- 9890 S Maryland Pkwy Ste 200A, 702-371-0950, binder@thehomefinderlv.com
-- Buyer-side investor work only
-
-### Pirates IG LLC
-
-| Item | Value | Status |
+| Setting | Value | How to change |
 | --- | --- | --- |
-| Company | Pirates IG LLC | Received |
-| Contact | Amos | Received |
-| Phone | (310) 986-5887 | Received |
-| Email | rocky12345@yahoo.com | Received |
-| Active | Yes | Received |
-| SMS / email OK | Not confirmed | Do not text or email Amos until Damian says Yes |
-| Notes | Amos is point of contact; other investors may participate | Received |
-| Property type | Single-family only | Required — in matching |
-| HOA | No. Reject any HOA | Required — in matching |
-| Cities | Las Vegas; North Las Vegas; Henderson | Required — in matching |
-| Price | Max purchase = **90% of ARV** (10% below ARV) | Required — in matching |
-| Example | $400,000 ARV → $360,000 max; 90.0% PASS | Built in as Example-001 |
-| Dollar cap | None. ARV % is the only price test | Received |
-| Beds / baths / sq ft / year | No minimum | Received |
-| Funding | All cash, no financing contingency assumed | Stored on the profile; used when a transaction is created |
-| Occupancy | TBD | Do not filter |
-| Who supplies ARV | TBD | Do not invent ARV. Listings without ARV sit in `AWAITING_ARV` |
+| Test operator email / from address | `cardanomint@gmail.com` | `EMAIL_FROM` |
+| Email relay inbox | `cardanomint@gmail.com` | `EMAIL_RELAY_TO` |
+| Relay mode | on (all mail goes to the relay inbox) | `EMAIL_RELAY_MODE=true\|false` |
+| Test investor template | Pirates IG LLC rules from the Numbers workbook | seed only |
+| Live realtor | not loaded | add Damian after testing |
 
-Screening columns the agent now calculates the same way as Damian’s sheet: Price ÷ ARV, Max Allowed Price, Type Pass, Area Pass, HOA Pass, Price Pass.
+Template matching rules (for tests, not production traffic):
+
+- Single-family only
+- No HOA
+- Las Vegas / North Las Vegas / Henderson
+- Max purchase = 90% of ARV
+- No beds/baths/sqft/year minimums
+- Missing ARV → `AWAITING_ARV` (never invent ARV)
 
 ---
 
-## Google sign-in error
+## After testing confirms the pipeline
 
-Damian does **not** need to sign into Google for this system. The “Couldn’t sign you in / this browser or app may not be secure” page is Google blocking that browser. We do not want his Google password.
+Then collect Damian’s live packet (identity already on file from his first reply) and switch:
 
-If he needs to send the workbook again:
+1. Seed Damian Einbinder / Home Finder Realty as the active realtor
+2. Replace the test investor with his real roster and permissions
+3. Set `EMAIL_FROM` / `EMAIL_RELAY_TO` if the live from-address should change
+4. Set `EMAIL_RELAY_MODE=false` only when mail should go to real investor addresses
 
-1. In Numbers: File → Export To → Excel, then email the `.xlsx`, or
-2. Email the `.numbers` file as an attachment, or
-3. AirDrop / USB
-
-Do not try to connect our bot to his Gmail or Google Drive login.
-
----
-
-## Still needed (short)
-
-1. Confirm SMS to Amos: Yes or No (currently held)
-2. Confirm email to Amos: Yes or No
-3. Who types ARV, and when (Damian, Amos, or an estimator)
-4. Occupancy: vacant / tenant / owner / any — or leave TBD
-5. Telegram username and hours he wants alerts
-6. MLS name, MLS ID, and written OK to use the authorized feed (not the website)
-7. Forms / e-sign platform — still not needed to screen properties
-
-Do not re-ask name, license, cities, HOA, SFH-only, 90% ARV, Amos’s phone/email, or “any other investors” (Amos is the Pirates IG point of contact; others may join later).
+Until then, outbound email is from and to `cardanomint@gmail.com`.

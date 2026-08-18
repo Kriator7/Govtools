@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.integrations.email.base import EmailProvider
 from app.integrations.telegram.base import TelegramProvider
 from app.integrations.twilio.base import SMSProvider
@@ -21,6 +22,7 @@ from app.models.enums import (
 from app.models.investor import Investor
 from app.models.realtor import Realtor
 from app.services.audit import AuditService
+from app.services.email.relay import resolve_email_envelope
 from app.services.notifications.templates import render_template
 from app.services.providers import get_email_provider, get_sms_provider, get_telegram_provider
 from app.utilities.ids import next_public_id
@@ -119,7 +121,17 @@ class CommunicationService:
             result.setdefault("provider", self.sms.name)
             return result
         if channel == NotificationChannel.EMAIL.value:
-            result = self.email.send_email(recipient, "Property opportunity", body)
+            envelope = resolve_email_envelope(recipient)
+            settings = get_settings()
+            subject = f"{settings.email_subject_prefix} Property opportunity".strip()
+            result = self.email.send_email(
+                envelope["to"] or recipient,
+                subject,
+                body,
+                from_address=envelope["from_address"] or settings.email_from,
+                intended_recipient=envelope.get("intended_recipient"),
+            )
             result.setdefault("provider", self.email.name)
+            result["relay_mode"] = envelope["relay_mode"]
             return result
         raise ValueError(f"Channel {channel} is not enabled in this MVP")

@@ -1,4 +1,4 @@
-"""Local demonstration using Damian / Pirates IG LLC rules."""
+"""Local demonstration using the Numbers workbook as a test template."""
 
 from datetime import date
 from decimal import Decimal
@@ -42,7 +42,7 @@ def run_demo(db: Session) -> dict:
     notify.notify_approved(realtor, opportunity)
     transaction = notify.record_response(realtor, opportunity, InvestorResponse.YES, "YES")
     assert transaction is not None
-    transaction.buyer_legal_name = "Pirates IG LLC"
+    transaction.buyer_legal_name = "Pirates IG LLC (test template)"
     transaction.offer_price = Decimal("360000")
     transaction.earnest_money = Decimal("5000")
     transaction.financing_type = FinancingType.CASH.value

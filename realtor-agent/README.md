@@ -44,6 +44,8 @@ python -m app.cli demo
 python -m pytest
 ```
 
+Testing uses `cardanomint@gmail.com` as the email from-address and relay inbox (`EMAIL_FROM`, `EMAIL_RELAY_TO`). Set `EMAIL_RELAY_MODE=false` later when mail should go to real recipients. The Pirates IG LLC Numbers sheets are test templates only; Damian is not loaded until testing is confirmed.
+
 API (after `uvicorn app.main:app --reload --app-dir .` from this folder):
 
 - `GET /health`

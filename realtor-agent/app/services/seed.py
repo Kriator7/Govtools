@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.models.enums import ActorOrigin, ActorType
 from app.models.investor import Investor
 from app.models.investor_criteria import PIRATES_IG_STRICT_FIELDS, InvestorCriteria
@@ -8,67 +9,93 @@ from app.services.audit import AuditService
 from app.services.matching.screening import PIRATES_CITIES, PIRATES_MAX_PRICE_PCT_OF_ARV
 from app.utilities.ids import next_public_id
 
+TEST_REALTOR_NAME = "Test Operator"
+TEST_INVESTOR_NAME = "Pirates IG LLC"
+
 
 def seed_realtor(db: Session) -> Realtor:
+    """Seed the testing operator. Damian is not loaded until testing is confirmed."""
+    settings = get_settings()
     existing = db.query(Realtor).filter(Realtor.is_active.is_(True)).order_by(Realtor.created_at.asc()).first()
     if existing:
-        if existing.name == "Nevada Demo Realtor":
-            existing.name = "Damian Einbinder"
-            existing.brokerage = "Home Finder Realty"
-            existing.license_number = "B.0146854"
-            existing.phone = "+17023710950"
-            existing.email = "binder@thehomefinderlv.com"
-            existing.notes = "Buyer-side investor work. License expires 2027-07-31."
-            db.flush()
+        _apply_test_realtor(existing, settings.email_from)
+        db.flush()
         return existing
     realtor = Realtor(
         public_id=next_public_id(db, "RLT"),
-        name="Damian Einbinder",
-        brokerage="Home Finder Realty",
-        license_number="B.0146854",
+        name=TEST_REALTOR_NAME,
+        brokerage="Test Brokerage",
+        license_number="TEST-0001",
         license_state="NV",
-        phone="+17023710950",
-        email="binder@thehomefinderlv.com",
+        phone=None,
+        email=settings.email_from,
         telegram_chat_id="mock-realtor",
         timezone="America/Los_Angeles",
-        mls_config_ref="secret:mls-home-finder-config",
-        transaction_platform_config_ref="secret:transaction-platform-home-finder",
-        notification_settings={"telegram": True, "critical_failures": True},
+        mls_config_ref="secret:mls-test-config",
+        transaction_platform_config_ref="secret:transaction-platform-test",
+        notification_settings={"telegram": True, "email": True, "critical_failures": True},
         is_active=True,
-        notes="Buyer-side investor work. Nevada license B.0146854 expires 2027-07-31. Office: 9890 S Maryland Pkwy Ste 200A.",
+        notes=(
+            "Testing operator only. Outbound email uses EMAIL_FROM / EMAIL_RELAY_TO "
+            f"({settings.email_from}). Damian Einbinder / Home Finder Realty will be added after testing."
+        ),
     )
     db.add(realtor)
     db.flush()
     return realtor
 
 
+def _apply_test_realtor(realtor: Realtor, email: str) -> None:
+    realtor.name = TEST_REALTOR_NAME
+    realtor.brokerage = "Test Brokerage"
+    realtor.license_number = "TEST-0001"
+    realtor.email = email
+    realtor.phone = None
+    realtor.notes = (
+        "Testing operator only. Damian Einbinder is not active in this environment yet. "
+        f"Email relay: {email}."
+    )
+
+
 def seed_pirates_ig(db: Session, realtor: Realtor | None = None) -> Investor:
-    """Client buy box from Pirates_IG_LLC_AI_Acquisition_Criteria.numbers."""
+    """Load the Numbers workbook as a **test template**, not live client traffic."""
+    settings = get_settings()
     realtor = realtor or seed_realtor(db)
     investor = (
         db.query(Investor)
-        .filter(Investor.realtor_id == realtor.id, Investor.name == "Pirates IG LLC")
+        .filter(Investor.realtor_id == realtor.id, Investor.name == TEST_INVESTOR_NAME)
         .one_or_none()
     )
     if investor is None:
         investor = Investor(
             public_id=next_public_id(db, "INV"),
             realtor_id=realtor.id,
-            name="Pirates IG LLC",
-            contact_name="Amos",
-            phone="+13109865887",
-            email="rocky12345@yahoo.com",
-            preferred_channel="sms",
+            name=TEST_INVESTOR_NAME,
+            contact_name="Test Contact",
+            phone=None,
+            email=settings.email_from,
+            preferred_channel="email",
             is_active=True,
-            communication_permissions={"sms": False, "email": False},
+            communication_permissions={"sms": False, "email": True},
             notes=(
-                "Amos represents himself and a group of investors; he is the point of contact; "
-                "additional investors may participate. SMS and email not confirmed — do not text "
-                "or email until Damian confirms."
+                "TEST TEMPLATE from Pirates_IG_LLC_AI_Acquisition_Criteria.numbers. "
+                "Not live Damian/Amos traffic. Email goes through EMAIL_RELAY_TO "
+                f"({settings.email_relay_to}) while EMAIL_RELAY_MODE=true."
             ),
-            import_source="Pirates_IG_LLC_AI_Acquisition_Criteria.numbers",
+            import_source="test-template:Pirates_IG_LLC_AI_Acquisition_Criteria.numbers",
         )
         db.add(investor)
+        db.flush()
+    else:
+        investor.contact_name = "Test Contact"
+        investor.phone = None
+        investor.email = settings.email_from
+        investor.preferred_channel = "email"
+        investor.communication_permissions = {"sms": False, "email": True}
+        investor.notes = (
+            "TEST TEMPLATE from Pirates_IG_LLC_AI_Acquisition_Criteria.numbers. "
+            "Not live Damian/Amos traffic."
+        )
         db.flush()
     profile = (
         db.query(InvestorCriteria)
@@ -94,9 +121,8 @@ def seed_pirates_ig(db: Session, realtor: Realtor | None = None) -> Investor:
             occupancy_statuses=[],
             strict_fields=list(PIRATES_IG_STRICT_FIELDS),
             notes=(
-                "Confirmed: SFH only; no HOA; cities LV/NLV/Henderson; max purchase 90% of ARV "
-                "(10% below ARV); no dollar cap; no min beds/baths/sqft/year; all cash. "
-                "Not confirmed: who supplies ARV, occupancy. Do not invent ARV."
+                "TEST TEMPLATE rules: SFH only; no HOA; LV/NLV/Henderson; max purchase 90% of ARV; "
+                "no dollar cap; no min beds/baths/sqft/year; all cash. Do not invent ARV."
             ),
             nl_criteria=(
                 "A property qualifies only if it is a single-family home in Las Vegas, "
@@ -106,13 +132,18 @@ def seed_pirates_ig(db: Session, realtor: Realtor | None = None) -> Investor:
         db.add(profile)
         db.flush()
         AuditService(db).record(
-            event="CLIENT_PROFILE_SEEDED",
+            event="TEST_TEMPLATE_SEEDED",
             object_type="investor",
             object_id=investor.public_id,
             actor="seed",
             actor_type=ActorType.SYSTEM.value,
             origin=ActorOrigin.AUTOMATION.value,
             realtor_id=str(realtor.id),
-            after_state={"max_price_pct_of_arv": 0.90, "cities": list(PIRATES_CITIES)},
+            after_state={
+                "max_price_pct_of_arv": 0.90,
+                "cities": list(PIRATES_CITIES),
+                "email_from": settings.email_from,
+                "email_relay_to": settings.email_relay_to,
+            },
         )
     return investor

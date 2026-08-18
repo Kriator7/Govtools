@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     default_timezone: str = "America/Los_Angeles"
     default_license_state: str = "NV"
 
+    # Testing relay. Change these without code edits when Damian goes live.
+    email_from: str = "cardanomint@gmail.com"
+    email_relay_to: str = "cardanomint@gmail.com"
+    email_relay_mode: bool = True
+    email_subject_prefix: str = "[realtor-agent test]"
+
     telegram_bot_token: str | None = None
     telegram_webhook_secret: str | None = None
     twilio_account_sid: str | None = None
