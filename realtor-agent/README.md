@@ -2,6 +2,8 @@
 
 Self-contained automation platform for **one Nevada realtor**, **one authorized MLS/API connection**, and the realtor’s existing investor clientele.
 
+Telegram for this folder is **@PirateEye_bot** only. TrueHold Wellness order emails use **@Npeppers_bot** in `truehold-wellness/` — a different company, different files, different architecture.
+
 This folder is the entire agent. Copy `realtor-agent/` to move the project. Nothing outside this directory is required to run, test, or deploy the service.
 
 The system **never** autonomously executes a real-estate transaction, signs documents, or submits contractual paperwork. Realtor approval is required before investor notification and before any document leaves `DRAFT`.

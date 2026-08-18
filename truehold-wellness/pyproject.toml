@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "truehold-wellness"
 version = "0.1.0"
-description = "TrueHold Wellness order-email workflow. Telegram: @Npeppers_bot only. Not realtor-agent and not Mr North."
+description = "TrueHold Wellness inbox/order agent. Telegram: @Npeppers_bot only. Independent of realtor-agent and Mr North."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -21,10 +21,13 @@ dev = [
 ]
 
 [project.scripts]
-truehold-wellness = "thw.cli:main"
+truehold-wellness = "wellness_agent.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["thw*"]
+include = ["wellness_agent*", "thw*"]
+
+[tool.setuptools.package-data]
+"wellness_agent" = ["data/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

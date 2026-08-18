@@ -18,10 +18,11 @@ def test_wellness_rejects_realtor_pirateeye_bot():
 
 
 def test_source_tree_does_not_import_realtor_agent():
-    root = Path(__file__).resolve().parents[1] / "thw"
-    for path in root.rglob("*.py"):
-        text = path.read_text(encoding="utf-8")
-        assert "from app." not in text
-        assert "import app" not in text
-        assert "realtor-agent/app" not in text
-        assert "from app.services" not in text
+    root = Path(__file__).resolve().parents[1]
+    for folder in ("thw", "wellness_agent"):
+        for path in (root / folder).rglob("*.py"):
+            text = path.read_text(encoding="utf-8")
+            assert "from app." not in text
+            assert "import app" not in text
+            assert "realtor-agent/app" not in text
+            assert "from app.services" not in text

@@ -1,46 +1,47 @@
-# TrueHold Wellness — order email workflow
+# TrueHold Wellness — business inbox + @Npeppers_bot
 
-Self-contained **TrueHold Wellness** agent. Copy `truehold-wellness/` to move it. It does not import `realtor-agent/` or `mr_north/`.
+Self-contained **TrueHold Wellness** agent restored from the original inbox-snapshot design (orders, payments, fulfillment, shipping, cancellations, peptides). Copy `truehold-wellness/` to move it.
+
+It does **not** import `realtor-agent/` or `mr_north/`. Telegram is **@Npeppers_bot** only.
 
 | This package | Not this package |
 | --- | --- |
-| TrueHold Wellness order emails | Realtor property acquisition |
-| Telegram **@Npeppers_bot** | Telegram **@PirateEye_bot** |
-| `truehold-wellness/` | `realtor-agent/` |
+| TrueHold Wellness inbox / orders | Realtor property acquisition |
+| **@Npeppers_bot** | **@PirateEye_bot** |
+| `WELLNESS_ALERT_WEBHOOK_URL` | `ALERT_WEBHOOK_URL` (Mr North) |
 
-Do not put a `@PirateEye_bot` token in this folder. Do not put a `@Npeppers_bot` token in `realtor-agent/`.
+## Workflow (as before)
 
-## Workflow
+Every alert includes the full business-inbox snapshot:
 
 ```
-order email inbox → parse → order record → @Npeppers_bot operator alert
+orders, payments, fulfillment, shipping, cancellations, peptides, other_actionable
 ```
-
-First milestone is local mocks (no live Gmail IMAP, no live Telegram token required).
 
 ```bash
 cd truehold-wellness
 python -m pip install -e ".[dev]"
-cp .env.example .env
-python -m thw.cli demo
+python -m wellness_agent compose
+python -m wellness_agent compose --type order --detail "New TrueHold Wellness order received."
+python -m wellness_agent send --dry-run --type order
 python -m pytest
 ```
 
-## Live Telegram (@Npeppers_bot only)
+`send` POSTs JSON with `agent=truehold-wellness-agent` to `WELLNESS_ALERT_WEBHOOK_URL` (never Mr North’s `ALERT_WEBHOOK_URL`). If `TELEGRAM_MODE=live` and the token is `@Npeppers_bot`, the same message is also delivered on Telegram.
+
+## Telegram (@Npeppers_bot)
 
 Source: https://core.telegram.org/bots/api
 
-1. In `@BotFather`, open **Npeppers_bot** from `/mybots` (it must appear there).
-2. Copy **API Token** from that screen, not from an old congratulations message.
-3. Put it in `.env` as `TELEGRAM_MODE=live` and `TELEGRAM_BOT_TOKEN=…`. Never commit `.env`.
-4. Live mode calls `getMe` and **refuses to start** unless the username is `Npeppers_bot`.
-5. `python -m thw.cli telegram-poll` then send `/start` to https://t.me/Npeppers_bot
-6. `python -m thw.cli ingest` to parse sample (or later, live) order emails and alert the operator.
+Live mode calls `getMe` and refuses `@PirateEye_bot`.
 
-A token that Telegram rejects as `401 Unauthorized` cannot run this bot. Recreate or refresh the token in `/mybots` first.
+1. BotFather `/mybots` must list **Npeppers_bot**. A congratulations token that returns `401 Unauthorized` cannot run.
+2. `.env`: `TELEGRAM_MODE=live`, `TELEGRAM_BOT_TOKEN=…`, optional `WELLNESS_TELEGRAM_CHAT_ID`.
+3. `python -m wellness_agent telegram-poll`
+4. In Telegram: `/start`, `/inbox`, `/order <product and qty>`
 
 ## Isolation
 
-- Separate Python package (`thw`), database (`data/wellness.db`), env, tests, and CI job
-- No shared models with realtor-agent
-- Identity lock: forbidden username `PirateEye_bot`
+- Separate folder, package (`wellness_agent`), webhook env, Telegram bot, tests, and CI job
+- Crypto/Hormuz content is rejected
+- Realtor MLS/matching code is not used

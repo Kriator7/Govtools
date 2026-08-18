@@ -43,17 +43,17 @@ python -m pytest
 
 ## TrueHold Wellness order emails (@Npeppers_bot)
 
-Self-contained in [`truehold-wellness/`](truehold-wellness/). Not realtor-agent.
+Original inbox-snapshot agent, restored under [`truehold-wellness/`](truehold-wellness/). Not realtor-agent.
 
 ```bash
 cd truehold-wellness
 python -m pip install -e ".[dev]"
-cp .env.example .env
-python -m thw.cli demo
+python -m wellness_agent compose
+python -m wellness_agent send --dry-run --type order
 python -m pytest
 ```
 
-Live `@Npeppers_bot` requires a token that Telegram `getMe` accepts **and** that appears under BotFather `/mybots`. A copied congratulations token that returns `401 Unauthorized` cannot run the bot.
+Telegram: **@Npeppers_bot** (`/start`, `/inbox`, `/order`). Live `getMe` must succeed; a `401 Unauthorized` token cannot deliver messages.
 
 ## Tests
 
