@@ -47,7 +47,7 @@ def test_order_marks_orders_new_and_keeps_other_categories():
     assert "klow" in inbox.orders.detail.lower()
     assert inbox.payments.new is False
     assert inbox.shipping.new is False
-    assert any("Got it. The TrueHold team will confirm" in item.get("text", "") for item in tg.sent)
+    assert any("Got it. The TrueHold team will call" in item.get("text", "") for item in tg.sent)
     assert not any("TrueHold Wellness alert — order" in item.get("text", "") for item in tg.sent)
     assert any(str(item.get("document", "")).endswith("klow.pdf") for item in tg.sent)
 

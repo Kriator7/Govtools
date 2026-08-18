@@ -1,4 +1,4 @@
-"""Inbound Telegram for TrueHold Wellness: picture menu for clients, staff-only inbox."""
+"""Inbound Telegram for TrueHold Wellness: intro, quick menu, one tile, phone capture."""
 
 from __future__ import annotations
 
@@ -9,13 +9,34 @@ from wellness_agent.catalog import (
     format_product_caption,
     pdf_path,
 )
+from wellness_agent.clients import (
+    client_phone,
+    parse_phone,
+    phone_line_for_staff,
+    save_client_phone,
+)
 from wellness_agent.compose import compose_alert, format_alert
 from wellness_agent.greetings import is_salutation
 from wellness_agent.identity import REQUIRED_USERNAME
-from wellness_agent.menu import CUSTOMER_CONFIRM, handle_menu_callback, send_picture_menu
+from wellness_agent.menu import (
+    CUSTOMER_CONFIRM,
+    PHONE_THANKS,
+    TYPE_PHONE,
+    ask_for_phone,
+    complete_pending_order_if_ready,
+    handle_menu_callback,
+    remove_keyboard,
+    send_quick_menu,
+)
 from wellness_agent.models import AlertTrigger
 from wellness_agent.reflex import fire_reflex
-from wellness_agent.session_store import begin_session, intro_pending, mark_intro_played
+from wellness_agent.session_store import (
+    awaiting_phone,
+    begin_session,
+    intro_pending,
+    mark_intro_played,
+    set_awaiting_phone,
+)
 from wellness_agent.telegram_copy import (
     BOT_COMMANDS,
     CUSTOMER_COMMANDS,
@@ -55,13 +76,14 @@ def _rest(text: str) -> str:
     return parts[1].strip() if len(parts) > 1 else ""
 
 
-def _ids(payload_message: dict) -> tuple[str, str, str]:
+def _ids(payload_message: dict) -> tuple[str, str, str, dict]:
     chat = payload_message.get("chat") or {}
     sender = payload_message.get("from") or {}
     return (
         str(chat.get("id") or ""),
         str(sender.get("id") or ""),
         str(chat.get("type") or "private"),
+        sender,
     )
 
 
@@ -75,9 +97,41 @@ def _matched_product(detail: str):
     return None
 
 
+def _sender_name(sender: dict) -> str:
+    parts = [str(sender.get("first_name") or "").strip(), str(sender.get("last_name") or "").strip()]
+    return " ".join(part for part in parts if part)
+
+
+def _record_phone(telegram, chat_id: str, phone: str, *, source: str, sender: dict) -> dict:
+    entry = save_client_phone(
+        chat_id,
+        phone,
+        source=source,
+        user_id=str(sender.get("id") or chat_id),
+        name=_sender_name(sender),
+        username=str(sender.get("username") or ""),
+    )
+    set_awaiting_phone(chat_id, False)
+    telegram.send_message(
+        chat_id,
+        PHONE_THANKS.format(phone=entry["phone"]),
+        reply_markup=remove_keyboard(),
+    )
+    pending = complete_pending_order_if_ready(telegram, chat_id)
+    return {"ok": True, "action": "phone-saved", "chat_id": chat_id, "pending": pending}
+
+
+def _send_introduction(telegram, chat_id: str) -> None:
+    telegram.send_message(chat_id, INTRODUCTION)
+    send_quick_menu(telegram, chat_id, include_blurb=True)
+    mark_intro_played(chat_id)
+    if not client_phone(chat_id):
+        ask_for_phone(telegram, chat_id)
+
+
 def _send_sheet(telegram, chat_id: str, query: str) -> dict:
     if not query:
-        telegram.send_message(chat_id, "Tap a picture on /menu, or send a product name.")
+        telegram.send_message(chat_id, "Tap a name on /menu.")
         return {"ok": True, "action": "product-help", "chat_id": chat_id}
     try:
         product = find_product(query)
@@ -89,12 +143,6 @@ def _send_sheet(telegram, chat_id: str, query: str) -> dict:
     return {"ok": True, "action": "product", "chat_id": chat_id, "product": product["id"]}
 
 
-def _send_introduction(telegram, chat_id: str) -> None:
-    telegram.send_message(chat_id, INTRODUCTION)
-    send_picture_menu(telegram, chat_id, include_blurb=False)
-    mark_intro_played(chat_id)
-
-
 def handle_telegram_update(payload: dict, telegram) -> dict:
     callback = payload.get("callback_query")
     if callback:
@@ -102,12 +150,36 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
 
     message = payload.get("message") or {}
     text = str(message.get("text") or "").strip()
-    chat_id, user_id, chat_type = _ids(message)
+    chat_id, user_id, chat_type, sender = _ids(message)
     if not chat_id:
         return {"ok": True, "ignored": True}
 
+    contact = message.get("contact") if isinstance(message.get("contact"), dict) else None
+    if contact and contact.get("phone_number"):
+        return _record_phone(
+            telegram,
+            chat_id,
+            str(contact["phone_number"]),
+            source="telegram_contact",
+            sender=sender,
+        )
+
+    if text.lower() in {"i'll type my number", "ill type my number", "i will type my number"}:
+        set_awaiting_phone(chat_id, True)
+        telegram.send_message(chat_id, TYPE_PHONE)
+        return {"ok": True, "action": "type-phone", "chat_id": chat_id}
+
     command = _command(text)
     staff = is_operator(user_id, chat_id, chat_type)
+
+    looks_like_phone = bool(parse_phone(text)) and len(text) <= 22 and sum(ch.isdigit() for ch in text) >= 10
+    if looks_like_phone and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule", "order"}:
+        return _record_phone(telegram, chat_id, text, source="typed", sender=sender)
+
+    if awaiting_phone(chat_id) and text and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule"}:
+        if not (is_salutation(text) or is_salutation(command)):
+            telegram.send_message(chat_id, TYPE_PHONE)
+            return {"ok": True, "action": "type-phone", "chat_id": chat_id}
 
     if command in PRIVILEGED_COMMANDS:
         if command == "inbox" and staff:
@@ -128,16 +200,20 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             telegram.send_message(chat_id, SAY_HI)
             return {"ok": True, "action": "say-hi", "chat_id": chat_id, "staff": staff}
         mark_intro_played(chat_id)
-        send_picture_menu(telegram, chat_id)
+        send_quick_menu(telegram, chat_id)
+        if not client_phone(chat_id):
+            ask_for_phone(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id, "staff": staff}
 
     if command == "schedule":
         telegram.send_message(chat_id, SCHEDULE)
+        if not client_phone(chat_id):
+            ask_for_phone(telegram, chat_id)
         return {"ok": True, "action": "schedule", "chat_id": chat_id}
 
     if command in {"catalog", "products"}:
         mark_intro_played(chat_id)
-        send_picture_menu(telegram, chat_id)
+        send_quick_menu(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id}
 
     if command in {"product", "sheet"}:
@@ -147,15 +223,18 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         detail = _rest(text) if command == "order" else text.split(":", 1)[1].strip()
         if not detail:
             mark_intro_played(chat_id)
-            send_picture_menu(telegram, chat_id)
+            send_quick_menu(telegram, chat_id)
             return {"ok": True, "action": "menu", "chat_id": chat_id}
+        staff_detail = f"{detail}\n{phone_line_for_staff(chat_id)}"
         result = fire_reflex(
             "order",
-            detail,
+            staff_detail,
             exclude_chats={chat_id},
             require_destination=False,
         )
         telegram.send_message(chat_id, CUSTOMER_CONFIRM.format(detail=detail))
+        if not client_phone(chat_id):
+            ask_for_phone(telegram, chat_id)
         product = _matched_product(detail)
         if product:
             telegram.send_document(
@@ -185,7 +264,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             return {"ok": True, "action": "say-hi", "chat_id": chat_id}
         telegram.send_message(
             chat_id,
-            "Use the picture menu — tap This one on the vial you want. Send /menu to see the photos.",
+            "Tap one name on the quick menu. Send /menu to see it again.",
         )
         return {"ok": True, "action": "nudge-menu", "chat_id": chat_id}
 

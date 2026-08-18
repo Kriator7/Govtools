@@ -15,4 +15,5 @@ data/operator.json
 data/inbox_state.json
 data/email_seen.json
 data/sessions.json
+data/clients.json
 *.log

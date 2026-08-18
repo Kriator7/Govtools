@@ -49,10 +49,11 @@ Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_
 ### Customer picture menu
 
 1. `/start` welcomes them and asks them to **say hi**.
-2. Hello, hey, good morning, or another salutation plays the introduction once for that session, then the picture menu.
-3. Tap **This one** on the vial they want.
+2. Hello, hey, good morning, or another salutation plays the introduction once for that session, then a **quick menu** (names only).
+3. Tap one name — we send **that tile**, not every SKU photo.
 4. **Order this** → 1 / 2 / 3 vials → **Yes, send to the team**.
-5. Staff are notified. The customer gets a short confirmation plus the locked info sheet.
+5. Telegram cannot expose a phone unless the client shares it. The bot asks them to **Share my phone number** or type it so the team can call for confirmation, consult, and waiver signing.
+6. Staff are notified with the number (or a note that it is missing). The customer gets a short confirmation plus the locked info sheet.
 
 Public BotFather commands are only `/start` `/menu` `/schedule` `/help`. `/inbox` is not in the customer menu.
 
@@ -76,7 +77,7 @@ Wrong or missing staff identity replies `That command is for TrueHold staff only
 3. `python -m wellness_agent whoami` — must return `THWellness_bot`.
 4. `python -m wellness_agent configure-telegram` — customer command menu by default; staff `/inbox` only on operator chats.
 5. `python -m wellness_agent telegram-poll`
-6. In Telegram as a customer: `/start`, say hi, tap a photo, order 1–3 vials.
+6. In Telegram as a customer: `/start`, say hi, tap one name, share a phone, order 1–3 vials.
 7. In Telegram as staff: `/inbox` after allowlisting.
 
 Rebuild picture cards:

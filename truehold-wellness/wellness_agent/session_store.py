@@ -47,7 +47,7 @@ def _chat(state: dict, chat_id: str) -> dict:
     chats = state.setdefault("chats", {})
     entry = chats.get(chat_id)
     if not isinstance(entry, dict):
-        entry = {"started_at": 0, "intro_at": 0, "prompted": False}
+        entry = {"started_at": 0, "intro_at": 0, "prompted": False, "awaiting_phone": False}
         chats[chat_id] = entry
     return entry
 
@@ -62,7 +62,13 @@ def begin_session(chat_id: str) -> dict:
     chat_id = str(chat_id)
     now = time.time()
     state = _load()
-    state["chats"][chat_id] = {"started_at": now, "intro_at": 0, "prompted": True}
+    state["chats"][chat_id] = {
+        "started_at": now,
+        "intro_at": 0,
+        "prompted": True,
+        "awaiting_phone": False,
+        "pending_order": None,
+    }
     _save(state)
     return state["chats"][chat_id]
 
@@ -89,6 +95,34 @@ def mark_intro_played(chat_id: str) -> None:
     _save(state)
 
 
+def set_awaiting_phone(chat_id: str, waiting: bool) -> None:
+    chat_id = str(chat_id)
+    state = _load()
+    entry = _chat(state, chat_id)
+    entry["awaiting_phone"] = bool(waiting)
+    _save(state)
+
+
+def awaiting_phone(chat_id: str) -> bool:
+    return bool(_chat(_load(), str(chat_id)).get("awaiting_phone"))
+
+
+def set_pending_order(chat_id: str, product_id: str | None, qty: str | None) -> None:
+    chat_id = str(chat_id)
+    state = _load()
+    entry = _chat(state, chat_id)
+    if product_id and qty:
+        entry["pending_order"] = {"product_id": product_id, "qty": qty}
+    else:
+        entry["pending_order"] = None
+    _save(state)
+
+
+def pending_order(chat_id: str) -> dict | None:
+    raw = _chat(_load(), str(chat_id)).get("pending_order")
+    return dict(raw) if isinstance(raw, dict) else None
+
+
 def ensure_session(chat_id: str) -> dict:
     chat_id = str(chat_id)
     now = time.time()
@@ -98,5 +132,6 @@ def ensure_session(chat_id: str) -> dict:
         entry["started_at"] = now
         entry["intro_at"] = 0
         entry["prompted"] = False
+        entry["awaiting_phone"] = False
         _save(state)
     return entry

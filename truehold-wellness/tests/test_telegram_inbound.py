@@ -81,8 +81,14 @@ def test_hello_plays_intro_once_then_does_not_repeat():
     assert hello["action"] == "intro"
     texts = [item.get("text") or "" for item in tg.sent]
     assert any("welcome to TrueHold Wellness" in text for text in texts)
+    assert any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
     photos = [item for item in tg.sent if "photo" in item]
-    assert len(photos) == 8
+    assert photos == []
+    menus = [item for item in tg.sent if (item.get("reply_markup") or {}).get("inline_keyboard")]
+    assert menus
+    labels = [btn["text"] for row in menus[0]["reply_markup"]["inline_keyboard"] for btn in row]
+    assert "KLOW" in labels
+    assert "Tirzepatide" in labels
     tg.sent.clear()
     again = handle_telegram_update(_msg("Hey there!", chat_id=99), tg)
     assert again["action"] == "greet-again"
@@ -94,7 +100,8 @@ def test_good_morning_is_a_salutation_on_first_visit():
     tg = _FakeTelegram()
     result = handle_telegram_update(_msg("Good morning", chat_id=44), tg)
     assert result["action"] == "intro"
-    assert any("photo" in item for item in tg.sent)
+    assert not any("photo" in item for item in tg.sent)
+    assert any((item.get("reply_markup") or {}).get("inline_keyboard") for item in tg.sent)
 
 
 def test_unrelated_first_message_asks_for_hi():
@@ -165,7 +172,7 @@ def test_customer_order_does_not_leak_inbox_snapshot():
     order = handle_telegram_update(_msg("/order 2x starter kit", chat_id=99), tg)
     assert order["action"] == "order"
     texts = [item.get("text") or "" for item in tg.sent]
-    assert any("Got it. The TrueHold team will confirm" in text for text in texts)
+    assert any("Got it. The TrueHold team will call" in text for text in texts)
     assert not any("TrueHold Wellness alert — order" in text for text in texts)
     assert not any("Orders:" in text for text in texts)
 

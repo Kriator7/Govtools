@@ -13,23 +13,23 @@ INTRODUCTION = (
     "Hi — welcome to TrueHold Wellness.\n"
     "\n"
     "We help Las Vegas residents with educational research-peptide information. "
-    "The team confirms before any payment. Protocol details are reviewed case by case.\n"
+    "The team calls to confirm, consult, and set up waiver signing before any payment.\n"
     "\n"
-    "Scroll the photos below. Tap This one on the vial you want.\n"
+    "Tap one name on the quick menu. We will send that tile.\n"
     "Need a person instead? /schedule"
 )
 
 GREET_AGAIN = (
-    "Hi again. Send /menu if you want the picture list, or tap a photo already on screen."
+    "Hi again. Send /menu for the quick list, or tap a name already on screen."
 )
 
 CUSTOMER_HELP = (
     f"TrueHold Wellness (@{REQUIRED_USERNAME})\n"
-    "Say hi to start. Then scroll the pictures and tap This one on the vial you want.\n"
-    "/menu — picture menu\n"
+    "Say hi to start. Then tap one name — we send that tile, not the whole list.\n"
+    "/menu — quick menu\n"
     "/schedule — talk to the TrueHold team\n"
     "/help — this message\n"
-    "Las Vegas residents only. Educational only. The team confirms before payment.\n"
+    "Las Vegas residents only. Educational only. The team confirms by phone.\n"
     "This bot is not realtor-agent / @PirateEye_bot."
 )
 
@@ -53,7 +53,7 @@ SCHEDULE = (
 
 CUSTOMER_COMMANDS = (
     {"command": "start", "description": "Say hi to start"},
-    {"command": "menu", "description": "Show the picture menu"},
+    {"command": "menu", "description": "Quick menu — tap one name"},
     {"command": "schedule", "description": "Talk to the TrueHold team"},
     {"command": "help", "description": "How to order"},
 )

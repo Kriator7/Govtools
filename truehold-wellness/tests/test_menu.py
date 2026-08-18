@@ -44,10 +44,16 @@ def _tap(data, chat_id=88, user_id=88, callback_id="cb1"):
 
 
 def test_picture_menu_order_flow_notifies_without_staff_leak():
+    from wellness_agent.clients import save_client_phone
+
+    save_client_phone("88", "7025550100", source="typed", user_id="88")
     tg = _FakeTelegram()
-    pick = handle_telegram_update(_tap("w:pick:klow"), tg)
-    assert pick["action"] == "pick"
+    pick = handle_telegram_update(_tap("w:tile:klow"), tg)
+    assert pick["action"] == "tile"
     assert pick["product"] == "klow"
+    photos = [item for item in tg.sent if "photo" in item]
+    assert len(photos) == 1
+    assert photos[0]["photo"].endswith("klow.jpg")
     qty = handle_menu_callback(_tap("w:qty:klow")["callback_query"], tg)
     assert qty["action"] == "qty"
     ask = handle_menu_callback(_tap("w:ask:klow:2")["callback_query"], tg)
@@ -58,9 +64,10 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     inbox = load_current_inbox()
     assert inbox.orders.new is True
     assert "klow" in inbox.orders.detail.lower()
+    assert "7025550100" in inbox.orders.detail.replace("-", "") or "+17025550100" in inbox.orders.detail
     assert inbox.payments.new is False
     texts = [item.get("text") or "" for item in tg.sent]
-    assert any("Got it. The TrueHold team will confirm" in text for text in texts)
+    assert any("Got it. The TrueHold team will call" in text for text in texts)
     assert not any("TrueHold Wellness alert — order" in text for text in texts)
     assert any(str(item.get("document", "")).endswith("klow.pdf") for item in tg.sent)
     assert "cb2" in tg.callbacks
@@ -74,4 +81,4 @@ def test_info_sheet_from_picture_keeps_two_choices():
     buttons = [item.get("reply_markup") for item in tg.sent if item.get("reply_markup")]
     assert buttons
     labels = [btn["text"] for row in buttons[-1]["inline_keyboard"] for btn in row]
-    assert labels == ["Order this", "See info sheet", "See all photos"]
+    assert labels == ["Order this", "See info sheet", "See menu"]
