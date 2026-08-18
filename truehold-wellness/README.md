@@ -2,7 +2,7 @@
 
 Self-contained **TrueHold Wellness** agent restored from the original inbox-snapshot design (orders, payments, fulfillment, shipping, cancellations, peptides). Copy `truehold-wellness/` to move it.
 
-It does **not** import `realtor-agent/` or `mr_north/`. Telegram is **@Npeppers_bot** only.
+It does **not** import `realtor-agent/` or `mr_north/`. Telegram is **@Npeppers_bot** only. This folder is protected business infrastructure; see [`PROTECTED_AGENTS.md`](../PROTECTED_AGENTS.md).
 
 | This package | Not this package |
 | --- | --- |

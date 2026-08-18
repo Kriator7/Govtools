@@ -1,0 +1,13 @@
+{
+  "agent_id": "REPLACE_WITH_mr-north_OR_realtor-agent_OR_truehold-wellness",
+  "reason": "Replace this with a business reason. Incomplete files are ignored.",
+  "confirmer_1": {
+    "name": "First person full name (must differ from confirmer_2)",
+    "phrase": "I CONFIRM DELETE OF <agent_id> FROM BUSINESS INFRASTRUCTURE"
+  },
+  "confirmer_2": {
+    "name": "Second person full name (must differ from confirmer_1)",
+    "phrase": "I INDEPENDENTLY CONFIRM DELETE OF <agent_id> FROM BUSINESS INFRASTRUCTURE"
+  },
+  "warning": "THIS DELETES PRODUCTION BUSINESS INFRASTRUCTURE"
+}

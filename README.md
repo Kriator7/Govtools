@@ -10,6 +10,8 @@ This repository holds **three independent products**. They do not share Telegram
 
 Never put the Wellness token in `realtor-agent/`. Never put the realtor token in `truehold-wellness/`. Live mode in each package calls Telegram `getMe` and refuses to start on the wrong username.
 
+These three agents are **protected business infrastructure**. CI fails if one is deleted unless two different people complete `.github/DELETE_AGENT_CONFIRMATION.json`. See [`PROTECTED_AGENTS.md`](PROTECTED_AGENTS.md).
+
 ## Mr North (TrueHold crypto)
 
 When any Mr North alert fires, the outbound message and JSON payload also include the current geopolitical / market catalyst briefing:

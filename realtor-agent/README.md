@@ -2,7 +2,7 @@
 
 Self-contained automation platform for **one Nevada realtor**, **one authorized MLS/API connection**, and the realtor’s existing investor clientele.
 
-Telegram for this folder is **@PirateEye_bot** only. TrueHold Wellness order emails use **@Npeppers_bot** in `truehold-wellness/` — a different company, different files, different architecture.
+Telegram for this folder is **@PirateEye_bot** only. TrueHold Wellness order emails use **@Npeppers_bot** in `truehold-wellness/` — a different company, different files, different architecture. This folder is protected business infrastructure; see [`PROTECTED_AGENTS.md`](../PROTECTED_AGENTS.md).
 
 This folder is the entire agent. Copy `realtor-agent/` to move the project. Nothing outside this directory is required to run, test, or deploy the service.
 
