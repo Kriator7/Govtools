@@ -41,15 +41,31 @@ STAFF_HELP = (
     "This bot is not realtor-agent / @PirateEye_bot."
 )
 
+TEAM_EMAIL = "trueholdwellness@gmail.com"
+# HTTPS Gmail compose — Telegram URL buttons require http/https, not mailto.
+# https://core.telegram.org/bots/api#inlinekeyboardbutton
+GMAIL_COMPOSE_URL = (
+    "https://mail.google.com/mail/?view=cm&fs=1&to=trueholdwellness@gmail.com"
+)
+
 SCHEDULE = (
     "TrueHold Wellness — book with the team\n"
     "Phone: (702) 879-8783 or (702) 879-TRUE\n"
-    "Email: TRUEHOLDWELLNESS@GMAIL.COM\n"
+    "Email: trueholdwellness at gmail.com\n"
+    "Tap Email on Gmail below to write us.\n"
     "Shop: https://trueholdwellness.com/shop\n"
     "Las Vegas residents only for Telegram interest orders.\n"
     "Protocol details are reviewed case by case. "
     "This bot does not provide dosing, reconstitution, or administration instructions in chat."
 )
+
+
+def schedule_keyboard() -> dict:
+    return {
+        "inline_keyboard": [
+            [{"text": "Email on Gmail", "url": GMAIL_COMPOSE_URL}],
+        ]
+    }
 
 CUSTOMER_COMMANDS = (
     {"command": "start", "description": "Say hi to start"},

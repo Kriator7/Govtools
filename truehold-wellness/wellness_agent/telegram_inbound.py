@@ -48,6 +48,7 @@ from wellness_agent.telegram_copy import (
     SCHEDULE,
     STAFF_COMMANDS,
     STAFF_HELP,
+    schedule_keyboard,
 )
 
 __all__ = [
@@ -206,7 +207,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         return {"ok": True, "action": "menu", "chat_id": chat_id, "staff": staff}
 
     if command == "schedule":
-        telegram.send_message(chat_id, SCHEDULE)
+        telegram.send_message(chat_id, SCHEDULE, reply_markup=schedule_keyboard())
         if not client_phone(chat_id):
             ask_for_phone(telegram, chat_id)
         return {"ok": True, "action": "schedule", "chat_id": chat_id}

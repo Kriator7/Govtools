@@ -236,9 +236,9 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
         send_quick_menu(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id}
     if action == "team":
-        from wellness_agent.telegram_copy import SCHEDULE
+        from wellness_agent.telegram_copy import SCHEDULE, schedule_keyboard
 
-        telegram.send_message(chat_id, SCHEDULE)
+        telegram.send_message(chat_id, SCHEDULE, reply_markup=schedule_keyboard())
         return {"ok": True, "action": "schedule", "chat_id": chat_id}
     try:
         product = find_product(sku) if sku else None

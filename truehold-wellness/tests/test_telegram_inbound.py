@@ -112,6 +112,29 @@ def test_unrelated_first_message_asks_for_hi():
     assert not any("photo" in item for item in tg.sent)
 
 
+def test_schedule_email_opens_gmail_not_telegram():
+    from wellness_agent.telegram_copy import GMAIL_COMPOSE_URL, SCHEDULE
+
+    assert "t.me" not in GMAIL_COMPOSE_URL
+    assert GMAIL_COMPOSE_URL.startswith("https://mail.google.com/mail/")
+    assert "trueholdwellness@gmail.com" in GMAIL_COMPOSE_URL
+    assert "@GMAIL" not in SCHEDULE
+    assert "@gmail" not in SCHEDULE
+    tg = _FakeTelegram()
+    result = handle_telegram_update(_msg("/schedule", chat_id=44), tg)
+    assert result["action"] == "schedule"
+    buttons = [
+        btn
+        for item in tg.sent
+        for row in (item.get("reply_markup") or {}).get("inline_keyboard") or []
+        for btn in row
+    ]
+    assert buttons
+    assert buttons[0]["text"] == "Email on Gmail"
+    assert buttons[0]["url"] == GMAIL_COMPOSE_URL
+    assert "t.me" not in buttons[0]["url"]
+
+
 def test_customer_inbox_is_denied():
     tg = _FakeTelegram()
     result = handle_telegram_update(_msg("/inbox", chat_id=99), tg)
