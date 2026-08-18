@@ -190,7 +190,7 @@ EMAIL_SMTP_STARTTLS=true
 
 Source: https://core.telegram.org/bots/api
 
-1. In Telegram, open `@BotFather`, send `/newbot`, and copy the bot token.
+1. In Telegram, open `@BotFather`, send `/newbot`, and copy the bot token. Use a **new dedicated bot**. Do not reuse, rename, revoke, or delete the TrueHold Wellness bot. That agent is not in this repo and must keep its existing token and webhook.
 2. Put the token in `.env`:
 
 ```
