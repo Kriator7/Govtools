@@ -23,9 +23,12 @@ def get_mls_provider(settings: Settings | None = None) -> MLSProvider:
 def get_telegram_provider(settings: Settings | None = None) -> TelegramProvider:
     settings = settings or get_settings()
     if settings.telegram_mode == "live" and settings.telegram_bot_token:
+        from app.integrations.telegram.identity import assert_realtor_telegram_username
         from app.integrations.telegram.live import LiveTelegramProvider
 
-        return LiveTelegramProvider(settings.telegram_bot_token)
+        provider = LiveTelegramProvider(settings.telegram_bot_token)
+        assert_realtor_telegram_username(provider.get_username())
+        return provider
     return MockTelegramProvider()
 
 

@@ -107,3 +107,7 @@ class LiveTelegramProvider(TelegramProvider):
         if not data.get("ok"):
             raise RuntimeError(data.get("description") or f"Telegram {method} failed")
         return data
+
+    def get_username(self) -> str:
+        data = self._get("getMe")
+        return str((data.get("result") or {}).get("username") or "")
