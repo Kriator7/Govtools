@@ -53,9 +53,20 @@ class Settings(BaseSettings):
     email_relay_to: str = "cardanomint@gmail.com"
     email_relay_mode: bool = True
     email_subject_prefix: str = "[realtor-agent test]"
+    email_smtp_host: str = "smtp.gmail.com"
+    email_smtp_port: int = 587
+    email_smtp_username: str | None = None
+    email_smtp_password: str | None = None
+    email_smtp_starttls: bool = True
+
+    # Damian's live preference is SMS. Relay keeps test texts off real investors.
+    sms_relay_mode: bool = True
+    sms_relay_to: str | None = None
+    notify_email_copy: bool = True
 
     telegram_bot_token: str | None = None
     telegram_webhook_secret: str | None = None
+    telegram_operator_chat_id: str | None = None
     twilio_account_sid: str | None = None
     twilio_auth_token: str | None = None
     twilio_from_number: str | None = None

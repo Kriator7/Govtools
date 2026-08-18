@@ -10,6 +10,7 @@ os.environ.setdefault("AUTO_CREATE_TABLES", "true")
 os.environ.setdefault("MLS_PROVIDER", "mock")
 os.environ.setdefault("TELEGRAM_MODE", "mock")
 os.environ.setdefault("SMS_PROVIDER", "mock")
+os.environ.setdefault("EMAIL_PROVIDER", "mock")
 os.environ.setdefault("ENVIRONMENT", "local")
 
 from app.config import get_settings

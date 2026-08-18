@@ -1,7 +1,9 @@
 """Compose mock or live providers from settings."""
 
 from app.config import Settings, get_settings
+from app.integrations.email.base import EmailProvider
 from app.integrations.email.mock import MockEmailProvider
+from app.integrations.email.smtp import SmtpEmailProvider
 from app.integrations.esign.mock import MockSignatureProvider
 from app.integrations.mls.base import MLSProvider
 from app.integrations.mls.mock import MockMLSProvider
@@ -45,7 +47,23 @@ def get_sms_provider(settings: Settings | None = None) -> SMSProvider:
     return MockSMSProvider()
 
 
-def get_email_provider(settings: Settings | None = None) -> MockEmailProvider:
+def get_email_provider(settings: Settings | None = None) -> EmailProvider:
+    settings = settings or get_settings()
+    if settings.email_provider in {"smtp", "gmail"}:
+        username = settings.email_smtp_username or settings.email_from
+        password = settings.email_smtp_password
+        if not password:
+            raise ValueError(
+                "EMAIL_SMTP_PASSWORD is required when EMAIL_PROVIDER=smtp. "
+                "Create a Gmail App Password: https://support.google.com/accounts/answer/185833"
+            )
+        return SmtpEmailProvider(
+            host=settings.email_smtp_host,
+            port=settings.email_smtp_port,
+            username=username,
+            password=password,
+            starttls=settings.email_smtp_starttls,
+        )
     return MockEmailProvider()
 
 

@@ -1,7 +1,7 @@
 """Telegram Bot API abstraction.
 
-Live adapter should follow https://core.telegram.org/bots/api — sendMessage,
-answerCallbackQuery, and webhook secret-token verification.
+Live adapter follows https://core.telegram.org/bots/api — sendMessage,
+answerCallbackQuery, getUpdates, deleteWebhook, and webhook secret-token verification.
 """
 
 from abc import ABC, abstractmethod
@@ -16,10 +16,19 @@ class TelegramProvider(ABC):
         self,
         chat_id: str,
         text: str,
-        buttons: list[dict[str, str]] | None = None,
+        buttons: list | None = None,
     ) -> dict[str, Any]:
         raise NotImplementedError
 
     @abstractmethod
     def health(self) -> tuple[str, str]:
         raise NotImplementedError
+
+    def answer_callback_query(self, callback_query_id: str, text: str | None = None) -> dict[str, Any]:
+        return {"ok": True, "callback_query_id": callback_query_id, "text": text}
+
+    def get_updates(self, offset: int | None = None, timeout: int = 0) -> list[dict[str, Any]]:
+        return []
+
+    def delete_webhook(self, drop_pending_updates: bool = False) -> dict[str, Any]:
+        return {"ok": True, "dropped": drop_pending_updates}

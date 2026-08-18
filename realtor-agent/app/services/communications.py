@@ -25,6 +25,7 @@ from app.services.audit import AuditService
 from app.services.email.relay import resolve_email_envelope
 from app.services.notifications.templates import render_template
 from app.services.providers import get_email_provider, get_sms_provider, get_telegram_provider
+from app.services.sms.relay import resolve_sms_destination
 from app.utilities.ids import next_public_id
 
 
@@ -54,7 +55,7 @@ class CommunicationService:
         opportunity_id=None,
         transaction_id=None,
         investor_id=None,
-        buttons: list[dict[str, str]] | None = None,
+        buttons: list | None = None,
     ) -> Communication:
         body = render_template(channel, template, context)
         row = Communication(
@@ -75,6 +76,8 @@ class CommunicationService:
         self.db.flush()
         try:
             result = self._dispatch(channel, recipient, body, buttons)
+            if result.get("to"):
+                row.recipient = result["to"]
             row.provider = result.get("provider") or channel
             row.provider_message_id = result.get("provider_message_id")
             row.status = result.get("status") or DeliveryStatus.SENT.value
@@ -102,7 +105,13 @@ class CommunicationService:
             actor_type=ActorType.SYSTEM.value,
             origin=ActorOrigin.AUTOMATION.value,
             realtor_id=str(realtor.id),
-            after_state={"channel": channel, "recipient": recipient},
+            after_state={
+                "channel": channel,
+                "recipient": recipient,
+                "intended_recipient": (result or {}).get("intended_recipient"),
+                "relay_mode": (result or {}).get("relay_mode"),
+                "provider": row.provider,
+            },
         )
         if investor_id:
             investor = self.db.get(Investor, investor_id)
@@ -110,15 +119,27 @@ class CommunicationService:
                 investor.last_contact_at = datetime.now(timezone.utc)
         return row
 
-    def _dispatch(self, channel: str, recipient: str, body: str, buttons: list[dict[str, str]] | None) -> dict:
+    def _dispatch(self, channel: str, recipient: str, body: str, buttons: list | None) -> dict:
         if channel == NotificationChannel.TELEGRAM.value:
             result = self.telegram.send_message(recipient, body, buttons)
             result.setdefault("provider", self.telegram.name)
             result.setdefault("status", DeliveryStatus.SENT.value)
             return result
         if channel == NotificationChannel.SMS.value:
-            result = self.sms.send_sms(recipient, body)
+            dest = resolve_sms_destination(recipient)
+            to = dest.get("to")
+            if not to:
+                raise ValueError(
+                    "SMS not sent: set SMS_RELAY_TO to your test phone, or turn SMS_RELAY_MODE=false "
+                    "only after investor numbers are approved."
+                )
+            if dest.get("relay_mode") == "on" and dest.get("intended_recipient") and dest["intended_recipient"] != to:
+                body = f"[TEST RELAY] Intended recipient: {dest['intended_recipient']}\n\n{body}"
+            result = self.sms.send_sms(to, body)
             result.setdefault("provider", self.sms.name)
+            result["relay_mode"] = dest["relay_mode"]
+            result["intended_recipient"] = dest.get("intended_recipient")
+            result["to"] = to
             return result
         if channel == NotificationChannel.EMAIL.value:
             envelope = resolve_email_envelope(recipient)

@@ -1,15 +1,18 @@
-"""Notify investors only after explicit realtor approval."""
+"""Notify investors only after explicit realtor approval.
+
+Damian’s live preference is SMS. During testing, SMS is relayed to SMS_RELAY_TO
+(if set) and an email copy is sent to the CardanoMint relay inbox.
+"""
 
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.models.enums import (
-    ActorOrigin,
     ActorType,
     InvestorResponse,
     OpportunityStatus,
-    TransactionStatus,
 )
 from app.models.investor import Investor
 from app.models.listing import Listing
@@ -17,6 +20,7 @@ from app.models.opportunity import Opportunity
 from app.models.realtor import Realtor
 from app.services.audit import AuditService
 from app.services.communications import CommunicationService
+from app.services.sms.relay import resolve_sms_destination
 from app.services.transactions.engine import TransactionService
 from app.utilities.money import money_label
 
@@ -41,29 +45,9 @@ class InvestorNotificationService:
         listing = self.db.get(Listing, opportunity.listing_id)
         if investor is None or listing is None:
             raise ValueError("Investor or listing missing")
+        settings = get_settings()
         permissions = investor.communication_permissions or {}
-        channel = investor.preferred_channel or "sms"
-        if channel == "sms" and permissions.get("sms") is not True:
-            self.audit.timeline(
-                realtor_id=realtor.id,
-                event_type="INVESTOR_SMS_HELD",
-                message="SMS held: investor has not confirmed text permission",
-                opportunity_id=opportunity.id,
-                listing_id=listing.id,
-                investor_id=investor.id,
-            )
-            return
-        if channel == "email" and permissions.get("email") is not True:
-            self.audit.timeline(
-                realtor_id=realtor.id,
-                event_type="INVESTOR_EMAIL_HELD",
-                message="Email held: investor has not confirmed email permission",
-                opportunity_id=opportunity.id,
-                listing_id=listing.id,
-                investor_id=investor.id,
-            )
-            return
-        recipient = investor.phone if channel == "sms" else (investor.email or investor.phone or "unknown")
+        preferred = (investor.preferred_channel or "sms").lower()
         context = {
             "address": listing.street_address,
             "city": listing.city,
@@ -75,23 +59,67 @@ class InvestorNotificationService:
             "sqft": f"{listing.sqft:,}" if listing.sqft else "n/a",
             "profile_name": "current acquisition",
         }
-        template = "opportunity.txt.j2" if channel == "sms" else "opportunity.txt.j2"
-        folder = "sms" if channel == "sms" else "email"
-        self.comms.send_message(
-            realtor=realtor,
-            recipient=recipient or "unknown",
-            channel=folder,
-            template=template,
-            context=context,
-            opportunity_id=opportunity.id,
-            investor_id=investor.id,
-        )
+        sent_channels: list[str] = []
+
+        if preferred == "sms":
+            dest = resolve_sms_destination(investor.phone, settings)
+            if permissions.get("sms") is not True:
+                self._hold(realtor, opportunity, listing, investor, "INVESTOR_SMS_HELD", "SMS held: investor has not confirmed text permission")
+            elif not dest.get("to"):
+                self._hold(
+                    realtor,
+                    opportunity,
+                    listing,
+                    investor,
+                    "INVESTOR_SMS_HELD",
+                    "SMS held: no relay/test phone. Set SMS_RELAY_TO to your number before live Twilio.",
+                )
+            else:
+                self.comms.send_message(
+                    realtor=realtor,
+                    recipient=investor.phone or dest["to"],
+                    channel="sms",
+                    template="opportunity.txt.j2",
+                    context=context,
+                    opportunity_id=opportunity.id,
+                    investor_id=investor.id,
+                )
+                sent_channels.append("sms")
+
+        send_email = preferred == "email" or settings.notify_email_copy
+        if send_email:
+            email_allowed = permissions.get("email") is True or (
+                settings.notify_email_copy and preferred == "sms"
+            )
+            if not email_allowed:
+                self._hold(
+                    realtor,
+                    opportunity,
+                    listing,
+                    investor,
+                    "INVESTOR_EMAIL_HELD",
+                    "Email held: investor has not confirmed email permission",
+                )
+            else:
+                self.comms.send_message(
+                    realtor=realtor,
+                    recipient=investor.email or settings.email_relay_to,
+                    channel="email",
+                    template="opportunity.txt.j2",
+                    context=context,
+                    opportunity_id=opportunity.id,
+                    investor_id=investor.id,
+                )
+                sent_channels.append("email")
+
+        if not sent_channels:
+            return
         opportunity.status = OpportunityStatus.INVESTOR_NOTIFIED.value
         opportunity.notified_investor_at = datetime.now(timezone.utc)
         self.audit.timeline(
             realtor_id=realtor.id,
             event_type="INVESTOR_NOTIFIED",
-            message=f"{channel.upper()} delivered to investor",
+            message=f"{'+'.join(item.upper() for item in sent_channels)} delivered to investor channel (test relays may apply)",
             opportunity_id=opportunity.id,
             listing_id=listing.id,
             investor_id=investor.id,
@@ -138,3 +166,21 @@ class InvestorNotificationService:
             actor_type=ActorType.INVESTOR.value,
         )
         return None
+
+    def _hold(
+        self,
+        realtor: Realtor,
+        opportunity: Opportunity,
+        listing: Listing,
+        investor: Investor,
+        event_type: str,
+        message: str,
+    ) -> None:
+        self.audit.timeline(
+            realtor_id=realtor.id,
+            event_type=event_type,
+            message=message,
+            opportunity_id=opportunity.id,
+            listing_id=listing.id,
+            investor_id=investor.id,
+        )

@@ -13,6 +13,7 @@ data/*.db-journal
 data/storage/
 data/exports/*
 !data/exports/.gitkeep
+data/telegram_offset.json
 data/imports/*
 !data/imports/.gitkeep
 !data/imports/sample_investors.csv

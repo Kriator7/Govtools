@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.models.enums import (
     ActorOrigin,
     ActorType,
@@ -36,6 +37,12 @@ class RealtorTelegramService:
         if listing is None or investor is None:
             return
         chat_id = realtor.telegram_chat_id or realtor.telegram_user_id or "mock-realtor"
+        settings = get_settings()
+        if settings.telegram_mode == "live" and chat_id in {None, "", "mock-realtor"}:
+            raise ValueError(
+                "Telegram chat is not linked. Open the bot on your phone and send /start, "
+                "or set TELEGRAM_OPERATOR_CHAT_ID."
+            )
         explanation = opportunity.explanation or {}
         context = {
             "address": listing.street_address,
@@ -54,13 +61,22 @@ class RealtorTelegramService:
             "needs_arv": bool(explanation.get("needs_arv")),
             "screening": explanation.get("screening") or {},
         }
-        buttons = [
-            {"text": "VIEW LISTING", "callback_data": f"view:{opportunity.public_id}"},
-            {"text": "APPROVE", "callback_data": f"approve:{opportunity.public_id}"},
-            {"text": "REJECT", "callback_data": f"reject:{opportunity.public_id}"},
-            {"text": "SNOOZE", "callback_data": f"snooze:{opportunity.public_id}"},
-            {"text": "DETAILS", "callback_data": f"details:{opportunity.public_id}"},
-        ]
+        oid = opportunity.public_id
+        buttons: list[list[dict[str, str]]] = []
+        if listing.listing_url:
+            buttons.append([{"text": "VIEW LISTING", "url": listing.listing_url}])
+        buttons.append(
+            [
+                {"text": "APPROVE", "callback_data": f"approve:{oid}"},
+                {"text": "REJECT", "callback_data": f"reject:{oid}"},
+            ]
+        )
+        buttons.append(
+            [
+                {"text": "SNOOZE", "callback_data": f"snooze:{oid}"},
+                {"text": "DETAILS", "callback_data": f"details:{oid}"},
+            ]
+        )
         self.comms.send_message(
             realtor=realtor,
             recipient=chat_id,

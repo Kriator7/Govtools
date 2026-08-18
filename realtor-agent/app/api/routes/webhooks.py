@@ -7,7 +7,7 @@ from app.dependencies import ActiveRealtor, DbSession
 from app.models.enums import InvestorResponse
 from app.models.opportunity import Opportunity
 from app.services.sms.investor_notify import InvestorNotificationService
-from app.services.telegram.realtor_agent import RealtorTelegramService
+from app.services.telegram.inbound import process_telegram_update
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
@@ -24,18 +24,7 @@ async def telegram_webhook(
         if x_telegram_bot_api_secret_token != settings.telegram_webhook_secret:
             raise HTTPException(status_code=401, detail="Invalid Telegram webhook secret")
     payload = await request.json()
-    callback = (payload.get("callback_query") or {}).get("data")
-    if not callback:
-        return {"ok": True, "ignored": True}
-    result = RealtorTelegramService(db).handle_callback(realtor, callback)
-    if result.get("action") == "approve" and result.get("ok"):
-        opportunity = (
-            db.query(Opportunity)
-            .filter(Opportunity.public_id == callback.split(":", 1)[1])
-            .one_or_none()
-        )
-        if opportunity:
-            InvestorNotificationService(db).notify_approved(realtor, opportunity)
+    result = process_telegram_update(db, realtor, payload)
     db.commit()
     return result
 

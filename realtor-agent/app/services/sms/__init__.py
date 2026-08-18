@@ -1,3 +1,3 @@
-from app.services.sms.investor_notify import InvestorNotificationService
+from app.services.sms.relay import resolve_sms_destination
 
-__all__ = ["InvestorNotificationService"]
+__all__ = ["resolve_sms_destination"]

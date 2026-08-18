@@ -17,3 +17,7 @@ class EmailProvider(ABC):
         intended_recipient: str | None = None,
     ) -> dict[str, Any]:
         raise NotImplementedError
+
+    @abstractmethod
+    def health(self) -> tuple[str, str]:
+        raise NotImplementedError

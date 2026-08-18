@@ -21,7 +21,7 @@ class MockTelegramProvider(TelegramProvider):
         self,
         chat_id: str,
         text: str,
-        buttons: list[dict[str, str]] | None = None,
+        buttons: list | None = None,
     ) -> dict[str, Any]:
         payload = {
             "provider_message_id": f"tg-mock-{uuid4().hex[:12]}",

@@ -44,3 +44,6 @@ class MockEmailProvider(EmailProvider):
         existing.append(payload)
         self.outbox_path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
         return payload
+
+    def health(self) -> tuple[str, str]:
+        return ("ok", "mock email provider")
