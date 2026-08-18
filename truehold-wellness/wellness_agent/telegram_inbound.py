@@ -3,16 +3,23 @@
 from __future__ import annotations
 
 from wellness_agent.compose import compose_alert, format_alert
+from wellness_agent.identity import REQUIRED_USERNAME
 from wellness_agent.models import AlertTrigger
 
-
 HELP = (
-    "TrueHold Wellness (@Npeppers_bot)\n"
+    f"TrueHold Wellness (@{REQUIRED_USERNAME})\n"
     "/start — link this chat\n"
     "/inbox — full business inbox snapshot (orders, payments, fulfillment, shipping, cancellations, peptides)\n"
     "/order <detail> — record an order and send confirmation\n"
     "/help — this message\n"
     "This bot is not realtor-agent / @PirateEye_bot."
+)
+
+BOT_COMMANDS = (
+    {"command": "start", "description": "Link this chat as the Wellness operator"},
+    {"command": "inbox", "description": "Full business inbox snapshot"},
+    {"command": "order", "description": "Record an order: /order <product and qty>"},
+    {"command": "help", "description": "Command list"},
 )
 
 

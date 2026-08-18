@@ -6,7 +6,7 @@ This repository holds **three independent products**. They do not share Telegram
 | --- | --- | --- | --- |
 | Mr North | TrueHold **crypto** alerts | none (webhook JSON) | [`mr_north/`](mr_north/) |
 | Realtor acquisition | Property matching for one Nevada realtor | **@PirateEye_bot** | [`realtor-agent/`](realtor-agent/) |
-| TrueHold Wellness | Order-email workflow | **@Npeppers_bot** | [`truehold-wellness/`](truehold-wellness/) |
+| TrueHold Wellness | Order-email workflow | **@THWellness_bot** | [`truehold-wellness/`](truehold-wellness/) |
 
 Never put the Wellness token in `realtor-agent/`. Never put the realtor token in `truehold-wellness/`. Live mode in each package calls Telegram `getMe` and refuses to start on the wrong username.
 
@@ -43,9 +43,9 @@ python -m app.cli demo
 python -m pytest
 ```
 
-## TrueHold Wellness order emails (@Npeppers_bot)
+## TrueHold Wellness order emails (@THWellness_bot)
 
-Original inbox-snapshot agent, restored under [`truehold-wellness/`](truehold-wellness/). Not realtor-agent.
+Original inbox-snapshot agent, restored under [`truehold-wellness/`](truehold-wellness/). Spec: [`truehold-wellness/ORIGINAL_SPEC.md`](truehold-wellness/ORIGINAL_SPEC.md). Not realtor-agent. `@Npeppers_bot` was deleted and cannot be undeleted.
 
 ```bash
 cd truehold-wellness
@@ -55,7 +55,7 @@ python -m wellness_agent send --dry-run --type order
 python -m pytest
 ```
 
-Telegram: **@Npeppers_bot** (`/start`, `/inbox`, `/order`). Live `getMe` must succeed; a `401 Unauthorized` token cannot deliver messages.
+Telegram: **@THWellness_bot** (`/start`, `/inbox`, `/order`). Live `getMe` must return `THWellness_bot`.
 
 ## Tests
 

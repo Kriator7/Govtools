@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from thw.email_inbox import load_inbox, parse_order_email
+from thw.identity import REQUIRED_USERNAME
 from thw.models import Operator, WellnessOrder
 from thw.providers import get_telegram
 
@@ -65,7 +66,7 @@ def notify_order(db: Session, order: WellnessOrder, telegram=None) -> None:
         f"Customer: {order.customer_name or 'n/a'}\n"
         f"Product: {order.product or 'n/a'}\n"
         f"Qty: {order.quantity or 'n/a'}\n"
-        "This alert is @Npeppers_bot only — not PirateEye / realtor-agent."
+        f"This alert is @{REQUIRED_USERNAME} only — not PirateEye / realtor-agent."
     )
     telegram.send_message(chat_id, text)
     order.telegram_notified_at = datetime.now(timezone.utc)
@@ -82,7 +83,7 @@ def handle_telegram_update(db: Session, payload: dict, telegram=None) -> dict:
         get_or_create_operator(db, chat_id)
         telegram.send_message(
             chat_id,
-            "Linked as TrueHold Wellness operator on @Npeppers_bot.\n"
+            f"Linked as TrueHold Wellness operator on @{REQUIRED_USERNAME}.\n"
             "You will get order-email alerts here.\n"
             "This bot is not realtor-agent / @PirateEye_bot.",
         )

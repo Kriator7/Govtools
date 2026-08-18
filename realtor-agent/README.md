@@ -2,7 +2,7 @@
 
 Self-contained automation platform for **one Nevada realtor**, **one authorized MLS/API connection**, and the realtor’s existing investor clientele.
 
-Telegram for this folder is **@PirateEye_bot** only. TrueHold Wellness order emails use **@Npeppers_bot** in `truehold-wellness/` — a different company, different files, different architecture. This folder is protected business infrastructure; see [`PROTECTED_AGENTS.md`](../PROTECTED_AGENTS.md).
+Telegram for this folder is **@PirateEye_bot** only. TrueHold Wellness order emails use **@THWellness_bot** in `truehold-wellness/` — a different company, different files, different architecture. This folder is protected business infrastructure; see [`PROTECTED_AGENTS.md`](../PROTECTED_AGENTS.md).
 
 This folder is the entire agent. Copy `realtor-agent/` to move the project. Nothing outside this directory is required to run, test, or deploy the service.
 
@@ -192,7 +192,7 @@ EMAIL_SMTP_STARTTLS=true
 
 Source: https://core.telegram.org/bots/api
 
-1. In Telegram, open `@BotFather`. Realtor acquisition uses **@PirateEye_bot** only. Never put the TrueHold Wellness token (`@Npeppers_bot`) in this folder. Wellness is a different company and lives in `truehold-wellness/`.
+1. In Telegram, open `@BotFather`. Realtor acquisition uses **@PirateEye_bot** only. Never put the TrueHold Wellness token (`@THWellness_bot`) in this folder. Wellness is a different company and lives in `truehold-wellness/`.
 2. Put the token in `.env`:
 
 ```

@@ -1,4 +1,4 @@
-"""CLI for TrueHold Wellness order emails and @Npeppers_bot. Independent of realtor-agent."""
+"""CLI for TrueHold Wellness order emails and @THWellness_bot. Independent of realtor-agent."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import argparse
 import json
 import time
 
+from thw.identity import REQUIRED_USERNAME
 from thw.config import get_settings
 from thw.db import get_session_factory, init_db
 from thw.orders import get_or_create_operator, handle_telegram_update, ingest_inbox, notify_order
@@ -15,7 +16,9 @@ OFFSET_PATH_NAME = "data/telegram_offset.json"
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="TrueHold Wellness order-email agent (@Npeppers_bot)")
+    parser = argparse.ArgumentParser(
+        description=f"TrueHold Wellness order-email agent (@{REQUIRED_USERNAME})"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("demo")
     sub.add_parser("ingest")
@@ -43,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
                 {
                     "ok": True,
                     "agent": "truehold-wellness",
-                    "telegram": "@Npeppers_bot",
+                    "telegram": f"@{REQUIRED_USERNAME}",
                     "orders": [item.public_id for item in created],
                 }
             )
@@ -67,12 +70,12 @@ def main(argv: list[str] | None = None) -> int:
 def _poll(db, *, once: bool) -> int:
     settings = get_settings()
     if settings.telegram_mode != "live":
-        print({"ok": False, "error": "Set TELEGRAM_MODE=live with the @Npeppers_bot token."})
+        print({"ok": False, "error": f"Set TELEGRAM_MODE=live with the @{REQUIRED_USERNAME} token."})
         return 1
     telegram = get_telegram(settings)
     telegram.delete_webhook()
     offset = _read_offset()
-    print({"ok": True, "polling": True, "bot": "@Npeppers_bot", "offset": offset})
+    print({"ok": True, "polling": True, "bot": f"@{REQUIRED_USERNAME}", "offset": offset})
     while True:
         updates = telegram.get_updates(offset=offset, timeout=25)
         for update in updates:

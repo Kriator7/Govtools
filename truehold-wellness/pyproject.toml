@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "truehold-wellness"
 version = "0.1.0"
-description = "TrueHold Wellness inbox/order agent. Telegram: @Npeppers_bot only. Independent of realtor-agent and Mr North."
+description = "TrueHold Wellness inbox/order agent. Telegram: @THWellness_bot only. Independent of realtor-agent and Mr North."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -22,6 +22,7 @@ dev = [
 
 [project.scripts]
 truehold-wellness = "wellness_agent.cli:main"
+truehold-wellness-agent = "wellness_agent.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["wellness_agent*", "thw*"]

@@ -5,6 +5,7 @@ from typing import Any
 from uuid import uuid4
 
 from thw.config import get_settings
+from thw.identity import REQUIRED_USERNAME
 
 
 class MockWellnessTelegram:
@@ -14,10 +15,10 @@ class MockWellnessTelegram:
         self.sent: list[dict[str, Any]] = []
 
     def get_username(self) -> str:
-        return "Npeppers_bot"
+        return REQUIRED_USERNAME
 
     def assert_identity(self) -> str:
-        return "Npeppers_bot"
+        return REQUIRED_USERNAME
 
     def send_message(self, chat_id: str, text: str) -> dict[str, Any]:
         payload = {

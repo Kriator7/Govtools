@@ -10,7 +10,16 @@ def test_realtor_accepts_pirateeye_only():
     assert assert_realtor_telegram_username("@PirateEye_bot") == REQUIRED_USERNAME
 
 
-def test_realtor_rejects_wellness_npeppers_bot():
+def test_realtor_rejects_wellness_thwellness_bot():
+    try:
+        assert_realtor_telegram_username("THWellness_bot")
+        raise AssertionError("expected WrongTelegramBotError")
+    except WrongTelegramBotError as exc:
+        assert "TrueHold Wellness" in str(exc)
+        assert "PirateEye_bot" in str(exc)
+
+
+def test_realtor_rejects_deleted_npeppers_bot():
     try:
         assert_realtor_telegram_username("Npeppers_bot")
         raise AssertionError("expected WrongTelegramBotError")

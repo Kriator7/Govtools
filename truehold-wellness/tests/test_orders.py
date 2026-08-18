@@ -21,7 +21,7 @@ def test_parse_order_email_fields():
     assert parsed["quantity"] == 2
 
 
-def test_ingest_and_notify_writes_npeppers_outbox(db, tmp_path):
+def test_ingest_and_notify_writes_thwellness_outbox(db, tmp_path):
     inbox = Path(__file__).resolve().parents[1] / "data" / "imports" / "sample_order_emails.json"
     created = ingest_inbox(db, inbox)
     assert len(created) >= 1
@@ -29,7 +29,7 @@ def test_ingest_and_notify_writes_npeppers_outbox(db, tmp_path):
     notify_order(db, created[0], telegram=telegram)
     assert telegram.sent
     assert "TrueHold Wellness order" in telegram.sent[0]["text"]
-    assert "@Npeppers_bot" in telegram.sent[0]["text"]
+    assert "@THWellness_bot" in telegram.sent[0]["text"]
     assert "PirateEye" in telegram.sent[0]["text"]
     assert db.query(WellnessOrder).count() >= 1
     get_settings.cache_clear()

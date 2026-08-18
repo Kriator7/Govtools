@@ -48,7 +48,7 @@ def send_alert(
     Send a TrueHold Wellness alert.
 
     Uses WELLNESS_ALERT_WEBHOOK_URL (not the crypto ALERT_WEBHOOK_URL).
-    Also delivers the same text to @Npeppers_bot when TELEGRAM_MODE=live.
+    Also delivers the same text to @THWellness_bot when TELEGRAM_MODE=live.
     """
     payload = alert_payload(alert)
     text = payload["text"]
@@ -92,10 +92,10 @@ def send_alert(
         client = WellnessTelegram(telegram_token)
         client.assert_identity()
         client.send_message(telegram_chat, text)
-        destinations.append(f"telegram:@Npeppers_bot")
+        destinations.append("telegram:@THWellness_bot")
     if not destinations:
         raise NotifyError(
-            f"No {WEBHOOK_ENV} configured and live @Npeppers_bot chat is not set. "
+            f"No {WEBHOOK_ENV} configured and live @THWellness_bot chat is not set. "
             "Pass webhook_url, set WELLNESS_ALERT_WEBHOOK_URL, or set TELEGRAM_MODE=live "
             "with TELEGRAM_BOT_TOKEN and WELLNESS_TELEGRAM_CHAT_ID."
         )

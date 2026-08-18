@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 os.environ.setdefault("TELEGRAM_MODE", "mock")
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+os.environ.setdefault("TELEGRAM_BOT_TOKEN", "")
 
 from thw.config import get_settings
 from thw.db import Base, configure_engine, get_session_factory, init_db

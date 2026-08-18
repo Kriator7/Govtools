@@ -1,4 +1,4 @@
-"""Telegram Bot API client for TrueHold Wellness (@Npeppers_bot) only.
+"""Telegram Bot API client for TrueHold Wellness (@THWellness_bot) only.
 
 https://core.telegram.org/bots/api
 """
@@ -7,9 +7,20 @@ from typing import Any
 
 import httpx
 
-from wellness_agent.identity import assert_wellness_telegram_username
+from wellness_agent.identity import REQUIRED_USERNAME, assert_wellness_telegram_username
+from wellness_agent.telegram_inbound import BOT_COMMANDS
 
 TELEGRAM_ENDPOINT = "https://api.telegram.org"
+BOT_DISPLAY_NAME = "TrueHold Wellness"
+BOT_DESCRIPTION = (
+    "TrueHold Wellness business-inbox agent. Every alert includes a complete "
+    "snapshot: orders, payments, fulfillment requests, shipping issues, "
+    "cancellations/refunds, peptide messages, and other actionable business email. "
+    "Use /inbox, /order, and /start. Not realtor-agent."
+)
+BOT_SHORT_DESCRIPTION = (
+    "TrueHold Wellness inbox: orders, payments, fulfillment, shipping, cancellations, peptides."
+)
 
 
 class WellnessTelegram:
@@ -21,6 +32,9 @@ class WellnessTelegram:
     def get_username(self) -> str:
         data = self._get("getMe")
         return str((data.get("result") or {}).get("username") or "")
+
+    def get_me(self) -> dict[str, Any]:
+        return dict((self._get("getMe").get("result") or {}))
 
     def assert_identity(self) -> str:
         return assert_wellness_telegram_username(self.get_username())
@@ -38,6 +52,27 @@ class WellnessTelegram:
 
     def delete_webhook(self) -> dict[str, Any]:
         return self._post("deleteWebhook", {"drop_pending_updates": False})
+
+    def configure_public_profile(self) -> dict[str, Any]:
+        """Match the original Wellness bot surface on @THWellness_bot.
+
+        setMyName: https://core.telegram.org/bots/api#setmyname
+        setMyDescription: https://core.telegram.org/bots/api#setmydescription
+        setMyShortDescription: https://core.telegram.org/bots/api#setmyshortdescription
+        setMyCommands: https://core.telegram.org/bots/api#setmycommands
+        """
+        self.assert_identity()
+        name = self._post("setMyName", {"name": BOT_DISPLAY_NAME})
+        description = self._post("setMyDescription", {"description": BOT_DESCRIPTION})
+        short = self._post("setMyShortDescription", {"short_description": BOT_SHORT_DESCRIPTION})
+        commands = self._post("setMyCommands", {"commands": list(BOT_COMMANDS)})
+        return {
+            "bot": f"@{REQUIRED_USERNAME}",
+            "setMyName": name.get("ok"),
+            "setMyDescription": description.get("ok"),
+            "setMyShortDescription": short.get("ok"),
+            "setMyCommands": commands.get("ok"),
+        }
 
     def _url(self, method: str) -> str:
         return f"{TELEGRAM_ENDPOINT}/bot{self.bot_token}/{method}"

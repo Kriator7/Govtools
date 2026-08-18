@@ -49,3 +49,10 @@ def test_send_without_webhook_fails(capsys, monkeypatch):
 def test_cli_rejects_crypto_trigger():
     with pytest.raises(SystemExit):
         main(["compose", "--type", "btc_threshold"])
+
+
+def test_whoami_requires_live_token(capsys, monkeypatch):
+    monkeypatch.setenv("TELEGRAM_MODE", "mock")
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    assert main(["whoami"]) == 1
+    assert "THWellness_bot" in capsys.readouterr().err

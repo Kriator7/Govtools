@@ -1,5 +1,5 @@
 from wellness_agent.identity import REQUIRED_USERNAME, WrongTelegramBotError, assert_wellness_telegram_username
-from wellness_agent.telegram_inbound import handle_telegram_update
+from wellness_agent.telegram_inbound import HELP, handle_telegram_update
 
 
 class _FakeTelegram:
@@ -19,8 +19,13 @@ def test_wellness_identity_rejects_pirateeye():
         assert "PirateEye_bot" in str(exc)
 
 
-def test_wellness_identity_accepts_npeppers():
-    assert assert_wellness_telegram_username("@Npeppers_bot") == REQUIRED_USERNAME
+def test_wellness_identity_accepts_thwellness():
+    assert assert_wellness_telegram_username("@THWellness_bot") == REQUIRED_USERNAME
+
+
+def test_help_names_thwellness_not_npeppers():
+    assert "@THWellness_bot" in HELP
+    assert "Npeppers" not in HELP
 
 
 def test_telegram_start_and_inbox_and_order():

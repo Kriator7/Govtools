@@ -29,14 +29,15 @@
     {
       "id": "truehold-wellness",
       "name": "TrueHold Wellness",
-      "role": "Order/inbox workflow; Telegram @Npeppers_bot",
+      "role": "Order/inbox workflow; Telegram @THWellness_bot",
       "path": "truehold-wellness",
       "required_files": [
         "truehold-wellness/wellness_agent/cli.py",
         "truehold-wellness/wellness_agent/compose.py",
         "truehold-wellness/wellness_agent/notify.py",
         "truehold-wellness/wellness_agent/data/current_inbox.json",
-        "truehold-wellness/wellness_agent/identity.py"
+        "truehold-wellness/wellness_agent/identity.py",
+        "truehold-wellness/ORIGINAL_SPEC.md"
       ]
     }
   ]
