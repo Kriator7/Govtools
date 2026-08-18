@@ -10,6 +10,10 @@ class _FakeTelegram:
         self.sent.append({"chat_id": chat_id, "text": text})
         return {"ok": True}
 
+    def send_document(self, chat_id, path, caption=""):
+        self.sent.append({"chat_id": chat_id, "document": str(path), "caption": caption})
+        return {"ok": True}
+
 
 def test_wellness_identity_rejects_pirateeye():
     try:
@@ -47,5 +51,5 @@ def test_telegram_start_and_inbox_and_order():
         tg,
     )
     assert order["action"] == "order"
-    assert any("Order recorded" in item["text"] for item in tg.sent)
+    assert any("Interest order recorded" in item["text"] for item in tg.sent)
     assert any("TrueHold Wellness alert — order" in item["text"] for item in tg.sent)

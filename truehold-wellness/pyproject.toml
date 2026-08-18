@@ -18,6 +18,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+    "reportlab>=4.0",
+    "pypdf>=5.0",
 ]
 
 [project.scripts]
@@ -28,7 +30,7 @@ truehold-wellness-agent = "wellness_agent.cli:main"
 include = ["wellness_agent*", "thw*"]
 
 [tool.setuptools.package-data]
-"wellness_agent" = ["data/*.json"]
+"wellness_agent" = ["data/*.json", "inventory/*.json", "inventory/pdfs/*.pdf", "inventory/assets/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

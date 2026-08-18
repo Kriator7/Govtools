@@ -37,7 +37,8 @@
         "truehold-wellness/wellness_agent/notify.py",
         "truehold-wellness/wellness_agent/data/current_inbox.json",
         "truehold-wellness/wellness_agent/identity.py",
-        "truehold-wellness/ORIGINAL_SPEC.md"
+        "truehold-wellness/ORIGINAL_SPEC.md",
+        "truehold-wellness/wellness_agent/inventory/catalog.json"
       ]
     }
   ]

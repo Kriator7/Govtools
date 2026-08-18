@@ -55,7 +55,7 @@ python -m wellness_agent send --dry-run --type order
 python -m pytest
 ```
 
-Telegram: **@THWellness_bot** (`/start`, `/inbox`, `/order`). Live `getMe` must return `THWellness_bot`.
+Telegram: **@THWellness_bot** (`/start`, `/inbox`, `/catalog`, `/product`, `/order`). Live `getMe` must return `THWellness_bot`. Inventory PDFs live in `truehold-wellness/wellness_agent/inventory/pdfs/`.
 
 ## Tests
 

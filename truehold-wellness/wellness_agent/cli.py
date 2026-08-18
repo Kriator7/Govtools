@@ -46,7 +46,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     poll = sub.add_parser(
         "telegram-poll",
-        help=f"Receive /start /inbox /order on @{REQUIRED_USERNAME}",
+        help=f"Receive /start /inbox /catalog /product /order on @{REQUIRED_USERNAME}",
     )
     poll.add_argument("--once", action="store_true")
     sub.add_parser("whoami", help=f"Call Telegram getMe and confirm @{REQUIRED_USERNAME}")
@@ -54,6 +54,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "configure-telegram",
         help=f"Set @{REQUIRED_USERNAME} name, description, and command menu",
     )
+    sub.add_parser("catalog", help="Print the live TrueHold Wellness shop inventory")
+    product = sub.add_parser("product", help="Resolve a SKU and print its locked-sheet path")
+    product.add_argument("query", help="Product name or alias, for example klow or tirzepatide")
     return parser
 
 
@@ -117,6 +120,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _telegram_whoami()
     if args.command == "configure-telegram":
         return _configure_telegram()
+    if args.command == "catalog":
+        from wellness_agent.catalog import format_catalog
+
+        sys.stdout.write(format_catalog())
+        return 0
+    if args.command == "product":
+        from wellness_agent.catalog import UnknownProductError, find_product, pdf_path
+
+        try:
+            item = find_product(args.query)
+            path = pdf_path(item)
+        except (UnknownProductError, FileNotFoundError) as exc:
+            sys.stderr.write(f"error: {exc}\n")
+            return 1
+        sys.stdout.write(json.dumps({"ok": True, "id": item["id"], "pdf": str(path)}) + "\n")
+        return 0
     alert = compose_alert(_trigger_from_args(args))
     if args.command == "compose":
         if args.json:

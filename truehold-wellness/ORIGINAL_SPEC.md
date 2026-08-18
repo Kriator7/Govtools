@@ -67,7 +67,7 @@ TrueHold Wellness alert — {headline}
 
 ## Telegram (@THWellness_bot)
 
-The original `cf24ec1` agent had no Telegram. The later `@Npeppers_bot` layer added `/start`, `/inbox`, and `/order`. That inbound surface is preserved here on **@THWellness_bot**.
+The original `cf24ec1` agent had no Telegram. The later `@Npeppers_bot` layer added `/start`, `/inbox`, and `/order`. That inbound surface is preserved here on **@THWellness_bot**, plus live-shop inventory sheets (`/catalog`, `/product`).
 
 Bot API: https://core.telegram.org/bots/api
 

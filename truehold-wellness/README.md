@@ -42,7 +42,25 @@ Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_
 3. `python -m wellness_agent whoami` — must return `THWellness_bot`.
 4. `python -m wellness_agent configure-telegram` — name, about, `/start` `/inbox` `/order` `/help`.
 5. `python -m wellness_agent telegram-poll`
-6. In Telegram: `/start`, `/inbox`, `/order <product and qty>`
+6. In Telegram: `/start`, `/inbox`, `/catalog`, `/product klow`, `/order <product and qty>`
+
+## Inventory (locked information sheets)
+
+Live shop SKUs from https://trueholdwellness.com/sitemap.ols.xml. Existing Tirzepatide, NAD+, Semax, and Retatrutide PDFs are stored as-is. KLOW, MOTS-c, SS-31, and GHK-Cu use the same locked-sheet layout.
+
+```bash
+python -m wellness_agent catalog
+python -m wellness_agent product klow
+```
+
+Telegram: `/catalog` and `/product <name>` send the PDF. New sheets are educational only — they do not invent reconstitution or dosing. Protocol details stay case-by-case (`/schedule`).
+
+Rebuild missing generated sheets:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m wellness_agent.inventory.build_pdfs
+```
 
 ## Isolation
 

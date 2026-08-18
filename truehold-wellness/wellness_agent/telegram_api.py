@@ -3,6 +3,7 @@
 https://core.telegram.org/bots/api
 """
 
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -16,10 +17,10 @@ BOT_DESCRIPTION = (
     "TrueHold Wellness business-inbox agent. Every alert includes a complete "
     "snapshot: orders, payments, fulfillment requests, shipping issues, "
     "cancellations/refunds, peptide messages, and other actionable business email. "
-    "Use /inbox, /order, and /start. Not realtor-agent."
+    "Use /catalog, /product, /inbox, /order, and /schedule. Not realtor-agent."
 )
 BOT_SHORT_DESCRIPTION = (
-    "TrueHold Wellness inbox: orders, payments, fulfillment, shipping, cancellations, peptides."
+    "TrueHold Wellness inventory, inbox, and interest orders. Educational only."
 )
 
 
@@ -41,6 +42,24 @@ class WellnessTelegram:
 
     def send_message(self, chat_id: str, text: str) -> dict[str, Any]:
         data = self._post("sendMessage", {"chat_id": chat_id, "text": text})
+        return {"provider_message_id": str((data.get("result") or {}).get("message_id")), "raw": data}
+
+    def send_document(self, chat_id: str, path: str | Path, caption: str = "") -> dict[str, Any]:
+        """sendDocument: https://core.telegram.org/bots/api#senddocument"""
+        file_path = Path(path)
+        payload = {"chat_id": chat_id}
+        if caption:
+            payload["caption"] = caption[:1024]
+        with file_path.open("rb") as handle, httpx.Client(timeout=60) as client:
+            response = client.post(
+                self._url("sendDocument"),
+                data=payload,
+                files={"document": (file_path.name, handle, "application/pdf")},
+            )
+            response.raise_for_status()
+            data = response.json()
+        if not data.get("ok"):
+            raise RuntimeError(data.get("description") or "Telegram sendDocument failed")
         return {"provider_message_id": str((data.get("result") or {}).get("message_id")), "raw": data}
 
     def get_updates(self, offset: int | None = None, timeout: int = 0) -> list[dict[str, Any]]:
