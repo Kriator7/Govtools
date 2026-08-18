@@ -15,6 +15,7 @@ MATERIAL_FIELDS = (
     "occupancy_status",
     "hoa_monthly",
     "estimated_rent",
+    "arv",
 )
 
 

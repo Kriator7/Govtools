@@ -13,6 +13,12 @@ from typing import Any
 from app.config import scoring_weights_defaults
 from app.models.investor_criteria import DEFAULT_STRICT_FIELDS, InvestorCriteria
 from app.models.listing import Listing
+from app.services.matching.screening import (
+    max_allowed_price,
+    normalize_property_type,
+    price_divided_by_arv,
+    screen_listing,
+)
 from app.services.scoring.engine import score_category, weighted_score
 from app.utilities.money import money_label
 
@@ -25,6 +31,8 @@ class MatchResult:
     reasons: list[str] = field(default_factory=list)
     issues: list[str] = field(default_factory=list)
     failures: list[str] = field(default_factory=list)
+    needs_arv: bool = False
+    screening: dict = field(default_factory=dict)
     explanation: dict = field(default_factory=dict)
 
     def as_explanation(self, investor_name: str) -> dict:
@@ -36,6 +44,8 @@ class MatchResult:
             "potential_issues": self.issues,
             "failures": self.failures,
             "matched": self.matched,
+            "needs_arv": self.needs_arv,
+            "screening": self.screening,
         }
 
 
@@ -51,6 +61,7 @@ class MatchingEngine:
 
         self._apply_exclusions(listing, criteria, failures)
         self._compare_price(listing, criteria, reasons, issues, failures, deductions)
+        self._compare_arv(listing, criteria, reasons, issues, failures, deductions)
         self._compare_geo(listing, criteria, reasons, issues, failures, deductions)
         self._compare_property_type(listing, criteria, reasons, issues, failures, deductions)
         self._compare_beds_baths(listing, criteria, reasons, issues, failures, deductions)
@@ -61,9 +72,18 @@ class MatchingEngine:
         self._compare_financials(listing, criteria, reasons, issues, failures, deductions)
         self._compare_flags(listing, criteria, reasons, issues, deductions)
 
+        screening = screen_listing(listing, criteria)
+        needs_arv = bool(screening.get("needs_arv")) and not failures
+        if needs_arv:
+            issues.append("ARV missing; enter ARV to finish Price ÷ ARV. Do not invent ARV.")
         score = weighted_score(deductions, self.weights)
         matched = not failures
-        category = score_category(score) if matched else "rejected"
+        if needs_arv:
+            category = "needs_arv"
+        elif matched:
+            category = score_category(score)
+        else:
+            category = "rejected"
         result = MatchResult(
             matched=matched,
             score=score if matched else Decimal("0"),
@@ -71,6 +91,8 @@ class MatchingEngine:
             reasons=reasons,
             issues=issues,
             failures=failures,
+            needs_arv=needs_arv,
+            screening=screening,
         )
         result.explanation = result.as_explanation(getattr(criteria, "name", "profile"))
         return result
@@ -133,6 +155,35 @@ class MatchingEngine:
             else:
                 reasons.append(f"Asking price below {money_label(ceiling)} maximum")
 
+    def _compare_arv(self, listing, criteria, reasons, issues, failures, deductions) -> None:
+        pct = getattr(criteria, "max_price_pct_of_arv", None)
+        if pct is None:
+            return
+        arv = getattr(listing, "arv", None)
+        if arv is None:
+            return
+        pct = Decimal(str(pct))
+        arv_value = Decimal(str(arv))
+        ceiling = max_allowed_price(arv_value, pct)
+        ratio = price_divided_by_arv(Decimal(str(listing.asking_price)), arv_value)
+        if listing.asking_price > ceiling:
+            self._fail_or_issue(
+                "max_price_pct_of_arv",
+                criteria,
+                (
+                    f"Asking price {money_label(listing.asking_price)} is {float(ratio) * 100:.1f}% of ARV "
+                    f"{money_label(arv_value)}; max allowed is {float(pct) * 100:.0f}% ({money_label(ceiling)})"
+                ),
+                issues,
+                failures,
+                deductions,
+            )
+        else:
+            reasons.append(
+                f"Asking price {money_label(listing.asking_price)} is {float(ratio) * 100:.1f}% of ARV; "
+                f"max allowed is {float(pct) * 100:.0f}% ({money_label(ceiling)})"
+            )
+
     def _compare_geo(self, listing, criteria, reasons, issues, failures, deductions) -> None:
         zip_ok = True
         city_ok = True
@@ -191,8 +242,8 @@ class MatchingEngine:
     def _compare_property_type(self, listing, criteria, reasons, issues, failures, deductions) -> None:
         if not criteria.property_types:
             return
-        allowed = {_norm(item) for item in criteria.property_types}
-        if _norm(listing.property_type) in allowed:
+        allowed = {normalize_property_type(item) for item in criteria.property_types}
+        if normalize_property_type(listing.property_type) in allowed:
             reasons.append(f"Property type {listing.property_type} matches")
         else:
             self._fail_or_issue(

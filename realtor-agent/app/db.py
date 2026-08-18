@@ -71,3 +71,28 @@ def init_db() -> None:
         settings.storage_path.mkdir(parents=True, exist_ok=True)
         (settings.project_root / "data").mkdir(parents=True, exist_ok=True)
         Base.metadata.create_all(bind=get_engine())
+        _sqlite_add_missing_columns()
+
+
+def _sqlite_add_missing_columns() -> None:
+    """create_all does not add columns to existing SQLite files."""
+    settings = get_settings()
+    if not settings.is_sqlite:
+        return
+    statements = (
+        "ALTER TABLE listings ADD COLUMN arv NUMERIC(12, 2)",
+        "ALTER TABLE investor_criteria ADD COLUMN max_price_pct_of_arv NUMERIC(6, 4)",
+        "ALTER TABLE investor_criteria ADD COLUMN preferred_financing VARCHAR(40)",
+    )
+    with get_engine().begin() as connection:
+        for statement in statements:
+            try:
+                connection.exec_driver_sql(statement)
+            except Exception as exc:  # noqa: BLE001
+                if "duplicate column" not in str(exc).lower():
+                    # Column already exists, or table not created yet.
+                    if "already exists" in str(exc).lower() or "duplicate column name" in str(exc).lower():
+                        continue
+                    if "no such table" in str(exc).lower():
+                        continue
+                    raise

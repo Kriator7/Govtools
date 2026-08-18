@@ -51,6 +51,8 @@ class RealtorTelegramService:
             "issues": explanation.get("potential_issues") or [],
             "listing_url": listing.listing_url or "",
             "opportunity_id": opportunity.public_id,
+            "needs_arv": bool(explanation.get("needs_arv")),
+            "screening": explanation.get("screening") or {},
         }
         buttons = [
             {"text": "VIEW LISTING", "callback_data": f"view:{opportunity.public_id}"},
@@ -79,6 +81,8 @@ class RealtorTelegramService:
         )
 
     def approve(self, realtor: Realtor, opportunity: Opportunity, notes: str | None = None) -> Opportunity:
+        if opportunity.status == OpportunityStatus.AWAITING_ARV.value:
+            raise ValueError("Enter ARV and re-screen before approving this opportunity")
         before = opportunity.status
         opportunity.status = OpportunityStatus.APPROVED_FOR_INVESTOR_NOTIFICATION.value
         opportunity.reviewed_at = datetime.now(timezone.utc)

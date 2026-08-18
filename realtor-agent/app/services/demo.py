@@ -1,26 +1,19 @@
-"""First-milestone local demonstration.
-
-Sample Investor CSV → investor DB → mock MLS → matching → Telegram alert →
-approve → mock investor notification → YES → transaction → sample PDF → audit.
-"""
+"""Local demonstration using Damian / Pirates IG LLC rules."""
 
 from datetime import date
 from decimal import Decimal
-from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from app.config import PROJECT_ROOT
 from app.models.activity_log import ActivityLog
 from app.models.audit_log import AuditLog
-from app.models.enums import FinancingType, InvestorResponse, TransactionStatus
+from app.models.enums import FinancingType, InvestorResponse, OpportunityStatus, TransactionStatus
 from app.models.opportunity import Opportunity
 from app.services.documents.engine import DocumentEngine
-from app.services.importing import InvestorImportService
 from app.services.matching.runner import OpportunityMatcher
 from app.services.mls.ingest import ListingIngestService
 from app.services.providers import get_mls_provider
-from app.services.seed import seed_realtor
+from app.services.seed import seed_pirates_ig, seed_realtor
 from app.services.sms.investor_notify import InvestorNotificationService
 from app.services.telegram.realtor_agent import RealtorTelegramService
 from app.services.transactions.engine import TransactionService
@@ -28,30 +21,29 @@ from app.services.transactions.engine import TransactionService
 
 def run_demo(db: Session) -> dict:
     realtor = seed_realtor(db)
-    csv_path = PROJECT_ROOT / "data" / "imports" / "sample_investors.csv"
-    imported = InvestorImportService(db).import_path(realtor, csv_path, source="sample_investors.csv")
+    investor = seed_pirates_ig(db, realtor)
     ingested = ListingIngestService(db, get_mls_provider()).sync(realtor, incremental=False)
     created = OpportunityMatcher(db).match_all(realtor)
     telegram = RealtorTelegramService(db)
     for opportunity in created:
         telegram.alert_opportunity(realtor, opportunity)
 
-    if not created:
+    ready = [item for item in created if item.status != OpportunityStatus.AWAITING_ARV.value]
+    if not ready:
         return {
             "ok": False,
-            "error": "No opportunities scored high enough to alert",
-            "imported": imported,
+            "error": "No fully screened opportunities (ARV may still be required)",
             "ingested": ingested,
         }
 
-    opportunity = created[0]
+    opportunity = ready[0]
     telegram.approve(realtor, opportunity, "Approved during local demo")
     notify = InvestorNotificationService(db)
     notify.notify_approved(realtor, opportunity)
     transaction = notify.record_response(realtor, opportunity, InvestorResponse.YES, "YES")
     assert transaction is not None
-    transaction.buyer_legal_name = "ABC Capital LLC"
-    transaction.offer_price = Decimal("425000")
+    transaction.buyer_legal_name = "Pirates IG LLC"
+    transaction.offer_price = Decimal("360000")
     transaction.earnest_money = Decimal("5000")
     transaction.financing_type = FinancingType.CASH.value
     transaction.requested_closing_date = date(2026, 9, 30)
@@ -73,7 +65,7 @@ def run_demo(db: Session) -> dict:
     return {
         "ok": True,
         "realtor_id": realtor.public_id,
-        "imported": imported,
+        "investor_id": investor.public_id,
         "ingested": ingested,
         "opportunities": [item.public_id for item in created],
         "approved_opportunity": opportunity.public_id,

@@ -109,6 +109,7 @@ def _draft_kwargs(draft: NormalizedListingDraft) -> dict:
         "longitude": draft.longitude,
         "asking_price": draft.asking_price,
         "previous_price": draft.previous_price,
+        "arv": draft.arv,
         "property_type": draft.property_type,
         "bedrooms": draft.bedrooms,
         "bathrooms": draft.bathrooms,

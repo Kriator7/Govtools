@@ -61,6 +61,7 @@ class NotificationChannel(StrEnum):
 
 class OpportunityStatus(StrEnum):
     MATCH_DETECTED = "MATCH_DETECTED"
+    AWAITING_ARV = "AWAITING_ARV"
     AWAITING_REALTOR_REVIEW = "AWAITING_REALTOR_REVIEW"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"

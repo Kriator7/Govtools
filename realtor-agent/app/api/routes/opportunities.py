@@ -53,7 +53,10 @@ def approve_opportunity(
 ) -> Opportunity:
     opportunity = _get(db, realtor, opportunity_id)
     service = RealtorTelegramService(db)
-    service.approve(realtor, opportunity, payload.notes)
+    try:
+        service.approve(realtor, opportunity, payload.notes)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     InvestorNotificationService(db).notify_approved(realtor, opportunity)
     db.commit()
     db.refresh(opportunity)

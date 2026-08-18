@@ -12,11 +12,20 @@ DEFAULT_STRICT_FIELDS = [
     "min_price",
     "max_price",
     "max_purchase_price",
+    "max_price_pct_of_arv",
     "zip_codes",
     "cities",
     "property_types",
     "min_bedrooms",
     "min_bathrooms",
+    "hoa_required",
+]
+
+PIRATES_IG_STRICT_FIELDS = [
+    "property_types",
+    "cities",
+    "hoa_required",
+    "max_price_pct_of_arv",
 ]
 
 
@@ -59,6 +68,8 @@ class InvestorCriteria(UUIDPrimaryKeyMixin, PublicIdMixin, RealtorScopedMixin, T
     max_repair_estimate: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     min_desired_equity: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     min_desired_discount: Mapped[Decimal | None] = mapped_column(Numeric(6, 3), nullable=True)
+    max_price_pct_of_arv: Mapped[Decimal | None] = mapped_column(Numeric(6, 4), nullable=True)
+    preferred_financing: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
     seller_financing_preferred: Mapped[bool] = mapped_column(Boolean, default=False)
     foreclosure_preferred: Mapped[bool] = mapped_column(Boolean, default=False)

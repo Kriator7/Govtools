@@ -56,6 +56,7 @@ class MockMLSProvider(MLSProvider):
             longitude=raw.get("longitude"),
             asking_price=Decimal(str(raw["asking_price"])),
             previous_price=Decimal(str(raw["previous_price"])) if raw.get("previous_price") else None,
+            arv=Decimal(str(raw["arv"])) if raw.get("arv") is not None else None,
             property_type=str(raw.get("property_type") or "single_family"),
             bedrooms=raw.get("bedrooms"),
             bathrooms=raw.get("bathrooms"),

@@ -72,6 +72,11 @@ class OpportunityMatcher:
         investor = self.db.get(Investor, criteria.investor_id)
         explanation = result.as_explanation(investor.name if investor else criteria.name)
         explanation["listing_snapshot"] = material_fields(listing)
+        status = (
+            OpportunityStatus.AWAITING_ARV.value
+            if result.needs_arv
+            else OpportunityStatus.AWAITING_REALTOR_REVIEW.value
+        )
         opportunity = Opportunity(
             public_id=next_public_id(self.db, "OPP"),
             realtor_id=realtor.id,
@@ -81,7 +86,7 @@ class OpportunityMatcher:
             score=result.score,
             score_category=result.category,
             explanation=explanation,
-            status=OpportunityStatus.AWAITING_REALTOR_REVIEW.value,
+            status=status,
             match_version=match_version,
             listing_fingerprint=listing.material_fingerprint,
         )

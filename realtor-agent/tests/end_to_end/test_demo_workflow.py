@@ -14,7 +14,7 @@ def test_first_milestone_workflow(db):
     assert db.query(Transaction).count() == 1
     assert db.query(Document).count() == 1
     events = [row.event for row in db.query(AuditLog).all()]
-    assert "INVESTORS_IMPORTED" in events
+    assert "CLIENT_PROFILE_SEEDED" in events
     assert "LISTING_INGESTED" in events
     assert "MATCH_DETECTED" in events
     assert "APPROVE_INVESTOR_NOTIFICATION" in events

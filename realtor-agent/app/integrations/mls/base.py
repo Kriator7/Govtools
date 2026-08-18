@@ -27,6 +27,7 @@ class NormalizedListingDraft:
     latitude: float | None = None
     longitude: float | None = None
     previous_price: Decimal | None = None
+    arv: Decimal | None = None
     bedrooms: int | None = None
     bathrooms: float | None = None
     sqft: int | None = None

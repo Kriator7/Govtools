@@ -43,8 +43,26 @@ class InvestorNotificationService:
             raise ValueError("Investor or listing missing")
         permissions = investor.communication_permissions or {}
         channel = investor.preferred_channel or "sms"
-        if channel == "sms" and permissions.get("sms") is False:
-            raise ValueError("Investor has not permitted SMS")
+        if channel == "sms" and permissions.get("sms") is not True:
+            self.audit.timeline(
+                realtor_id=realtor.id,
+                event_type="INVESTOR_SMS_HELD",
+                message="SMS held: investor has not confirmed text permission",
+                opportunity_id=opportunity.id,
+                listing_id=listing.id,
+                investor_id=investor.id,
+            )
+            return
+        if channel == "email" and permissions.get("email") is not True:
+            self.audit.timeline(
+                realtor_id=realtor.id,
+                event_type="INVESTOR_EMAIL_HELD",
+                message="Email held: investor has not confirmed email permission",
+                opportunity_id=opportunity.id,
+                listing_id=listing.id,
+                investor_id=investor.id,
+            )
+            return
         recipient = investor.phone if channel == "sms" else (investor.email or investor.phone or "unknown")
         context = {
             "address": listing.street_address,

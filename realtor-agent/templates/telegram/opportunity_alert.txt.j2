@@ -18,6 +18,14 @@ Potential issues:
 ⚠ {{ issue }}
 {% endfor %}
 {% endif %}
+{% if needs_arv | default(false) %}
+⚠ NEEDS ARV — do not invent a value. Enter ARV to finish Price ÷ ARV (max 90% of ARV).
+{% endif %}
+{% if screening | default({}) and (screening.max_allowed_price | default(none)) %}
+Price ÷ ARV: {{ screening.price_divided_by_arv }}
+Max allowed: {{ screening.max_allowed_price }}
+Type: {{ screening.property_type_pass }} | Area: {{ screening.area_pass }} | HOA: {{ screening.hoa_pass }}
+{% endif %}
 {{ listing_url }}
 [{{ opportunity_id }}]
 [VIEW LISTING]

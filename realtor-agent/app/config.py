@@ -117,4 +117,5 @@ def scoring_weights_defaults() -> dict[str, float]:
         "assumable_loan": 3,
         "price_reduction": 3,
         "hoa_required": 4,
+        "max_price_pct_of_arv": 15,
     }

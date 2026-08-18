@@ -18,6 +18,7 @@ class ListingCreate(ORMModel):
     longitude: float | None = None
     asking_price: Decimal
     previous_price: Decimal | None = None
+    arv: Decimal | None = None
     property_type: str
     bedrooms: int | None = None
     bathrooms: float | None = None

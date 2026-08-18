@@ -28,6 +28,7 @@ class Listing(UUIDPrimaryKeyMixin, PublicIdMixin, RealtorScopedMixin, TimestampM
 
     asking_price: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     previous_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    arv: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     property_type: Mapped[str] = mapped_column(String(40))
     bedrooms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     bathrooms: Mapped[float | None] = mapped_column(Numeric(4, 1), nullable=True)

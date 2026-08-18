@@ -29,6 +29,7 @@ def _listing(**overrides):
         short_sale=False,
         assumable_loan=False,
         repair_estimate=Decimal("15000"),
+        arv=None,
     )
     data.update(overrides)
     return SimpleNamespace(**data)
@@ -66,6 +67,7 @@ def _criteria(**overrides):
         assumable_loan_preferred=False,
         exclusion_rules=[],
         strict_fields=list(DEFAULT_STRICT_FIELDS),
+        max_price_pct_of_arv=None,
     )
     data.update(overrides)
     return SimpleNamespace(**data)

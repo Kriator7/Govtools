@@ -65,6 +65,8 @@ class CriteriaCreate(ORMModel):
     max_repair_estimate: Decimal | None = None
     min_desired_equity: Decimal | None = None
     min_desired_discount: Decimal | None = None
+    max_price_pct_of_arv: Decimal | None = None
+    preferred_financing: str | None = None
     seller_financing_preferred: bool = False
     foreclosure_preferred: bool = False
     short_sale_preferred: bool = False
