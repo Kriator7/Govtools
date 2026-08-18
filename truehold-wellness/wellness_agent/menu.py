@@ -81,9 +81,10 @@ def confirm_keyboard(product_id: str, qty: str) -> dict[str, Any]:
     )
 
 
-def send_picture_menu(telegram, chat_id: str) -> int:
+def send_picture_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> int:
     ensure_cards()
-    telegram.send_message(chat_id, MENU_INTRO)
+    if include_blurb:
+        telegram.send_message(chat_id, MENU_INTRO)
     count = 0
     live = os.environ.get("TELEGRAM_MODE", "mock") == "live"
     for item in products():

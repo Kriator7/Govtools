@@ -2,9 +2,30 @@
 
 from wellness_agent.identity import REQUIRED_USERNAME
 
+SAY_HI = (
+    "Welcome to TrueHold Wellness.\n"
+    "\n"
+    "Say hi to start the conversation.\n"
+    "Hello, hey, or good morning all work."
+)
+
+INTRODUCTION = (
+    "Hi — welcome to TrueHold Wellness.\n"
+    "\n"
+    "We help Las Vegas residents with educational research-peptide information. "
+    "The team confirms before any payment. Protocol details are reviewed case by case.\n"
+    "\n"
+    "Scroll the photos below. Tap This one on the vial you want.\n"
+    "Need a person instead? /schedule"
+)
+
+GREET_AGAIN = (
+    "Hi again. Send /menu if you want the picture list, or tap a photo already on screen."
+)
+
 CUSTOMER_HELP = (
     f"TrueHold Wellness (@{REQUIRED_USERNAME})\n"
-    "Scroll the pictures and tap This one on the vial you want.\n"
+    "Say hi to start. Then scroll the pictures and tap This one on the vial you want.\n"
     "/menu — picture menu\n"
     "/schedule — talk to the TrueHold team\n"
     "/help — this message\n"
@@ -31,7 +52,7 @@ SCHEDULE = (
 )
 
 CUSTOMER_COMMANDS = (
-    {"command": "start", "description": "Picture menu — tap the vial you want"},
+    {"command": "start", "description": "Say hi to start"},
     {"command": "menu", "description": "Show the picture menu"},
     {"command": "schedule", "description": "Talk to the TrueHold team"},
     {"command": "help", "description": "How to order"},

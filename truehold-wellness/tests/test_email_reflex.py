@@ -31,7 +31,7 @@ def test_start_does_not_link_customer_as_operator():
     tg = _FakeTelegram()
     handle_telegram_update({"message": {"text": "/start", "chat": {"id": 501}, "from": {"id": 501}}}, tg)
     assert load_operator_chats() == []
-    assert any("picture menu" in (item.get("text") or "").lower() for item in tg.sent)
+    assert any("say hi" in (item.get("text") or "").lower() for item in tg.sent)
 
 
 def test_order_marks_orders_new_and_keeps_other_categories():

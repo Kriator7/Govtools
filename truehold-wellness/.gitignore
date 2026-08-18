@@ -14,4 +14,5 @@ data/telegram_offset.json
 data/operator.json
 data/inbox_state.json
 data/email_seen.json
+data/sessions.json
 *.log

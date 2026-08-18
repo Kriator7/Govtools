@@ -10,15 +10,20 @@ from wellness_agent.catalog import (
     pdf_path,
 )
 from wellness_agent.compose import compose_alert, format_alert
+from wellness_agent.greetings import is_salutation
 from wellness_agent.identity import REQUIRED_USERNAME
 from wellness_agent.menu import CUSTOMER_CONFIRM, handle_menu_callback, send_picture_menu
 from wellness_agent.models import AlertTrigger
 from wellness_agent.reflex import fire_reflex
+from wellness_agent.session_store import begin_session, intro_pending, mark_intro_played
 from wellness_agent.telegram_copy import (
     BOT_COMMANDS,
     CUSTOMER_COMMANDS,
     CUSTOMER_HELP,
+    GREET_AGAIN,
     HELP,
+    INTRODUCTION,
+    SAY_HI,
     SCHEDULE,
     STAFF_COMMANDS,
     STAFF_HELP,
@@ -84,6 +89,12 @@ def _send_sheet(telegram, chat_id: str, query: str) -> dict:
     return {"ok": True, "action": "product", "chat_id": chat_id, "product": product["id"]}
 
 
+def _send_introduction(telegram, chat_id: str) -> None:
+    telegram.send_message(chat_id, INTRODUCTION)
+    send_picture_menu(telegram, chat_id, include_blurb=False)
+    mark_intro_played(chat_id)
+
+
 def handle_telegram_update(payload: dict, telegram) -> dict:
     callback = payload.get("callback_query")
     if callback:
@@ -110,8 +121,13 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         if command == "help":
             telegram.send_message(chat_id, STAFF_HELP if staff else CUSTOMER_HELP)
             return {"ok": True, "action": "help", "chat_id": chat_id, "staff": staff}
-        if command == "start" and staff:
-            telegram.send_message(chat_id, STAFF_HELP)
+        if command == "start":
+            begin_session(chat_id)
+            if staff:
+                telegram.send_message(chat_id, STAFF_HELP)
+            telegram.send_message(chat_id, SAY_HI)
+            return {"ok": True, "action": "say-hi", "chat_id": chat_id, "staff": staff}
+        mark_intro_played(chat_id)
         send_picture_menu(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id, "staff": staff}
 
@@ -120,6 +136,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         return {"ok": True, "action": "schedule", "chat_id": chat_id}
 
     if command in {"catalog", "products"}:
+        mark_intro_played(chat_id)
         send_picture_menu(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id}
 
@@ -129,6 +146,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
     if command == "order" or text.lower().startswith("order:"):
         detail = _rest(text) if command == "order" else text.split(":", 1)[1].strip()
         if not detail:
+            mark_intro_played(chat_id)
             send_picture_menu(telegram, chat_id)
             return {"ok": True, "action": "menu", "chat_id": chat_id}
         result = fire_reflex(
@@ -154,12 +172,21 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             "product": None if product is None else product["id"],
         }
 
+    if text and (is_salutation(text) or is_salutation(command)):
+        if intro_pending(chat_id):
+            _send_introduction(telegram, chat_id)
+            return {"ok": True, "action": "intro", "chat_id": chat_id}
+        telegram.send_message(chat_id, GREET_AGAIN)
+        return {"ok": True, "action": "greet-again", "chat_id": chat_id}
+
     if text:
+        if intro_pending(chat_id):
+            telegram.send_message(chat_id, SAY_HI)
+            return {"ok": True, "action": "say-hi", "chat_id": chat_id}
         telegram.send_message(
             chat_id,
-            "Use the picture menu — tap This one on the vial you want.",
+            "Use the picture menu — tap This one on the vial you want. Send /menu to see the photos.",
         )
-        send_picture_menu(telegram, chat_id)
-        return {"ok": True, "action": "menu", "chat_id": chat_id}
+        return {"ok": True, "action": "nudge-menu", "chat_id": chat_id}
 
     return {"ok": True, "ignored": True, "bot": REQUIRED_USERNAME}

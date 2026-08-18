@@ -61,19 +61,48 @@ def test_help_names_thwellness_not_npeppers():
     assert "/inbox" not in HELP
 
 
-def test_start_does_not_grant_staff():
+def test_start_asks_to_say_hi_and_does_not_grant_staff():
     tg = _FakeTelegram()
     result = handle_telegram_update(_msg("/start", chat_id=99), tg)
-    assert result["action"] == "menu"
+    assert result["action"] == "say-hi"
     assert result["staff"] is False
     assert load_operator_chats() == []
     assert load_operator_user_ids() == []
-    assert any("Linked as TrueHold Wellness operator" in (item.get("text") or "") for item in tg.sent) is False
+    texts = [item.get("text") or "" for item in tg.sent]
+    assert any("Say hi to start" in text for text in texts)
+    assert not any("Linked as TrueHold Wellness operator" in text for text in texts)
+    assert not any("photo" in item for item in tg.sent)
+
+
+def test_hello_plays_intro_once_then_does_not_repeat():
+    tg = _FakeTelegram()
+    handle_telegram_update(_msg("/start", chat_id=99), tg)
+    hello = handle_telegram_update(_msg("hello", chat_id=99), tg)
+    assert hello["action"] == "intro"
+    texts = [item.get("text") or "" for item in tg.sent]
+    assert any("welcome to TrueHold Wellness" in text for text in texts)
     photos = [item for item in tg.sent if "photo" in item]
     assert len(photos) == 8
-    assert all(
-        item["reply_markup"]["inline_keyboard"][0][0]["text"] == "This one" for item in photos
-    )
+    tg.sent.clear()
+    again = handle_telegram_update(_msg("Hey there!", chat_id=99), tg)
+    assert again["action"] == "greet-again"
+    assert not any("photo" in item for item in tg.sent)
+    assert any("Hi again" in (item.get("text") or "") for item in tg.sent)
+
+
+def test_good_morning_is_a_salutation_on_first_visit():
+    tg = _FakeTelegram()
+    result = handle_telegram_update(_msg("Good morning", chat_id=44), tg)
+    assert result["action"] == "intro"
+    assert any("photo" in item for item in tg.sent)
+
+
+def test_unrelated_first_message_asks_for_hi():
+    tg = _FakeTelegram()
+    result = handle_telegram_update(_msg("what do you sell", chat_id=44), tg)
+    assert result["action"] == "say-hi"
+    assert any("Say hi to start" in (item.get("text") or "") for item in tg.sent)
+    assert not any("photo" in item for item in tg.sent)
 
 
 def test_customer_inbox_is_denied():

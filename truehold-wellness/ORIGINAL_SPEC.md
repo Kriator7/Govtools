@@ -70,13 +70,14 @@ TrueHold Wellness alert — {headline}
 
 The original `cf24ec1` agent had no Telegram. The later `@Npeppers_bot` layer added `/start`, `/inbox`, and `/order`. That inbound surface is preserved here on **@THWellness_bot**, plus live-shop inventory sheets and a picture menu (`/menu`).
 
-`/start` is the **customer** picture menu. It does not grant staff access. No Telegram command can grant staff access. Staff user ids are set only in env (`WELLNESS_OPERATOR_USER_IDS` / `WELLNESS_TELEGRAM_CHAT_ID`). `/order` (slash or picture-menu confirm) and `ingest-email` fire the original inbox reflexes so **allowlisted staff** are notified of orders, payments, fulfillment, shipping, cancellations, peptides, and other actionable email. Every staff alert still includes the complete snapshot. Customers receive only a short confirmation. `/inbox` is refused in groups.
+`/start` asks the visitor to **say hi**. Any salutation (hello, hey, good morning) on that first visit plays the introduction and picture menu once for the session. It does not grant staff access. No Telegram command can grant staff access. Staff user ids are set only in env (`WELLNESS_OPERATOR_USER_IDS` / `WELLNESS_TELEGRAM_CHAT_ID`). `/order` (slash or picture-menu confirm) and `ingest-email` fire the original inbox reflexes so **allowlisted staff** are notified of orders, payments, fulfillment, shipping, cancellations, peptides, and other actionable email. Every staff alert still includes the complete snapshot. Customers receive only a short confirmation. `/inbox` is refused in groups.
 
 Bot API: https://core.telegram.org/bots/api (`sendPhoto`, `InlineKeyboardMarkup`, `callback_query`, `setMyCommands` with `BotCommandScopeChat`)
 
 | Command | Who | Behavior |
 | --- | --- | --- |
-| `/start` `/menu` | Customer | Picture menu — one photo per SKU, tap **This one** |
+| `/start` | Customer | Ask them to say hi to start |
+| `/menu` | Customer | Picture menu — one photo per SKU, tap **This one** |
 | `/help` `/schedule` | Customer | Short help / team contact |
 | `/inbox` | Staff only | Full business-inbox snapshot; private allowlisted chat only |
 | `/staff` `/admin` `/operator` `/grant` | Nobody | Always denied. Cannot grant admin |
