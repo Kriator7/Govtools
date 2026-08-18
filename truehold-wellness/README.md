@@ -59,13 +59,16 @@ Public BotFather commands are only `/start` `/menu` `/schedule` `/help`. `/inbox
 
 ### Staff access (fail-closed)
 
-`/start` does **not** grant admin. Anyone can talk to the bot to order; only allowlisted staff can read `/inbox` or receive reflex alerts.
+No Telegram command can grant admin. `/start`, `/staff`, `/admin`, and `/operator` never promote a customer.
 
-1. Set `WELLNESS_OPERATOR_USER_IDS` to the staff Telegram user id(s), **or**
-2. Set `WELLNESS_TELEGRAM_CHAT_ID` to the staff private chat id, **or**
-3. Set `WELLNESS_OPERATOR_CLAIM_TOKEN` and have staff send `/staff <token>` once.
+Staff IDs are set only in `truehold-wellness/.env` on the machine that runs the bot:
 
-Wrong or missing token replies `That command is for TrueHold staff only.` Group members cannot inherit staff access from a group chat id.
+1. Set `WELLNESS_OPERATOR_USER_IDS` to the staff Telegram user id(s) (private chat id is the same number), **or**
+2. Set `WELLNESS_TELEGRAM_CHAT_ID` to that same private chat id.
+
+`/inbox` runs only in a **private** 1:1 chat with an allowlisted `from.id`. Group chats are denied so the snapshot cannot leak to other members. A leftover `data/operator.json` is ignored.
+
+Wrong or missing staff identity replies `That command is for TrueHold staff only.`
 
 ### Run locally
 

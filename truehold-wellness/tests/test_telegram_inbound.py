@@ -93,22 +93,42 @@ def test_staff_inbox_allowed(monkeypatch):
     assert any("Orders:" in (item.get("text") or "") for item in tg.sent)
 
 
-def test_wrong_staff_token_is_denied(monkeypatch):
-    monkeypatch.setenv("WELLNESS_OPERATOR_CLAIM_TOKEN", "correct-token-value")
-    tg = _FakeTelegram()
-    result = handle_telegram_update(_msg("/staff wrong-token-value", chat_id=77, user_id=77), tg)
-    assert result["action"] == "staff-denied"
-    assert load_operator_user_ids() == []
-
-
-def test_staff_claim_token_grants_inbox(monkeypatch):
+def test_staff_claim_from_telegram_never_grants(monkeypatch):
     monkeypatch.setenv("WELLNESS_OPERATOR_CLAIM_TOKEN", "correct-token-value")
     tg = _FakeTelegram()
     claimed = handle_telegram_update(_msg("/staff correct-token-value", chat_id=77, user_id=77), tg)
-    assert claimed["action"] == "staff-claimed"
-    assert "77" in load_operator_user_ids()
+    assert claimed["action"] == "staff-denied"
+    assert load_operator_user_ids() == []
     inbox = handle_telegram_update(_msg("/inbox", chat_id=77, user_id=77), tg)
-    assert inbox["action"] == "inbox"
+    assert inbox["action"] == "staff-denied"
+    assert not any("Orders:" in (item.get("text") or "") for item in tg.sent)
+
+
+def test_admin_and_operator_commands_never_grant():
+    tg = _FakeTelegram()
+    for command in ("/admin", "/operator", "/grant", "/staff"):
+        result = handle_telegram_update(_msg(command, chat_id=88, user_id=88), tg)
+        assert result["action"] == "staff-denied"
+
+
+def test_leftover_operator_file_does_not_unlock_inbox(tmp_path, monkeypatch):
+    path = tmp_path / "operator.json"
+    path.write_text('{"chat_ids": ["501"], "user_ids": ["501"]}', encoding="utf-8")
+    monkeypatch.setenv("WELLNESS_OPERATOR_PATH", str(path))
+    tg = _FakeTelegram()
+    result = handle_telegram_update(_msg("/inbox", chat_id=501, user_id=501), tg)
+    assert result["action"] == "staff-denied"
+
+
+def test_allowlisted_staff_inbox_denied_in_group(monkeypatch):
+    monkeypatch.setenv("WELLNESS_OPERATOR_USER_IDS", "42")
+    tg = _FakeTelegram()
+    result = handle_telegram_update(
+        _msg("/inbox", chat_id=-100, user_id=42, chat_type="supergroup"),
+        tg,
+    )
+    assert result["action"] == "staff-denied"
+    assert not any("Orders:" in (item.get("text") or "") for item in tg.sent)
 
 
 def test_customer_order_does_not_leak_inbox_snapshot():

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from wellness_agent.access import STAFF_DENIED, claim_staff, is_operator
+from wellness_agent.access import PRIVILEGED_COMMANDS, STAFF_DENIED, is_operator
 from wellness_agent.catalog import (
     UnknownProductError,
     find_product,
@@ -98,13 +98,11 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
     command = _command(text)
     staff = is_operator(user_id, chat_id, chat_type)
 
-    if command == "staff":
-        if staff:
-            telegram.send_message(chat_id, STAFF_HELP)
-            return {"ok": True, "action": "staff-already", "chat_id": chat_id, "user_id": user_id}
-        if claim_staff(_rest(text), chat_id=chat_id, user_id=user_id):
-            telegram.send_message(chat_id, STAFF_HELP)
-            return {"ok": True, "action": "staff-claimed", "chat_id": chat_id, "user_id": user_id}
+    if command in PRIVILEGED_COMMANDS:
+        if command == "inbox" and staff:
+            alert = compose_alert(AlertTrigger(type="business", headline="business inbox"))
+            telegram.send_message(chat_id, format_alert(alert))
+            return {"ok": True, "action": "inbox", "chat_id": chat_id, "staff": True}
         telegram.send_message(chat_id, STAFF_DENIED)
         return {"ok": False, "action": "staff-denied", "chat_id": chat_id}
 
@@ -116,14 +114,6 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             telegram.send_message(chat_id, STAFF_HELP)
         send_picture_menu(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id, "staff": staff}
-
-    if command == "inbox":
-        if not staff:
-            telegram.send_message(chat_id, STAFF_DENIED)
-            return {"ok": False, "action": "staff-denied", "chat_id": chat_id}
-        alert = compose_alert(AlertTrigger(type="business", headline="business inbox"))
-        telegram.send_message(chat_id, format_alert(alert))
-        return {"ok": True, "action": "inbox", "chat_id": chat_id, "staff": True}
 
     if command == "schedule":
         telegram.send_message(chat_id, SCHEDULE)
