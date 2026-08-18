@@ -42,6 +42,7 @@ python -m wellness_agent compose --json
 python -m wellness_agent compose --type order --detail "New TrueHold Wellness order received."
 python -m wellness_agent send --dry-run --type business
 WELLNESS_ALERT_WEBHOOK_URL=https://example.invalid/wellness python -m wellness_agent send --type order
+python -m wellness_agent ingest-email
 python -m pytest
 ```
 
@@ -69,13 +70,17 @@ TrueHold Wellness alert — {headline}
 
 The original `cf24ec1` agent had no Telegram. The later `@Npeppers_bot` layer added `/start`, `/inbox`, and `/order`. That inbound surface is preserved here on **@THWellness_bot**, plus live-shop inventory sheets (`/catalog`, `/product`).
 
+`/start` links the operator chat. `/order` and `ingest-email` fire the original inbox reflexes so operators are notified of orders, payments, fulfillment, shipping, cancellations, peptides, and other actionable email. Every alert still includes the complete snapshot.
+
 Bot API: https://core.telegram.org/bots/api
 
 | Command | Behavior |
 | --- | --- |
-| `/start` `/help` | Link/help text |
+| `/start` `/help` | Link operator chat for order/email-reflex alerts |
 | `/inbox` | Full business-inbox snapshot |
-| `/order <detail>` | Order trigger + confirmation |
+| `/catalog` `/product` | Locked inventory sheets |
+| `/order <detail>` | Order trigger, operator notify, inventory PDF when SKU matches |
+| `/schedule` | Team contact |
 
 Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_bot` username.
 

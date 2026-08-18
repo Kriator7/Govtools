@@ -11,4 +11,7 @@ data/*.db-journal
 data/exports/*
 !data/exports/.gitkeep
 data/telegram_offset.json
+data/operator.json
+data/inbox_state.json
+data/email_seen.json
 *.log

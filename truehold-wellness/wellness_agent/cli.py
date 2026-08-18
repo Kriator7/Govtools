@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from typing import Sequence
 
@@ -57,6 +58,15 @@ def _build_parser() -> argparse.ArgumentParser:
     sub.add_parser("catalog", help="Print the live TrueHold Wellness shop inventory")
     product = sub.add_parser("product", help="Resolve a SKU and print its locked-sheet path")
     product.add_argument("query", help="Product name or alias, for example klow or tirzepatide")
+    ingest = sub.add_parser(
+        "ingest-email",
+        help="Run order/payment/fulfillment/shipping/cancellation/peptide email reflexes",
+    )
+    ingest.add_argument(
+        "--path",
+        default=None,
+        help="JSON inbox. Defaults to EMAIL_INBOX_PATH or data/imports/sample_reflex_emails.json",
+    )
     return parser
 
 
@@ -136,6 +146,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 1
         sys.stdout.write(json.dumps({"ok": True, "id": item["id"], "pdf": str(path)}) + "\n")
         return 0
+    if args.command == "ingest-email":
+        from pathlib import Path
+
+        from wellness_agent.email_reflex import ingest_reflex_emails
+        from wellness_agent.envfile import PACKAGE_ROOT
+
+        inbox = Path(
+            args.path
+            or os.environ.get("EMAIL_INBOX_PATH")
+            or (PACKAGE_ROOT / "data" / "imports" / "sample_reflex_emails.json")
+        )
+        if not inbox.is_absolute():
+            inbox = PACKAGE_ROOT / inbox
+        fired = ingest_reflex_emails(inbox)
+        sys.stdout.write(json.dumps({"ok": True, "fired": fired}, indent=2) + "\n")
+        return 0
     alert = compose_alert(_trigger_from_args(args))
     if args.command == "compose":
         if args.json:
@@ -179,7 +205,10 @@ def _telegram_poll(*, once: bool) -> int:
         return 1
     telegram = WellnessTelegram(token)
     telegram.assert_identity()
-    telegram.configure_public_profile()
+    try:
+        telegram.configure_public_profile()
+    except Exception as exc:
+        sys.stderr.write(f"configure-telegram skipped: {exc}\n")
     telegram.delete_webhook()
     offset_path = Path(__file__).resolve().parent.parent / "data" / "telegram_offset.json"
     offset = None

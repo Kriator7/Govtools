@@ -81,10 +81,12 @@ class WellnessTelegram:
         setMyCommands: https://core.telegram.org/bots/api#setmycommands
         """
         self.assert_identity()
-        name = self._post("setMyName", {"name": BOT_DISPLAY_NAME})
-        description = self._post("setMyDescription", {"description": BOT_DESCRIPTION})
-        short = self._post("setMyShortDescription", {"short_description": BOT_SHORT_DESCRIPTION})
-        commands = self._post("setMyCommands", {"commands": list(BOT_COMMANDS)})
+        name = self._configure_call("setMyName", {"name": BOT_DISPLAY_NAME})
+        description = self._configure_call("setMyDescription", {"description": BOT_DESCRIPTION})
+        short = self._configure_call(
+            "setMyShortDescription", {"short_description": BOT_SHORT_DESCRIPTION}
+        )
+        commands = self._configure_call("setMyCommands", {"commands": list(BOT_COMMANDS)})
         return {
             "bot": f"@{REQUIRED_USERNAME}",
             "setMyName": name.get("ok"),
@@ -92,6 +94,15 @@ class WellnessTelegram:
             "setMyShortDescription": short.get("ok"),
             "setMyCommands": commands.get("ok"),
         }
+
+    def _configure_call(self, method: str, payload: dict[str, Any]) -> dict[str, Any]:
+        try:
+            return self._post(method, payload)
+        except httpx.HTTPStatusError as exc:
+            status = getattr(exc.response, "status_code", None)
+            if status == 429:
+                return {"ok": False, "description": "429 Too Many Requests"}
+            raise
 
     def _url(self, method: str) -> str:
         return f"{TELEGRAM_ENDPOINT}/bot{self.bot_token}/{method}"

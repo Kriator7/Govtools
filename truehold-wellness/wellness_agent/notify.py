@@ -9,6 +9,7 @@ from typing import Any, Callable
 
 from wellness_agent.compose import format_alert
 from wellness_agent.models import Alert
+from wellness_agent.operator_store import configured_operator_chats
 
 DEFAULT_TIMEOUT_SECONDS = 15
 WEBHOOK_ENV = "WELLNESS_ALERT_WEBHOOK_URL"
@@ -43,6 +44,8 @@ def send_alert(
     dry_run: bool = False,
     opener: Callable[..., Any] | None = None,
     timeout: int = DEFAULT_TIMEOUT_SECONDS,
+    exclude_chats: set[str] | None = None,
+    require_destination: bool = True,
 ) -> NotifyResult:
     """
     Send a TrueHold Wellness alert.
@@ -53,9 +56,10 @@ def send_alert(
     payload = alert_payload(alert)
     text = payload["text"]
     destination = webhook_url or os.environ.get(WEBHOOK_ENV)
-    telegram_chat = os.environ.get("WELLNESS_TELEGRAM_CHAT_ID") or os.environ.get("TELEGRAM_OPERATOR_CHAT_ID")
     telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN")
     telegram_live = os.environ.get("TELEGRAM_MODE", "mock") == "live"
+    skip = {str(item) for item in (exclude_chats or set())}
+    operator_chats = [chat_id for chat_id in configured_operator_chats() if chat_id not in skip]
     if dry_run:
         return NotifyResult(
             delivered=False,
@@ -86,18 +90,28 @@ def send_alert(
         except urllib.error.URLError as exc:
             raise NotifyError(f"Webhook delivery failed: {exc}") from exc
         destinations.append(destination)
-    if telegram_live and telegram_token and telegram_chat:
+    if telegram_live and telegram_token and operator_chats:
         from wellness_agent.telegram_api import WellnessTelegram
 
         client = WellnessTelegram(telegram_token)
         client.assert_identity()
-        client.send_message(telegram_chat, text)
+        for chat_id in operator_chats:
+            client.send_message(chat_id, text)
         destinations.append("telegram:@THWellness_bot")
     if not destinations:
+        if not require_destination:
+            return NotifyResult(
+                delivered=False,
+                dry_run=False,
+                text=text,
+                payload=payload,
+                destination=None,
+                status="queued_no_destination",
+            )
         raise NotifyError(
             f"No {WEBHOOK_ENV} configured and live @THWellness_bot chat is not set. "
-            "Pass webhook_url, set WELLNESS_ALERT_WEBHOOK_URL, or set TELEGRAM_MODE=live "
-            "with TELEGRAM_BOT_TOKEN and WELLNESS_TELEGRAM_CHAT_ID."
+            "Pass webhook_url, set WELLNESS_ALERT_WEBHOOK_URL, or /start on @THWellness_bot "
+            "so WELLNESS_TELEGRAM_CHAT_ID / operator.json is set."
         )
     return NotifyResult(
         delivered=True,

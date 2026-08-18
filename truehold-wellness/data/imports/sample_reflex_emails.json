@@ -1,0 +1,44 @@
+[
+  {
+    "id": "reflex-order-001",
+    "from": "buyer@example.invalid",
+    "subject": "Order: 2x KLOW",
+    "body": "Customer: Test Buyer\nProduct: KLOW\nQuantity: 2\nPlease confirm this TrueHold Wellness order."
+  },
+  {
+    "id": "reflex-payment-001",
+    "from": "billing@example.invalid",
+    "subject": "Payment received for NAD+ Cellular Renewal",
+    "body": "Invoice paid in full for NAD+ 1000 mg."
+  },
+  {
+    "id": "reflex-fulfillment-001",
+    "from": "ops@example.invalid",
+    "subject": "Fulfillment request: pack Tirzepatide 20 mg",
+    "body": "Ready to ship. Pick list attached for GLP-2 Tirzepatide."
+  },
+  {
+    "id": "reflex-shipping-001",
+    "from": "ship@example.invalid",
+    "subject": "Shipping issue: USPS tracking delay",
+    "body": "Package marked shipped but tracking is not updating."
+  },
+  {
+    "id": "reflex-cancel-001",
+    "from": "support@example.invalid",
+    "subject": "Cancellation/refund for Semax 10 mg",
+    "body": "Customer requested a refund and cancellation of the Semax order."
+  },
+  {
+    "id": "reflex-peptide-001",
+    "from": "research@example.invalid",
+    "subject": "Peptide message: Retatrutide sheet request",
+    "body": "Please send the locked Retatrutide information sheet."
+  },
+  {
+    "id": "reflex-other-001",
+    "from": "desk@example.invalid",
+    "subject": "Need a consult before deciding",
+    "body": "Please have the TrueHold team call back about a consult."
+  }
+]

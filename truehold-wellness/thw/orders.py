@@ -71,6 +71,18 @@ def notify_order(db: Session, order: WellnessOrder, telegram=None) -> None:
     telegram.send_message(chat_id, text)
     order.telegram_notified_at = datetime.now(timezone.utc)
     order.status = "NOTIFIED"
+    try:
+        from wellness_agent.reflex import fire_reflex
+
+        fire_reflex(
+            "order",
+            text,
+            exclude_chats={str(chat_id)},
+            require_destination=False,
+        )
+    except Exception:
+        # Telegram order card already sent. Webhook/operator snapshot is best-effort.
+        pass
 
 
 def handle_telegram_update(db: Session, payload: dict, telegram=None) -> dict:

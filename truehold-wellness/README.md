@@ -29,7 +29,16 @@ python -m wellness_agent send --dry-run --type order
 python -m pytest
 ```
 
-`send` POSTs JSON with `agent=truehold-wellness-agent` to `WELLNESS_ALERT_WEBHOOK_URL` (never Mr North’s `ALERT_WEBHOOK_URL`). If `TELEGRAM_MODE=live` and the token is `@THWellness_bot`, the same message is also delivered on Telegram.
+`send` POSTs JSON with `agent=truehold-wellness-agent` to `WELLNESS_ALERT_WEBHOOK_URL` (never Mr North’s `ALERT_WEBHOOK_URL`). If `TELEGRAM_MODE=live` and an operator has `/start`’d (or `WELLNESS_TELEGRAM_CHAT_ID` is set), the same message is delivered on **@THWellness_bot**.
+
+`/order` still uses the original protocol: full inbox snapshot (orders, payments, fulfillment, shipping, cancellations, peptides, other_actionable), operator notify, and the matching locked inventory PDF when the SKU is recognized.
+
+Email reflexes:
+
+```bash
+python -m wellness_agent ingest-email
+python -m thw ingest
+```
 
 ## Telegram (@THWellness_bot)
 

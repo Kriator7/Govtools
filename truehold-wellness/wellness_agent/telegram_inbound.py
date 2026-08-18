@@ -12,6 +12,8 @@ from wellness_agent.catalog import (
 from wellness_agent.compose import compose_alert, format_alert
 from wellness_agent.identity import REQUIRED_USERNAME
 from wellness_agent.models import AlertTrigger
+from wellness_agent.operator_store import remember_operator
+from wellness_agent.reflex import fire_reflex
 
 HELP = (
     f"TrueHold Wellness (@{REQUIRED_USERNAME})\n"
@@ -19,7 +21,7 @@ HELP = (
     "/inbox — full business inbox snapshot (orders, payments, fulfillment, shipping, cancellations, peptides)\n"
     "/catalog — live shop inventory and locked information sheets\n"
     "/product <name> — send a locked PDF (tirzepatide, retatrutide, semax, nad, klow, mots-c, ss-31, ghk-cu)\n"
-    "/order <detail> — record an interest order\n"
+    "/order <detail> — record an interest order and notify operators\n"
     "/schedule — book with the TrueHold team\n"
     "/help — this message\n"
     "Educational only. Protocol details reviewed case by case.\n"
@@ -41,7 +43,7 @@ BOT_COMMANDS = (
     {"command": "inbox", "description": "Full business inbox snapshot"},
     {"command": "catalog", "description": "Live shop inventory"},
     {"command": "product", "description": "Send a locked information sheet PDF"},
-    {"command": "order", "description": "Record an interest order: /order <product and qty>"},
+    {"command": "order", "description": "Interest order; notifies operators with inbox snapshot"},
     {"command": "schedule", "description": "Book with the TrueHold team"},
     {"command": "help", "description": "Command list"},
 )
@@ -55,6 +57,16 @@ def _product_query(text: str, command: str) -> str:
     return rest
 
 
+def _matched_product(detail: str):
+    tokens = [part for part in detail.replace("/", " ").replace(",", " ").split() if len(part) >= 3]
+    for token in (detail, *tokens):
+        try:
+            return find_product(token)
+        except UnknownProductError:
+            continue
+    return None
+
+
 def handle_telegram_update(payload: dict, telegram) -> dict:
     message = payload.get("message") or {}
     text = str(message.get("text") or "").strip()
@@ -64,6 +76,15 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         return {"ok": True, "ignored": True}
     lowered = text.lower()
     if lowered.startswith("/start") or lowered in {"/help", "help"}:
+        if lowered.startswith("/start"):
+            remember_operator(chat_id)
+            telegram.send_message(
+                chat_id,
+                f"Linked as TrueHold Wellness operator on @{REQUIRED_USERNAME}.\n"
+                "You will get order and email-reflex alerts here "
+                "(orders, payments, fulfillment, shipping, cancellations, peptides).\n"
+                "This bot is not realtor-agent / @PirateEye_bot.",
+            )
         telegram.send_message(chat_id, HELP)
         return {"ok": True, "action": "help", "chat_id": chat_id}
     if lowered.startswith("/inbox"):
@@ -95,10 +116,32 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         if detail.lower() in {"/order", "order:"}:
             telegram.send_message(chat_id, "Send /order <product and qty> to take an interest order.")
             return {"ok": True, "action": "order-help", "chat_id": chat_id}
-        alert = compose_alert(
-            AlertTrigger(type="order", headline="order", detail=detail)
+        result = fire_reflex(
+            "order",
+            detail,
+            exclude_chats={chat_id},
+            require_destination=False,
         )
-        telegram.send_message(chat_id, format_alert(alert))
-        telegram.send_message(chat_id, f"Interest order recorded on TrueHold Wellness.\n{detail}")
-        return {"ok": True, "action": "order", "chat_id": chat_id, "detail": detail}
+        telegram.send_message(chat_id, result.text)
+        telegram.send_message(
+            chat_id,
+            "Interest order recorded on TrueHold Wellness. Operators are notified "
+            "with the full inbox snapshot (orders, payments, fulfillment, shipping, "
+            f"cancellations, peptides).\n{detail}",
+        )
+        product = _matched_product(detail)
+        if product:
+            telegram.send_document(
+                chat_id,
+                pdf_path(product),
+                caption=format_product_caption(product),
+            )
+        return {
+            "ok": True,
+            "action": "order",
+            "chat_id": chat_id,
+            "detail": detail,
+            "notified": result.status,
+            "product": None if product is None else product["id"],
+        }
     return {"ok": True, "ignored": True}
