@@ -68,19 +68,20 @@ TrueHold Wellness alert — {headline}
 
 ## Telegram (@THWellness_bot)
 
-The original `cf24ec1` agent had no Telegram. The later `@Npeppers_bot` layer added `/start`, `/inbox`, and `/order`. That inbound surface is preserved here on **@THWellness_bot**, plus live-shop inventory sheets (`/catalog`, `/product`).
+The original `cf24ec1` agent had no Telegram. The later `@Npeppers_bot` layer added `/start`, `/inbox`, and `/order`. That inbound surface is preserved here on **@THWellness_bot**, plus live-shop inventory sheets and a picture menu (`/menu`).
 
-`/start` links the operator chat. `/order` and `ingest-email` fire the original inbox reflexes so operators are notified of orders, payments, fulfillment, shipping, cancellations, peptides, and other actionable email. Every alert still includes the complete snapshot.
+`/start` is the **customer** picture menu. It does not grant staff access. `/order` (slash or picture-menu confirm) and `ingest-email` fire the original inbox reflexes so **allowlisted staff** are notified of orders, payments, fulfillment, shipping, cancellations, peptides, and other actionable email. Every staff alert still includes the complete snapshot. Customers receive only a short confirmation.
 
-Bot API: https://core.telegram.org/bots/api
+Bot API: https://core.telegram.org/bots/api (`sendPhoto`, `InlineKeyboardMarkup`, `callback_query`, `setMyCommands` with `BotCommandScopeChat`)
 
-| Command | Behavior |
-| --- | --- |
-| `/start` `/help` | Link operator chat for order/email-reflex alerts |
-| `/inbox` | Full business-inbox snapshot |
-| `/catalog` `/product` | Locked inventory sheets |
-| `/order <detail>` | Order trigger, operator notify, inventory PDF when SKU matches |
-| `/schedule` | Team contact |
+| Command | Who | Behavior |
+| --- | --- | --- |
+| `/start` `/menu` | Customer | Picture menu — one photo per SKU, tap **This one** |
+| `/help` `/schedule` | Customer | Short help / team contact |
+| `/inbox` | Staff only | Full business-inbox snapshot |
+| `/staff <token>` | Staff claim | Grants admin only if `WELLNESS_OPERATOR_CLAIM_TOKEN` matches |
+| `/product <name>` | Hidden | Locked inventory PDF |
+| `/order <detail>` | Hidden | Interest order; staff notify; no inbox leak to the customer |
 
 Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_bot` username.
 

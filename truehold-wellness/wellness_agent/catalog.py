@@ -68,7 +68,7 @@ def format_catalog() -> str:
     lines = [
         "TrueHold Wellness inventory",
         "Educational information only. Research use only.",
-        "Interest orders: pick an item, then /order. Consult before any decision.",
+        "Tap /menu and This one on the photo you want. Consult before any decision.",
         "Las Vegas residents only for Telegram interest orders.",
         "",
     ]
@@ -78,7 +78,7 @@ def format_catalog() -> str:
     lines.extend(
         [
             "",
-            "/product <name> — send the locked information sheet",
+            "/menu — picture menu (tap This one)",
             "/schedule — book with the team",
             "Shop: https://trueholdwellness.com/shop",
         ]

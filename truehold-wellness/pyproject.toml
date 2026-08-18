@@ -13,6 +13,7 @@ dependencies = [
     "pydantic-settings>=2.6.0",
     "sqlalchemy>=2.0.36",
     "httpx>=0.28.0",
+    "pillow>=10.0",
 ]
 
 [project.optional-dependencies]
@@ -30,7 +31,7 @@ truehold-wellness-agent = "wellness_agent.cli:main"
 include = ["wellness_agent*", "thw*"]
 
 [tool.setuptools.package-data]
-"wellness_agent" = ["data/*.json", "inventory/*.json", "inventory/pdfs/*.pdf", "inventory/assets/*"]
+"wellness_agent" = ["data/*.json", "inventory/*.json", "inventory/pdfs/*.pdf", "inventory/assets/*", "inventory/cards/*.jpg"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

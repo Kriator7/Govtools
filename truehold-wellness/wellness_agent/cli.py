@@ -47,7 +47,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     poll = sub.add_parser(
         "telegram-poll",
-        help=f"Receive /start /inbox /catalog /product /order on @{REQUIRED_USERNAME}",
+        help=f"Receive picture-menu orders and staff /inbox on @{REQUIRED_USERNAME}",
     )
     poll.add_argument("--once", action="store_true")
     sub.add_parser("whoami", help=f"Call Telegram getMe and confirm @{REQUIRED_USERNAME}")

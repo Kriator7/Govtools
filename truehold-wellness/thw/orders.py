@@ -90,14 +90,24 @@ def handle_telegram_update(db: Session, payload: dict, telegram=None) -> dict:
     message = payload.get("message") or {}
     text = str(message.get("text") or "").strip()
     chat = message.get("chat") or {}
+    sender = message.get("from") or {}
     chat_id = str(chat.get("id") or "")
+    user_id = str(sender.get("id") or "")
     if text.startswith("/start") and chat_id:
-        get_or_create_operator(db, chat_id)
+        from wellness_agent.access import is_operator
+
+        if is_operator(user_id, chat_id, str(chat.get("type") or "private")):
+            get_or_create_operator(db, chat_id)
+            telegram.send_message(
+                chat_id,
+                f"Linked as TrueHold Wellness operator on @{REQUIRED_USERNAME}.\n"
+                "You will get order-email alerts here.\n"
+                "This bot is not realtor-agent / @PirateEye_bot.",
+            )
+            return {"ok": True, "action": "linked", "chat_id": chat_id}
         telegram.send_message(
             chat_id,
-            f"Linked as TrueHold Wellness operator on @{REQUIRED_USERNAME}.\n"
-            "You will get order-email alerts here.\n"
-            "This bot is not realtor-agent / @PirateEye_bot.",
+            "TrueHold Wellness. Use the picture menu in this chat.",
         )
-        return {"ok": True, "action": "linked", "chat_id": chat_id}
+        return {"ok": True, "action": "customer-start", "chat_id": chat_id}
     return {"ok": True, "ignored": True}

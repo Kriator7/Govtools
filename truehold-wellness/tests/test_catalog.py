@@ -7,12 +7,19 @@ class _FakeTelegram:
     def __init__(self) -> None:
         self.sent = []
 
-    def send_message(self, chat_id, text):
-        self.sent.append({"chat_id": chat_id, "text": text})
+    def send_message(self, chat_id, text, reply_markup=None):
+        self.sent.append({"chat_id": chat_id, "text": text, "reply_markup": reply_markup})
         return {"ok": True}
 
     def send_document(self, chat_id, path, caption=""):
         self.sent.append({"chat_id": chat_id, "document": str(path), "caption": caption})
+        return {"ok": True}
+
+    def send_photo(self, chat_id, path, caption="", reply_markup=None):
+        self.sent.append({"chat_id": chat_id, "photo": str(path), "caption": caption, "reply_markup": reply_markup})
+        return {"ok": True}
+
+    def answer_callback_query(self, callback_query_id, text=None):
         return {"ok": True}
 
 
@@ -70,12 +77,12 @@ def test_product_cli(capsys):
 def test_telegram_catalog_and_product_sheet():
     tg = _FakeTelegram()
     catalog = handle_telegram_update(
-        {"message": {"text": "/catalog", "chat": {"id": 7}}},
+        {"message": {"text": "/catalog", "chat": {"id": 7}, "from": {"id": 7}}},
         tg,
     )
-    assert catalog["action"] == "catalog"
+    assert catalog["action"] == "menu"
     product = handle_telegram_update(
-        {"message": {"text": "/product klow", "chat": {"id": 7}}},
+        {"message": {"text": "/product klow", "chat": {"id": 7}, "from": {"id": 7}}},
         tg,
     )
     assert product == {"ok": True, "action": "product", "chat_id": "7", "product": "klow"}
@@ -95,3 +102,14 @@ def test_generated_sheets_are_educational_only():
         assert "does not provide dosing" in text
         assert "25 units" not in text
         assert "draw 2 ml" not in text
+
+
+def test_picture_menu_cards_exist_for_every_sku():
+    from wellness_agent.inventory.build_cards import card_path, ensure_cards
+
+    ensure_cards()
+    for item in products():
+        path = card_path(item)
+        assert path.is_file()
+        assert path.suffix == ".jpg"
+        assert path.stat().st_size > 1000

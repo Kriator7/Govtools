@@ -1,4 +1,7 @@
-"""Persist TrueHold Wellness operator chats for order and email-reflex alerts."""
+"""Persist TrueHold Wellness staff chats/user ids for order and email-reflex alerts.
+
+Customers are never written here. Only /staff <token> or env allowlists grant access.
+"""
 
 from __future__ import annotations
 
@@ -16,29 +19,55 @@ def operator_path() -> Path:
     return PACKAGE_ROOT / "data" / "operator.json"
 
 
-def load_operator_chats() -> list[str]:
+def _load_state() -> dict:
     path = operator_path()
     if not path.is_file():
-        return []
+        return {"chat_ids": [], "user_ids": []}
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
-        return []
-    chats = payload.get("chat_ids") or []
+        return {"chat_ids": [], "user_ids": []}
+    if not isinstance(payload, dict):
+        return {"chat_ids": [], "user_ids": []}
+    return payload
+
+
+def _save_state(chats: list[str], users: list[str]) -> None:
+    path = operator_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {"chat_ids": chats, "user_ids": users, "bot": "THWellness_bot"},
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def load_operator_chats() -> list[str]:
+    chats = _load_state().get("chat_ids") or []
     return [str(item) for item in chats if str(item).strip()]
 
 
-def remember_operator(chat_id: str) -> list[str]:
-    chat_id = str(chat_id).strip()
+def load_operator_user_ids() -> list[str]:
+    users = _load_state().get("user_ids") or []
+    return [str(item) for item in users if str(item).strip()]
+
+
+def remember_operator(chat_id: str | None = None, user_id: str | None = None) -> list[str]:
     chats = load_operator_chats()
+    users = load_operator_user_ids()
+    chat_id = str(chat_id or "").strip()
+    user_id = str(user_id or "").strip()
+    changed = False
     if chat_id and chat_id not in chats:
         chats.append(chat_id)
-        path = operator_path()
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            json.dumps({"chat_ids": chats, "bot": "THWellness_bot"}, indent=2),
-            encoding="utf-8",
-        )
+        changed = True
+    if user_id and user_id not in users:
+        users.append(user_id)
+        changed = True
+    if changed:
+        _save_state(chats, users)
     return chats
 
 
@@ -49,6 +78,7 @@ def configured_operator_chats() -> list[str]:
         if value:
             chats.append(value)
     chats.extend(load_operator_chats())
+    chats.extend(load_operator_user_ids())
     seen: set[str] = set()
     ordered: list[str] = []
     for chat_id in chats:

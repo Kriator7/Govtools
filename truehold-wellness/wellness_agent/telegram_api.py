@@ -3,25 +3,26 @@
 https://core.telegram.org/bots/api
 """
 
+from __future__ import annotations
+
+import json
 from pathlib import Path
 from typing import Any
 
 import httpx
 
 from wellness_agent.identity import REQUIRED_USERNAME, assert_wellness_telegram_username
-from wellness_agent.telegram_inbound import BOT_COMMANDS
+from wellness_agent.operator_store import configured_operator_chats
+from wellness_agent.telegram_copy import CUSTOMER_COMMANDS, STAFF_COMMANDS
 
 TELEGRAM_ENDPOINT = "https://api.telegram.org"
 BOT_DISPLAY_NAME = "TrueHold Wellness"
 BOT_DESCRIPTION = (
-    "TrueHold Wellness business-inbox agent. Every alert includes a complete "
-    "snapshot: orders, payments, fulfillment requests, shipping issues, "
-    "cancellations/refunds, peptide messages, and other actionable business email. "
-    "Use /catalog, /product, /inbox, /order, and /schedule. Not realtor-agent."
+    "TrueHold Wellness. Scroll the picture menu and tap the vial you want. "
+    "Las Vegas residents only. Educational information only. "
+    "Not realtor-agent."
 )
-BOT_SHORT_DESCRIPTION = (
-    "TrueHold Wellness inventory, inbox, and interest orders. Educational only."
-)
+BOT_SHORT_DESCRIPTION = "TrueHold Wellness picture menu. Tap the vial you want."
 
 
 class WellnessTelegram:
@@ -40,8 +41,42 @@ class WellnessTelegram:
     def assert_identity(self) -> str:
         return assert_wellness_telegram_username(self.get_username())
 
-    def send_message(self, chat_id: str, text: str) -> dict[str, Any]:
-        data = self._post("sendMessage", {"chat_id": chat_id, "text": text})
+    def send_message(
+        self,
+        chat_id: str,
+        text: str,
+        reply_markup: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {"chat_id": chat_id, "text": text}
+        if reply_markup:
+            payload["reply_markup"] = reply_markup
+        data = self._post("sendMessage", payload)
+        return {"provider_message_id": str((data.get("result") or {}).get("message_id")), "raw": data}
+
+    def send_photo(
+        self,
+        chat_id: str,
+        path: str | Path,
+        caption: str = "",
+        reply_markup: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """sendPhoto: https://core.telegram.org/bots/api#sendphoto"""
+        file_path = Path(path)
+        payload: dict[str, Any] = {"chat_id": chat_id}
+        if caption:
+            payload["caption"] = caption[:1024]
+        if reply_markup:
+            payload["reply_markup"] = json.dumps(reply_markup)
+        with file_path.open("rb") as handle, httpx.Client(timeout=60) as client:
+            response = client.post(
+                self._url("sendPhoto"),
+                data=payload,
+                files={"photo": (file_path.name, handle, "image/jpeg")},
+            )
+            response.raise_for_status()
+            data = response.json()
+        if not data.get("ok"):
+            raise RuntimeError(data.get("description") or "Telegram sendPhoto failed")
         return {"provider_message_id": str((data.get("result") or {}).get("message_id")), "raw": data}
 
     def send_document(self, chat_id: str, path: str | Path, caption: str = "") -> dict[str, Any]:
@@ -62,8 +97,18 @@ class WellnessTelegram:
             raise RuntimeError(data.get("description") or "Telegram sendDocument failed")
         return {"provider_message_id": str((data.get("result") or {}).get("message_id")), "raw": data}
 
+    def answer_callback_query(self, callback_query_id: str, text: str | None = None) -> dict[str, Any]:
+        """answerCallbackQuery: https://core.telegram.org/bots/api#answercallbackquery"""
+        payload: dict[str, Any] = {"callback_query_id": callback_query_id}
+        if text:
+            payload["text"] = text[:200]
+        return self._post("answerCallbackQuery", payload)
+
     def get_updates(self, offset: int | None = None, timeout: int = 0) -> list[dict[str, Any]]:
-        payload: dict[str, Any] = {"timeout": timeout}
+        payload: dict[str, Any] = {
+            "timeout": timeout,
+            "allowed_updates": ["message", "callback_query"],
+        }
         if offset is not None:
             payload["offset"] = offset
         data = self._post("getUpdates", payload, timeout=timeout + 10)
@@ -73,12 +118,13 @@ class WellnessTelegram:
         return self._post("deleteWebhook", {"drop_pending_updates": False})
 
     def configure_public_profile(self) -> dict[str, Any]:
-        """Match the original Wellness bot surface on @THWellness_bot.
+        """Customer command menu by default; staff commands only in operator chats.
 
         setMyName: https://core.telegram.org/bots/api#setmyname
         setMyDescription: https://core.telegram.org/bots/api#setmydescription
         setMyShortDescription: https://core.telegram.org/bots/api#setmyshortdescription
         setMyCommands: https://core.telegram.org/bots/api#setmycommands
+        BotCommandScopeChat: https://core.telegram.org/bots/api#botcommandscopechat
         """
         self.assert_identity()
         name = self._configure_call("setMyName", {"name": BOT_DISPLAY_NAME})
@@ -86,13 +132,33 @@ class WellnessTelegram:
         short = self._configure_call(
             "setMyShortDescription", {"short_description": BOT_SHORT_DESCRIPTION}
         )
-        commands = self._configure_call("setMyCommands", {"commands": list(BOT_COMMANDS)})
+        default = self._configure_call(
+            "setMyCommands",
+            {"commands": list(CUSTOMER_COMMANDS), "scope": {"type": "default"}},
+        )
+        private = self._configure_call(
+            "setMyCommands",
+            {"commands": list(CUSTOMER_COMMANDS), "scope": {"type": "all_private_chats"}},
+        )
+        staff_scopes: list[str] = []
+        for chat_id in configured_operator_chats():
+            scope_chat: int | str = int(chat_id) if chat_id.lstrip("-").isdigit() else chat_id
+            result = self._configure_call(
+                "setMyCommands",
+                {
+                    "commands": list(STAFF_COMMANDS),
+                    "scope": {"type": "chat", "chat_id": scope_chat},
+                },
+            )
+            staff_scopes.append(f"{chat_id}:{result.get('ok')}")
         return {
             "bot": f"@{REQUIRED_USERNAME}",
             "setMyName": name.get("ok"),
             "setMyDescription": description.get("ok"),
             "setMyShortDescription": short.get("ok"),
-            "setMyCommands": commands.get("ok"),
+            "setMyCommandsDefault": default.get("ok"),
+            "setMyCommandsPrivate": private.get("ok"),
+            "setMyCommandsStaff": staff_scopes,
         }
 
     def _configure_call(self, method: str, payload: dict[str, Any]) -> dict[str, Any]:
