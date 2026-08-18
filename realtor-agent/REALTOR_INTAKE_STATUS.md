@@ -37,3 +37,7 @@ Then collect Damian’s live packet (identity already on file from his first rep
 4. Set `EMAIL_RELAY_MODE=false` only when mail should go to real investor addresses
 
 Until then, outbound email is from and to `cardanomint@gmail.com`.
+
+The operator mailbox is confirmed as the CardanoMint Gmail account (`cardanomint@gmail.com`). Mock email still writes `data/exports/email_outbox.json`; live Gmail SMTP/OAuth is not wired yet.
+
+Zillow listing emails in that inbox are **not** an MLS source. Do not scrape Gmail or Zillow for listings. Use only an authorized MLS/API feed later.
