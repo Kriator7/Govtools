@@ -47,9 +47,13 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     poll = sub.add_parser(
         "telegram-poll",
-        help=f"Receive picture-menu orders and staff /inbox on @{REQUIRED_USERNAME}",
+        help=f"Receive picture-menu orders on @{REQUIRED_USERNAME} and restart if polling dies",
     )
     poll.add_argument("--once", action="store_true")
+    sub.add_parser(
+        "telegram-status",
+        help=f"Show whether @{REQUIRED_USERNAME} getUpdates is still alive",
+    )
     sub.add_parser("whoami", help=f"Call Telegram getMe and confirm @{REQUIRED_USERNAME}")
     sub.add_parser(
         "configure-telegram",
@@ -135,7 +139,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     load_local_env()
     args = _build_parser().parse_args(argv)
     if args.command == "telegram-poll":
-        return _telegram_poll(once=args.once)
+        from wellness_agent.poll_guard import supervise
+
+        return supervise(_telegram_poll, once=args.once)
+    if args.command == "telegram-status":
+        from wellness_agent.poll_guard import poll_status
+
+        status = poll_status()
+        sys.stdout.write(json.dumps(status) + "\n")
+        return 0 if status.get("ok") else 1
     if args.command == "whoami":
         return _telegram_whoami()
     if args.command == "configure-telegram":
@@ -237,6 +249,7 @@ def _telegram_poll(*, once: bool) -> int:
     import time
     from pathlib import Path
 
+    from wellness_agent.poll_guard import write_heartbeat
     from wellness_agent.telegram_api import WellnessTelegram
     from wellness_agent.telegram_inbound import handle_telegram_update
 
@@ -282,6 +295,7 @@ def _telegram_poll(*, once: bool) -> int:
                 return 1
             time.sleep(2)
             continue
+        write_heartbeat(offset=offset, extra={"state": "polling"})
         for update in updates:
             offset = int(update["update_id"]) + 1
             offset_path.parent.mkdir(parents=True, exist_ok=True)

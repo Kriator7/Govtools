@@ -12,6 +12,8 @@ wellness_agent/inventory/assets/agent_cards/
 data/exports/*
 !data/exports/.gitkeep
 data/telegram_offset.json
+data/telegram_poll.lock
+data/telegram_poll.heartbeat.json
 data/operator.json
 data/inbox_state.json
 data/email_seen.json
