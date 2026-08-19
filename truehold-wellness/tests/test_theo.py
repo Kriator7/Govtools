@@ -74,11 +74,12 @@ def test_talk_stays_on_approved_text_without_llm():
 def test_pending_promo_is_hidden_until_staff_approve():
     spoken = reply("any sale?", chat_id="sale-chat")
     assert "staff-approved note" not in spoken.text.lower()
+    assert "ADPILV2026" in spoken.text
     draft = draft_promo("10% off KLOW", "Las Vegas only this weekend", staff_id="42")
     assert draft["status"] == "pending"
     assert active_promo() is None
     spoken = reply("any sale?", chat_id="sale-chat")
-    assert "10% off" not in spoken.text
+    assert "Las Vegas only this weekend" not in spoken.text
     decide_promo(draft["id"], status="approved", staff_id="42")
     assert active_promo()["headline"] == "10% off KLOW"
 

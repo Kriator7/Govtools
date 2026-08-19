@@ -14,6 +14,14 @@ from wellness_agent.clients import (
     save_client_phone,
 )
 from wellness_agent.compose import compose_alert, format_alert
+from wellness_agent.discounts import (
+    COLLEGE_THANKS,
+    customer_discount_line,
+    extract_code,
+    is_code_only_message,
+    staff_discount_line,
+    strip_code,
+)
 from wellness_agent.greetings import is_crew_request, is_salutation
 from wellness_agent.identity import REQUIRED_USERNAME
 from wellness_agent.inventory.build_brand import service_path
@@ -42,15 +50,18 @@ from wellness_agent.reflex import fire_reflex
 from wellness_agent.session_store import (
     awaiting_phone,
     begin_session,
+    discount_code,
     intro_pending,
     mark_intro_played,
     set_awaiting_phone,
+    set_discount_code,
 )
 from wellness_agent.telegram_copy import (
     BOT_COMMANDS,
     CUSTOMER_COMMANDS,
     CUSTOMER_HELP,
     HELP,
+    PARSE_MODE,
     SCHEDULE,
     STAFF_COMMANDS,
     STAFF_HELP,
@@ -236,7 +247,12 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
     if looks_like_phone and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule", "order", "crew"}:
         return _record_phone(telegram, chat_id, text, source="typed", sender=sender)
 
-    if awaiting_phone(chat_id) and text and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule", "crew"}:
+    if (
+        awaiting_phone(chat_id)
+        and text
+        and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule", "crew"}
+        and not extract_code(text)
+    ):
         if not (is_salutation(text) or is_salutation(command) or is_crew_request(text)):
             telegram.send_message(chat_id, TYPE_PHONE)
             return {"ok": True, "action": "type-phone", "chat_id": chat_id}
@@ -255,6 +271,17 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             return _handle_promo(telegram, chat_id, user_id, _rest(text))
         telegram.send_message(chat_id, STAFF_DENIED)
         return {"ok": False, "action": "staff-denied", "chat_id": chat_id}
+
+    if text and extract_code(text):
+        set_discount_code(chat_id, extract_code(text))
+        if is_code_only_message(text):
+            if intro_pending(chat_id):
+                _send_introduction(telegram, chat_id)
+            try:
+                telegram.send_message(chat_id, COLLEGE_THANKS, parse_mode=PARSE_MODE)
+            except TypeError:
+                telegram.send_message(chat_id, COLLEGE_THANKS)
+            return {"ok": True, "action": "discount-code", "chat_id": chat_id, "code": extract_code(text)}
 
     if command in {"start", "help", "menu"}:
         if command == "help":
@@ -291,6 +318,9 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
 
     if command == "order" or text.lower().startswith("order:"):
         detail = _rest(text) if command == "order" else text.split(":", 1)[1].strip()
+        if extract_code(detail):
+            set_discount_code(chat_id, extract_code(detail))
+            detail = strip_code(detail)
         if not detail:
             mark_intro_played(chat_id)
             send_quick_menu(telegram, chat_id)
@@ -299,6 +329,9 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         if product:
             return _place_interest_order(telegram, chat_id, product, parse_interest_qty(detail))
         staff_detail = f"{detail}\n{phone_line_for_staff(chat_id)}"
+        extra_discount = staff_discount_line(discount_code(chat_id))
+        if extra_discount:
+            staff_detail = f"{staff_detail}\n{extra_discount}"
         result = fire_reflex(
             "order",
             staff_detail,
@@ -306,6 +339,10 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             require_destination=False,
         )
         host = current_host(chat_id)
+        confirm = CUSTOMER_CONFIRM.format(detail=detail)
+        extra_customer = customer_discount_line(discount_code(chat_id))
+        if extra_customer:
+            confirm = f"{confirm}\n{extra_customer}"
         send_host_photo(
             telegram,
             chat_id,
@@ -313,7 +350,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             flavor_caption(
                 host,
                 "cheer",
-                CUSTOMER_CONFIRM.format(detail=detail) + f"\n\n{host['icon']} {pose_line(host, 'soon')}",
+                confirm + f"\n\n{host['icon']} {pose_line(host, 'soon')}",
             ),
             host=host,
             effect=True,

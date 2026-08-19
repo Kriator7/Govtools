@@ -137,7 +137,14 @@ def format_stock() -> str:
     return "\n".join(lines) + "\n"
 
 
-def record_order_row(product: dict[str, Any], qty: str, *, chat_id: str, phone: str | None) -> None:
+def record_order_row(
+    product: dict[str, Any],
+    qty: str,
+    *,
+    chat_id: str,
+    phone: str | None,
+    discount: str | None = None,
+) -> None:
     """Append the interest order to the working workbook, matching the old xlsx ledger."""
     from openpyxl import load_workbook
 
@@ -149,6 +156,13 @@ def record_order_row(product: dict[str, Any], qty: str, *, chat_id: str, phone: 
     wb = load_workbook(source)
     if "Orders" not in wb.sheetnames:
         return
+    note = f"Telegram chat {chat_id}"
+    if discount:
+        from wellness_agent.discounts import staff_discount_line
+
+        extra = staff_discount_line(discount)
+        if extra:
+            note = f"{note}; {extra}"
     ws = wb["Orders"]
     ws.append(
         [
@@ -161,7 +175,7 @@ def record_order_row(product: dict[str, Any], qty: str, *, chat_id: str, phone: 
             "interest",
             "Las Vegas local prep/delivery or dry-vial ship",
             "pending",
-            f"Telegram chat {chat_id}",
+            note,
         ]
     )
     if "Inventory" in wb.sheetnames:

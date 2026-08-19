@@ -2,6 +2,7 @@
 
 from urllib.parse import quote
 
+from wellness_agent.discounts import COLLEGE_HELP
 from wellness_agent.identity import REQUIRED_USERNAME
 
 SAY_HI = (
@@ -45,7 +46,9 @@ INTRODUCTION = (
     "\n"
     "Nature and God already packed the tools. Science opened the door again. We'll treat them with care.\n"
     "Prep and local delivery: Las Vegas residents only.\n"
-    "Need a person? tap Team"
+    "Need a person? tap Team\n"
+    "\n"
+    f"{COLLEGE_HELP}"
 )
 
 GREET_AGAIN = (
@@ -70,6 +73,7 @@ CUSTOMER_HELP = (
     "/help — this message\n"
     f"{SERVICE_POLICY} Educational only. {CALL_AND_DOCS}.\n"
     f"{PAYMENT_COPY}\n"
+    f"{COLLEGE_HELP}\n"
     "This bot is not realtor-agent / @PirateEye_bot."
 )
 
@@ -114,6 +118,7 @@ SCHEDULE = (
     "\n"
     "<b>Pay</b>\n"
     "Zelle on the confirmation call · debit on the website\n"
+    f"{COLLEGE_HELP}\n"
     f'<a href="{SHOP_URL}">trueholdwellness.com/shop</a>\n'
     "\n"
     "Protocol details are reviewed case by case. "

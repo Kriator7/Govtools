@@ -94,6 +94,7 @@ def sync_telegram_files() -> list[Path]:
 
 def format_catalog() -> str:
     from wellness_agent.telegram_copy import PAYMENT_COPY
+    from wellness_agent.discounts import COLLEGE_HELP
 
     lines = [
         "TrueHold Wellness inventory",
@@ -101,6 +102,7 @@ def format_catalog() -> str:
         "Tap /menu, then one name. View PDF in Telegram sends the locked sheet as a file in this chat — not a shop page.",
         "Prep and local delivery: Las Vegas residents only. Shipping: dry vials only.",
         PAYMENT_COPY,
+        COLLEGE_HELP,
         "",
     ]
     for item in products():

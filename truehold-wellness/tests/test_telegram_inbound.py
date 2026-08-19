@@ -100,6 +100,9 @@ def test_customer_copy_uses_documentation_not_waivers():
     assert "how it works" in INTRODUCTION.lower()
     assert "welcome to truehold wellness" in INTRODUCTION.lower()
     assert "ownership" in INTRODUCTION.lower() or "nature" in INTRODUCTION.lower()
+    assert "adpilv2026" in blob
+    assert "10%" in blob
+    assert len(INTRODUCTION) <= 1024
 
 
 def test_start_plays_welcome_with_logo_and_does_not_grant_staff():

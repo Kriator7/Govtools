@@ -62,12 +62,15 @@ def begin_session(chat_id: str) -> dict:
     chat_id = str(chat_id)
     now = time.time()
     state = _load()
+    previous = state["chats"].get(chat_id) if isinstance(state["chats"].get(chat_id), dict) else {}
+    saved_code = previous.get("discount_code") if isinstance(previous, dict) else None
     state["chats"][chat_id] = {
         "started_at": now,
         "intro_at": 0,
         "prompted": True,
         "awaiting_phone": False,
         "pending_order": None,
+        "discount_code": saved_code,
     }
     _save(state)
     return state["chats"][chat_id]
@@ -134,6 +137,19 @@ def focus_sku(chat_id: str) -> str | None:
 def pending_order(chat_id: str) -> dict | None:
     raw = _chat(_load(), str(chat_id)).get("pending_order")
     return dict(raw) if isinstance(raw, dict) else None
+
+
+def set_discount_code(chat_id: str, code: str | None) -> None:
+    chat_id = str(chat_id)
+    state = _load()
+    entry = _chat(state, chat_id)
+    entry["discount_code"] = str(code).strip().upper() if code else None
+    _save(state)
+
+
+def discount_code(chat_id: str) -> str | None:
+    value = _chat(_load(), str(chat_id)).get("discount_code")
+    return str(value).strip().upper() if value else None
 
 
 def ensure_session(chat_id: str) -> dict:

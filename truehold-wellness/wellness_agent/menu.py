@@ -25,7 +25,14 @@ from wellness_agent.inventory.build_agent import agent_path, crew_path, ensure_h
 from wellness_agent.inventory.build_brand import logo_path, service_path
 from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
-from wellness_agent.session_store import pending_order, set_awaiting_phone, set_focus_sku, set_pending_order
+from wellness_agent.discounts import customer_discount_line, staff_discount_line
+from wellness_agent.session_store import (
+    discount_code,
+    pending_order,
+    set_awaiting_phone,
+    set_focus_sku,
+    set_pending_order,
+)
 from wellness_agent.stock import record_order_row, staff_inventory_line
 from wellness_agent.team import (
     advance_on_greet,
@@ -561,6 +568,9 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
             "qty": qty,
         }
     detail = f"{qty}x {product['name']} ({product['vial']})"
+    code = discount_code(chat_id)
+    discount_staff = staff_discount_line(code)
+    discount_note = customer_discount_line(code)
     inventory_line = staff_inventory_line(
         product["id"],
         int(qty),
@@ -573,10 +583,13 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
             qty,
             chat_id=str(chat_id),
             phone=client_phone(chat_id),
+            discount=code,
         )
     except Exception as exc:
         inventory_line = f"{inventory_line} Workbook update skipped: {exc}."
     staff_detail = f"{detail}\n{phone_line_for_staff(chat_id)}\n{inventory_line}"
+    if discount_staff:
+        staff_detail = f"{staff_detail}\n{discount_staff}"
     result = fire_reflex(
         "order",
         f"Telegram interest order: {staff_detail}",
@@ -585,6 +598,9 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
     )
     set_pending_order(chat_id, None, None)
     host = current_host(chat_id)
+    confirm = CUSTOMER_CONFIRM.format(detail=detail)
+    if discount_note:
+        confirm = f"{confirm}\n{discount_note}"
     send_host_photo(
         telegram,
         chat_id,
@@ -592,7 +608,7 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
         flavor_caption(
             host,
             "cheer",
-            CUSTOMER_CONFIRM.format(detail=detail) + f"\n\n{host['icon']} {pose_line(host, 'soon')}",
+            confirm + f"\n\n{host['icon']} {pose_line(host, 'soon')}",
         ),
         after_pick_keyboard(product["id"], host),
         host=host,

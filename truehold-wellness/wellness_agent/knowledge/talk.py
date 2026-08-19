@@ -20,6 +20,7 @@ from wellness_agent.greetings import (
     is_fasting_request,
     is_herb_request,
 )
+from wellness_agent.discounts import COLLEGE_POLICY, extract_code
 from wellness_agent.knowledge import active_promo, pick_snippet, retrieve, seed_approved_knowledge
 from wellness_agent.knowledge.house import (
     FASTING_OPENER,
@@ -69,6 +70,12 @@ def reply(
         return TalkReply(text=body, pose="wave", source="seed-hello")
     if is_creed_request(text):
         return _creed_reply(host, text)
+    if extract_code(text) or _is_discount_question(lowered):
+        body = COLLEGE_POLICY
+        extra = _promo_line(chat_id, sprinkle=False)
+        if extra:
+            body = f"{body}\n\n{extra}"
+        return TalkReply(text=_signed(host, body), pose="present", source="seed-discount")
     focused = peptide_record(focus_sku(chat_id) or "") if chat_id else peptide_record("")
     if focused.get("weight_loss"):
         answer = fasting_answer(text)
@@ -157,6 +164,16 @@ def _signed(host: dict[str, Any], text: str) -> str:
     return f"<b>{host['icon']} {host['name']}</b>\n{text}"
 
 
+def _is_discount_question(lowered: str) -> bool:
+    return bool(
+        re.search(
+            r"\b(discount|promo code|coupon|college student|student discount|"
+            r"10%\s*off|percent off|sale|sales)\b",
+            lowered,
+        )
+    )
+
+
 def _promo_line(chat_id: str, *, sprinkle: bool) -> str:
     promo = active_promo()
     if not promo:
@@ -169,11 +186,13 @@ def _promo_line(chat_id: str, *, sprinkle: bool) -> str:
 def _llm_reply(message: str, hits: list[dict[str, Any]], host: dict[str, Any]) -> TalkReply | None:
     context = "\n\n".join(f"[{row['kind']}] {row['title']}: {row['text']}" for row in hits) or "No extra snippets."
     promo = active_promo()
-    promo_block = (
+    standing = f"Approved standing discount: {COLLEGE_POLICY}"
+    extra = (
         f"Approved promotion: {promo['headline']} — {promo['body']}"
         if promo
-        else "No approved promotion. Do not mention a sale, discount, or deal."
+        else "No extra promotion beyond the college code."
     )
+    promo_block = f"{standing}\n{extra}"
     name = str(host.get("name") or "Theo")
     role = str(host.get("role") or "floor host")
     creed = str(host.get("creed") or "")
@@ -194,7 +213,8 @@ def _llm_reply(message: str, hits: list[dict[str, Any]], host: dict[str, Any]) -
         "The floor team is backed by over 50 years of combined clinical, medical, and surgical experience. "
         "Use ONLY the approved context. If it is not there, say you will fetch a person via Team "
         "and offer the tap-menu. Never give dosing, reconstitution, injection, or medical advice. "
-        "Never invent products, prices, or sales. Never include http links. "
+        "Never invent products, prices, or sales other than the approved college code ADPILV2026 (10% off). "
+        "Never include http links. "
         "Las Vegas residents, dry vials only, educational only. Under 500 characters."
     )
     user = f"Approved context:\n{context}\n\n{promo_block}\n\nCustomer: {message}"
