@@ -125,6 +125,52 @@ def molecule_overlay(
     return layer.filter(ImageFilter.GaussianBlur(radius=0.4))
 
 
+def tech_hud_overlay(size: tuple[int, int], *, seed: int = 4) -> Image.Image:
+    """Circuit traces, hex HUD, scanlines, and corner brackets over a dark field."""
+    width, height = size
+    layer = Image.new("RGBA", size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    rng = random.Random(seed)
+    # Scanlines
+    for y in range(0, height, 4):
+        draw.line((0, y, width, y), fill=(92, 174, 196, 18), width=1)
+    # Hex grid
+    radius = min(width, height) * 0.07
+    for col in range(-1, int(width / (radius * 1.5)) + 2):
+        for row in range(-1, int(height / (radius * 1.7)) + 2):
+            cx = col * radius * 1.55
+            cy = row * radius * math.sqrt(3) + (radius * 0.78 if col % 2 else 0)
+            verts = _hex_vertices(cx, cy, radius * 0.9)
+            draw.line(verts + [verts[0]], fill=(*TEAL, 28), width=1)
+    # Circuit traces
+    for _ in range(28):
+        x = rng.randint(0, width)
+        y = rng.randint(0, height)
+        length = rng.randint(40, 180)
+        horizontal = rng.random() > 0.45
+        color = (*GOLD, 70) if rng.random() > 0.5 else (*TEAL, 80)
+        if horizontal:
+            draw.line((x, y, x + length, y), fill=color, width=2)
+            draw.line((x + length, y, x + length, y + rng.choice([-1, 1]) * rng.randint(16, 70)), fill=color, width=2)
+        else:
+            draw.line((x, y, x, y + length), fill=color, width=2)
+        r = 3
+        draw.ellipse((x - r, y - r, x + r, y + r), fill=(*GOLD, 140))
+    # Corner HUD brackets
+    inset, arm, thick = 28, 54, 3
+    bracket = (*GOLD, 200)
+    corners = (
+        (inset, inset, 1, 1),
+        (width - inset, inset, -1, 1),
+        (inset, height - inset, 1, -1),
+        (width - inset, height - inset, -1, -1),
+    )
+    for x, y, dx, dy in corners:
+        draw.line((x, y, x + arm * dx, y), fill=bracket, width=thick)
+        draw.line((x, y, x, y + arm * dy), fill=bracket, width=thick)
+    return layer
+
+
 def paste_overlay(base: Image.Image, overlay: Image.Image) -> Image.Image:
     if base.mode != "RGBA":
         merged = base.convert("RGBA")

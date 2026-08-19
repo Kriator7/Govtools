@@ -39,7 +39,13 @@ class _FakeTelegram:
 
 
 def test_theo_portraits_exist_for_each_pose():
+    from wellness_agent.inventory.graphics import tech_hud_overlay
+
     ensure_agent()
+    hud = tech_hud_overlay((200, 120), seed=1)
+    assert hud.mode == "RGBA"
+    extrema = hud.getextrema()
+    assert extrema[-1][1] > 0
     for pose in POSES:
         assert portrait_path(pose).is_file()
         card = agent_path(pose)

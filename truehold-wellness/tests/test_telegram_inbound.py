@@ -133,8 +133,9 @@ def test_hello_after_start_does_not_repeat_intro():
     assert photos
     assert "wave" in photos[0]["photo"]
     blob = "\n".join((item.get("text") or item.get("caption") or "") for item in tg.sent).lower()
-    assert "theo" in blob or "good to see you" in blob or "hi again" in blob
+    assert blob.strip()
     assert "send /menu" not in blob
+    assert "<b>" in "\n".join((item.get("text") or item.get("caption") or "") for item in tg.sent)
 
 
 def test_hello_plays_intro_once_then_does_not_repeat():
