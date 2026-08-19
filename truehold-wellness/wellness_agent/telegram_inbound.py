@@ -14,7 +14,7 @@ from wellness_agent.clients import (
     save_client_phone,
 )
 from wellness_agent.compose import compose_alert, format_alert
-from wellness_agent.greetings import is_salutation
+from wellness_agent.greetings import is_crew_request, is_salutation
 from wellness_agent.identity import REQUIRED_USERNAME
 from wellness_agent.inventory.build_brand import service_path
 from wellness_agent.menu import (
@@ -27,6 +27,7 @@ from wellness_agent.menu import (
     handle_menu_callback,
     parse_interest_qty,
     remove_keyboard,
+    send_crew_photo,
     send_greet_again,
     send_host_photo,
     send_info_pdf,
@@ -232,11 +233,11 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
     staff = is_operator(user_id, chat_id, chat_type)
 
     looks_like_phone = bool(parse_phone(text)) and len(text) <= 22 and sum(ch.isdigit() for ch in text) >= 10
-    if looks_like_phone and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule", "order"}:
+    if looks_like_phone and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule", "order", "crew"}:
         return _record_phone(telegram, chat_id, text, source="typed", sender=sender)
 
-    if awaiting_phone(chat_id) and text and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule"}:
-        if not (is_salutation(text) or is_salutation(command)):
+    if awaiting_phone(chat_id) and text and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule", "crew"}:
+        if not (is_salutation(text) or is_salutation(command) or is_crew_request(text)):
             telegram.send_message(chat_id, TYPE_PHONE)
             return {"ok": True, "action": "type-phone", "chat_id": chat_id}
 
@@ -279,6 +280,11 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         mark_intro_played(chat_id)
         send_quick_menu(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id}
+
+    if command == "crew" or (text and is_crew_request(text)):
+        mark_intro_played(chat_id)
+        send_crew_photo(telegram, chat_id)
+        return {"ok": True, "action": "crew", "chat_id": chat_id}
 
     if command in {"product", "sheet"}:
         return _send_sheet(telegram, chat_id, _rest(text))

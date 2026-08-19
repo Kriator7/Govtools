@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw, ImageFilter
 from wellness_agent.inventory.graphics import (
     ASSETS,
     CREAM,
+    GOLD,
     GOLD_SOFT,
     NAVY_DEEP,
     WHITE,
@@ -57,6 +58,38 @@ def agent_card_path(pose: str = "wave", member_id: str | None = None) -> Path:
     return CARD_DIR / f"{member['id']}-{name}.jpg"
 
 
+def crew_source() -> Path:
+    return PORTRAIT_DIR / "crew.jpg"
+
+
+def crew_card_path() -> Path:
+    return CARD_DIR / "crew.jpg"
+
+
+def crew_path() -> Path:
+    return build_crew_card()
+
+
+def build_crew_card() -> Path:
+    """Full class photo. Keep the group in frame — do not crop to 16:9."""
+    CARD_DIR.mkdir(parents=True, exist_ok=True)
+    source = crew_source()
+    if source.is_file():
+        image = Image.open(source).convert("RGB")
+        width, height = image.size
+        if width > 1600:
+            scale = 1600 / width
+            image = image.resize((1600, max(1, int(height * scale))), Image.Resampling.LANCZOS)
+    else:
+        image = vertical_gradient((1280, 720), (2, 8, 18), NAVY_DEEP)
+    draw = ImageDraw.Draw(image)
+    gold_bars(draw, image.size, thickness=8, fill=GOLD)
+    paste_logo(image, box=96, margin=24)
+    dest = crew_card_path()
+    image.save(dest, format="JPEG", quality=90)
+    return dest
+
+
 def agent_path(pose: str = "wave", member_id: str | None = None) -> Path:
     return build_agent_card(pose, member_id)
 
@@ -73,6 +106,7 @@ def ensure_agent() -> list[Path]:
     paths: list[Path] = []
     for row in members():
         paths.extend(ensure_host(row["id"]))
+    paths.append(build_crew_card())
     return paths
 
 

@@ -56,9 +56,11 @@ CUSTOMER_HELP = (
     "A floor host waves when you say hi, then shows the tap-menu. "
     "Each return visit introduces a new teammate until you have met all 20. "
     "Then you can rotate again or lock a favorite who always serves you.\n"
+    "Type \"lets see the crew\" (or tap 📸 Crew) for the office class photo.\n"
     "View PDF / Sheet sends the locked information sheet as a Telegram file (Files). "
     "Shop pages in Links are not the sheets.\n"
     "/menu — quick menu\n"
+    "/crew — class photo of the floor team\n"
     "/schedule — talk to the TrueHold team\n"
     "/help — this message\n"
     f"{SERVICE_POLICY} Educational only. {CALL_AND_DOCS}.\n"
@@ -141,6 +143,7 @@ def send_schedule(telegram, chat_id: str) -> None:
 CUSTOMER_COMMANDS = (
     {"command": "start", "description": "Welcome to TrueHold Wellness"},
     {"command": "menu", "description": "Quick menu — tap one name"},
+    {"command": "crew", "description": "Class photo of the floor team"},
     {"command": "schedule", "description": "Talk to the TrueHold team"},
     {"command": "help", "description": "How to order"},
 )

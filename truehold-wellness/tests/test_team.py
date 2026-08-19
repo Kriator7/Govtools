@@ -1,4 +1,4 @@
-from wellness_agent.inventory.build_agent import POSES, agent_path, portrait_path
+from wellness_agent.inventory.build_agent import POSES, agent_path, crew_source, portrait_path
 from wellness_agent.knowledge.talk import reply
 from wellness_agent.menu import handle_menu_callback
 from wellness_agent.session_store import mark_intro_played
@@ -169,3 +169,47 @@ def test_talk_signs_the_current_host_and_still_refuses_dose_math():
 def test_all_poses_exist_for_theo():
     for pose in POSES:
         assert portrait_path(pose, "theo").is_file()
+
+
+def test_crew_class_photo_exists():
+    path = crew_source()
+    assert path.is_file()
+    assert path.stat().st_size > 1000
+
+
+def test_lets_see_the_crew_sends_the_class_photo():
+    from wellness_agent.session_store import mark_intro_played
+
+    mark_intro_played("31")
+    tg = _FakeTelegram()
+    result = handle_telegram_update(
+        {
+            "message": {
+                "text": "lets see the crew",
+                "chat": {"id": 31, "type": "private"},
+                "from": {"id": 31},
+            }
+        },
+        tg,
+    )
+    assert result["action"] == "crew"
+    photos = [item for item in tg.sent if "photo" in item]
+    assert photos
+    assert photos[0]["photo"].endswith("crew.jpg")
+    assert "floor crew" in (photos[0].get("caption") or "").lower()
+    labels = [
+        btn["text"]
+        for row in (photos[0].get("reply_markup") or {}).get("inline_keyboard") or []
+        for btn in row
+    ]
+    assert any("Crew" in label for label in labels)
+    tap = handle_menu_callback(
+        {
+            "id": "crew-cb",
+            "data": "w:crew",
+            "from": {"id": 31},
+            "message": {"chat": {"id": 31, "type": "private"}},
+        },
+        tg,
+    )
+    assert tap["action"] == "crew"

@@ -21,7 +21,7 @@ from wellness_agent.catalog import (
     products,
 )
 from wellness_agent.clients import client_phone, phone_line_for_staff
-from wellness_agent.inventory.build_agent import agent_path, ensure_host
+from wellness_agent.inventory.build_agent import agent_path, crew_path, ensure_host
 from wellness_agent.inventory.build_brand import logo_path, service_path
 from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
@@ -42,6 +42,7 @@ from wellness_agent.team import (
 )
 from wellness_agent.telegram_copy import (
     CALL_AND_DOCS,
+    CELEBRATE_EFFECT_ID,
     INTRODUCTION,
     PARSE_MODE,
 )
@@ -96,6 +97,7 @@ PRODUCT_EMOJI = {
 TOASTS = {
     "yes": "You're in 🎉",
     "prep": "Prep 🛠️",
+    "crew": "The crew 📸",
     "fav": "Favorite locked",
     "next": "Next teammate",
     "rotate": "Tour reset",
@@ -181,7 +183,13 @@ def quick_menu_keyboard(chat_id: str | None = None, host: dict[str, Any] | None 
         rows.append(row)
     if chat_id:
         rows.extend(host_action_rows(str(chat_id), host))
-    rows.append([_button("🛠️ Prep", "w:prep"), _button("📅 Team", "w:team")])
+    rows.append(
+        [
+            _button("🛠️ Prep", "w:prep"),
+            _button("📅 Team", "w:team"),
+            _button("📸 Crew", "w:crew"),
+        ]
+    )
     return _keyboard(rows)
 
 
@@ -329,6 +337,25 @@ def send_theo_talk(telegram, chat_id: str, text: str) -> str:
         host=host,
     )
     return spoken.source
+
+
+CREW_CAPTION = (
+    "<b>The floor crew</b>\n"
+    "TrueHold Wellness · Las Vegas\n"
+    "Bunny ears, one happy closed-eye laugh, twenty friends.\n"
+    "Tap a name — or lock a favorite who always serves you."
+)
+
+
+def send_crew_photo(telegram, chat_id: str) -> None:
+    send_brand_photo(
+        telegram,
+        chat_id,
+        crew_path(),
+        CREW_CAPTION,
+        quick_menu_keyboard(str(chat_id)),
+        message_effect_id=CELEBRATE_EFFECT_ID,
+    )
 
 
 def send_quick_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> None:
@@ -610,6 +637,9 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
     if action == "menu":
         send_quick_menu(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id}
+    if action == "crew":
+        send_crew_photo(telegram, chat_id)
+        return {"ok": True, "action": "crew", "chat_id": chat_id}
     if action == "team":
         send_team_card(telegram, chat_id)
         return {"ok": True, "action": "schedule", "chat_id": chat_id}

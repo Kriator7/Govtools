@@ -50,6 +50,24 @@ def _normalize(text: str) -> str:
     return " ".join(folded.split())
 
 
+_CREW_RE = re.compile(
+    r"(?:let'?s|lets|let us|see|show|meet|who is|who'?s|where'?s|where is).{0,32}\b"
+    r"(crew|class photo|group photo|everyone|whole (?:floor )?team)\b"
+    r"|\b(the crew|floor crew|class photo|group photo|office photo)\b",
+    re.IGNORECASE,
+)
+
+
+def is_crew_request(text: str) -> bool:
+    """True when the customer asked to see the whole floor-team class photo."""
+    normalized = _normalize(text)
+    if not normalized:
+        return False
+    if normalized in {"crew", "the crew", "floor crew", "class photo", "group photo", "office photo"}:
+        return True
+    return _CREW_RE.search(normalized) is not None
+
+
 def is_salutation(text: str) -> bool:
     """True when the message is (or starts with) a greeting."""
     normalized = _normalize(text)
