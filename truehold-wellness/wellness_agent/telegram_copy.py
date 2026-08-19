@@ -34,7 +34,8 @@ PAYMENT_COPY = (
 INTRODUCTION = (
     "<b>Welcome to TrueHold Wellness</b>\n"
     "\n"
-    "Hello — we are glad you are here. Official Telegram shop for Las Vegas residents. "
+    "Hello — we are glad you are here. We care that you get healthy and take ownership of your body. "
+    "Official Telegram shop for Las Vegas residents. "
     "Educational research-peptide information. Dry (lyophilized) vials only.\n"
     "\n"
     "<b>How it works</b>\n"
@@ -42,6 +43,7 @@ INTRODUCTION = (
     "2. Sheet or Order\n"
     f"3. We call to confirm, consult, and complete required documentation\n"
     "\n"
+    "Nature and God already packed the tools. Science opened the door again. Respect them.\n"
     "Prep and local delivery: Las Vegas residents only.\n"
     "Need a person? tap Team"
 )
@@ -56,6 +58,9 @@ CUSTOMER_HELP = (
     "A floor host waves when you say hi, then shows the tap-menu. "
     "Each return visit introduces a new teammate until you have met all 20. "
     "Then you can rotate again or lock a favorite who always serves you.\n"
+    "We care that you get healthy, take ownership of your body, and use the tools nature and God already gave us. "
+    "Most peptides already exist in you — respect them, like oxygen. Learn, but do not lose access. "
+    "If you support this house, tell others.\n"
     "Type \"lets see the crew\" (or tap 📸 Crew) for the office class photo.\n"
     "View PDF / Sheet sends the locked information sheet as a Telegram file (Files). "
     "Shop pages in Links are not the sheets.\n"

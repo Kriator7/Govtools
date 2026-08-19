@@ -68,6 +68,29 @@ def is_crew_request(text: str) -> bool:
     return _CREW_RE.search(normalized) is not None
 
 
+_CREED_RE = re.compile(
+    r"\b("
+    r"why (?:are|do) you|what do you (?:believe|stand|care)|your mission|"
+    r"truehold(?: wellness)? (?:why|mission|believe)|"
+    r"empower(?:ment)?|take control|ownership|"
+    r"natur(?:e|al|ally)|god|bone broth|ferment|"
+    r"vitamin\s*c|oranges?|hostage|oxygen|"
+    r"already (?:in|exist)|naturally occurring|"
+    r"people deserve|profiteer|the truth|tell others|"
+    r"why peptides|why this (?:house|bot|shop)"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def is_creed_request(text: str) -> bool:
+    """True when the customer asked why this house exists or what we believe."""
+    normalized = _normalize(text)
+    if not normalized:
+        return False
+    return _CREED_RE.search(normalized) is not None
+
+
 def is_salutation(text: str) -> bool:
     """True when the message is (or starts with) a greeting."""
     normalized = _normalize(text)

@@ -52,6 +52,7 @@ from wellness_agent.telegram_copy import (
 MENU_INTRO = (
     "<b>Menu</b>\n"
     "Tap a name — one picture, short buttons.\n"
+    "We care that you get well. Your body, your call.\n"
     "Las Vegas · dry vials only"
 )
 
@@ -382,7 +383,8 @@ def send_theo_talk(telegram, chat_id: str, text: str) -> str:
 CREW_CAPTION = (
     "<b>The floor crew</b>\n"
     "TrueHold Wellness · Las Vegas\n"
-    "Bunny ears, one happy closed-eye laugh, twenty friends.\n"
+    "Bunny ears, one happy closed-eye laugh, twenty friends who care that you get well.\n"
+    "Take ownership. Tell others if this house helped.\n"
     "Tap a name — or lock a favorite who always serves you."
 )
 

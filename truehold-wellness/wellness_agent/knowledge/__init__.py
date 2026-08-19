@@ -139,6 +139,31 @@ def retrieve(query: str, *, limit: int = 6) -> list[dict[str, Any]]:
         score = sum(1 for part in needle if part in blob)
         if row["kind"] == "product" and any(part in blob for part in needle):
             score += 2
+        if row["kind"] == "creed":
+            score += 1
+            if any(
+                part in needle
+                for part in (
+                    "nature",
+                    "natural",
+                    "god",
+                    "vitamin",
+                    "orange",
+                    "oranges",
+                    "truth",
+                    "empower",
+                    "peptide",
+                    "peptides",
+                    "healthy",
+                    "profit",
+                    "oxygen",
+                    "broth",
+                    "herbs",
+                    "ownership",
+                    "hostage",
+                )
+            ):
+                score += 2
         if score:
             scored.append((score, row))
     scored.sort(key=lambda item: (-item[0], item[1]["id"]))

@@ -91,9 +91,14 @@ def flavor_caption(
     extra: str = "",
     *,
     joke: bool = False,
+    creed: bool | None = None,
 ) -> str:
     heading = f"<b>{member['icon']} {member['name']}</b> · {member['role']}"
     body = f"{heading}\n{pose_line(member, pose)}"
+    if creed is None:
+        creed = pose == "wave"
+    if creed and member.get("creed"):
+        body = f"{body}\n\n<i>{member['creed']}</i>"
     if joke and member.get("joke"):
         body = f"{body}\n\n<i>{member['joke']}</i>"
     if extra:

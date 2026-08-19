@@ -13,6 +13,7 @@ from typing import Any
 
 import httpx
 
+from wellness_agent.greetings import is_creed_request
 from wellness_agent.knowledge import active_promo, pick_snippet, retrieve, seed_approved_knowledge
 from wellness_agent.team import current_host, flavor_caption
 
@@ -53,6 +54,8 @@ def reply(
         if promo:
             body = f"{body}\n\n{promo}"
         return TalkReply(text=body, pose="wave", source="seed-hello")
+    if is_creed_request(text):
+        return _creed_reply(host, text)
     if re.search(r"\b(thanks|thank you|thx|appreciate)\b", lowered):
         return TalkReply(
             text=_signed(host, pick_snippet("thanks", salt=chat_id)),
@@ -91,6 +94,22 @@ def reply(
     return TalkReply(text=_signed(host, body), pose="present", source="seed-smalltalk")
 
 
+def _creed_reply(host: dict[str, Any], message: str) -> TalkReply:
+    hits = retrieve(message)
+    house = next((row for row in hits if row.get("kind") == "creed"), None)
+    if house is None:
+        fallback = retrieve("nature peptides truth empowerment vitamin")
+        house = next((row for row in fallback if row.get("kind") == "creed"), None)
+        if house is None and fallback:
+            house = fallback[0]
+    body = f"<i>{host.get('creed') or ''}</i>".strip()
+    if house:
+        body = f"{body}\n\n<b>{house['title']}</b>\n{house['text']}" if body else f"<b>{house['title']}</b>\n{house['text']}"
+    if not body:
+        body = "We care that you get healthy. Tap Sheet for the locked truth, Team for a person."
+    return TalkReply(text=_signed(host, body), pose="think", source="seed-creed")
+
+
 def _signed(host: dict[str, Any], text: str) -> str:
     return f"<b>{host['icon']} {host['name']}</b>\n{text}"
 
@@ -114,9 +133,16 @@ def _llm_reply(message: str, hits: list[dict[str, Any]], host: dict[str, Any]) -
     )
     name = str(host.get("name") or "Theo")
     role = str(host.get("role") or "floor host")
+    creed = str(host.get("creed") or "")
     system = (
         f"You are {name}, {role} at TrueHold Wellness on Telegram. "
         "Warm, brief, playful, never sad or dry. One short HTML <b> heading plus a few lines. "
+        f"House voice: {creed} "
+        "We care that people get healthy and take control of their lives. "
+        "Nature and God gave the tools. Science recovered what broths, herbs, and fermentation once knew. "
+        "Most peptides already exist in the body. Too much of anything, even oxygen, can harm you. "
+        "Respect the tools; do not hostage them like vitamin C. Empowerment, ownership, high-quality food and rest. "
+        "The people deserve the truth. If they support this house, ask them to tell others. "
         "Use ONLY the approved context. If it is not there, say you will fetch a person via Team "
         "and offer the tap-menu. Never give dosing, reconstitution, injection, or medical advice. "
         "Never invent products, prices, or sales. Never include http links. "

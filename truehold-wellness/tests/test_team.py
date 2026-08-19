@@ -87,6 +87,7 @@ def test_floor_team_has_twenty_distinct_hosts():
             "cheer",
             "soon",
             "joke",
+            "creed",
             "effect",
         ):
             assert row.get(key), f"{row['id']} missing {key}"
@@ -101,8 +102,11 @@ def test_floor_team_has_twenty_distinct_hosts():
         assert "Team" in kit["team"]
         assert "Crew" in kit["crew"]
         blob = " ".join(
-            str(row[key]) for key in ("hello", "present", "think", "work", "cheer", "soon", "joke")
+            str(row[key])
+            for key in ("hello", "present", "think", "work", "cheer", "soon", "joke", "creed")
         ).lower()
+        assert "care" in str(row["hello"]).lower() or "health" in str(row["hello"]).lower() or "well" in str(row["hello"]).lower()
+        assert len(str(row["creed"])) > 40
         assert "units =" not in blob
         assert "inject" not in blob
         assert "bac water" not in blob
@@ -155,6 +159,7 @@ def test_greet_again_rotates_hosts_and_can_lock_a_favorite():
     photo = [item for item in tg.sent if "photo" in item][-1]
     assert "theo-wave.jpg" in photo["photo"]
     assert "Theo" in photo["caption"]
+    assert "already live in you" in photo["caption"].lower() or "tools to respect" in photo["caption"].lower()
     assert photo["message_effect_id"]
     labels = [
         btn["text"]
@@ -186,6 +191,19 @@ def test_talk_signs_the_current_host_and_still_refuses_dose_math():
     lower = spoken.text.lower()
     assert "rio" in spoken.text.lower()
     assert "sheet" in lower or "locked" in lower or "pdf" in lower
+    assert "reconstitut" not in lower
+    assert "units =" not in lower
+    assert "http" not in lower
+
+
+def test_talk_answers_house_creed_in_the_current_host_voice():
+    set_favorite("creed-1", "wynn")
+    spoken = reply("why do you care about vitamin C and oranges?", chat_id="creed-1")
+    lower = spoken.text.lower()
+    assert spoken.source == "seed-creed"
+    assert "wynn" in spoken.text.lower()
+    assert "orange" in lower or "vitamin" in lower
+    assert "hostage" in lower or "people" in lower or "access" in lower
     assert "reconstitut" not in lower
     assert "units =" not in lower
     assert "http" not in lower
