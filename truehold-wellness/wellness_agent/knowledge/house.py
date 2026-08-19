@@ -14,7 +14,7 @@ from typing import Any
 HOUSE_PATH = Path(__file__).resolve().parent / "house.json"
 
 WEIGHT_LOSS_IDS = frozenset({"tirzepatide", "retatrutide"})
-FASTING_OPENER = "Have you ever fasted before?"
+FASTING_OPENER = "Have you ever tried fasting, even a little? We're here either way."
 
 
 @lru_cache
@@ -144,7 +144,7 @@ def format_prep_caption(product: dict[str, Any]) -> str:
         lines.extend(["", "<b>Kitchen allies</b>", companions, "Educational herbs and food — not a prescription."])
     lines.extend(["", f"<b>{rec['opener']}</b>"])
     if rec["weight_loss"]:
-        lines.append("Fasting is the ideal prep conversation for this vial.")
+        lines.append("A gentle fasting question helps us start this vial in a kind place.")
     lines.extend(["", "Las Vegas · dry vials only · mix math on Sheet"])
     return "\n".join(line for line in lines if line is not None)
 

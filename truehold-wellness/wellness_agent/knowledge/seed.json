@@ -35,38 +35,38 @@
       "id": "creed-why",
       "title": "Why we are here",
       "kind": "creed",
-      "text": "We care that people get healthy and take control of their own lives. Use the tools nature and God already gave us. High-quality food and rest make a high-quality human. Peptides can help you aim at your best health. Educational only. If you support this house, tell others."
+      "text": "We care that people get healthy, and we walk with them. Use the tools nature and God already gave us. High-quality food and rest make a high-quality human. Peptides can help you aim at your best health. Educational only. If this house helped, you're welcome to tell others."
     },
     {
       "id": "creed-nature",
       "title": "Nature, science, and memory",
       "kind": "creed",
-      "text": "These signals showed up in bone broths, herbs, and fermentation long before lab glass. A lot of that kitchen knowledge was lost. Science opened the door again — like seeing it for the first time. Most peptides already exist in the human body. They are naturally occurring. You have a right to know. Mix math stays on the locked sheet, not in chat."
+      "text": "These signals showed up in bone broths, herbs, and fermentation long before lab glass. A lot of that kitchen knowledge was lost. Science opened the door again — like seeing it for the first time. Most peptides already exist in the human body. They are naturally occurring. You're welcome to know. Mix math stays on the locked sheet, not in chat."
     },
     {
       "id": "creed-respect",
-      "title": "Respect, not control",
+      "title": "Respect, with care",
       "kind": "creed",
-      "text": "Too much of anything — even oxygen — can seriously hurt you. TrueHold Wellness agrees: these are tools to respect, not toys and not a hostage. We will not dose in chat. We will not hide the truth. Learn. Do not lose access."
+      "text": "Too much of anything — even oxygen — can seriously hurt you. TrueHold Wellness agrees: these are tools to respect, not toys. We will not dose in chat. We'll keep the facts open and kind. Learn with us — the door stays open."
     },
     {
       "id": "creed-oranges",
-      "title": "Vitamin C is not a hostage",
+      "title": "Vitamin C and oranges",
       "kind": "creed",
-      "text": "It is like holding vitamin C hostage and saying someone else must control how many oranges you may have. We must learn, but not at the expense of losing access. Leave naturally occurring tools with the people. Stop profiteers from locking them up for profit — and from corrupting them later. The people deserve the truth."
+      "text": "Vitamin C in oranges was never meant to feel like someone else's permission slip. We learn how to use naturally occurring tools with care, and we keep the kitchen door open. Honest information belongs with the people who need it. If this house helped, you're welcome to tell someone else."
     },
     {
       "id": "creed-body",
       "title": "What you put in",
       "kind": "creed",
-      "text": "Empowerment means taking ownership of your body. What you put in produces the human you are. High-quality food and rest equal a high-quality human. We have a right to pursue our best health. Peptides are one of the tools that can help. Educational information. Las Vegas, dry vials, team consult for orders."
+      "text": "Empowerment can mean feeling at home in your own body. What you put in produces the human you are. High-quality food and rest equal a high-quality human. We have a right to pursue our best health. Peptides are one of the tools that can help. Educational information. Las Vegas, dry vials, team consult for orders."
     }
   ],
   "hellos": [
-    "<b>Welcome back.</b>\nWe care that you get healthy and take the wheel.\nTap a name, or just tell me what you are curious about.",
-    "<b>Hi again — still grinning.</b>\nLas Vegas · dry vials · tools to respect, not a hostage.\nWhat are we looking at?",
+    "<b>Welcome back.</b>\nWe care that you get healthy, and we'll walk with you.\nTap a name, or just tell me what you are curious about.",
+    "<b>Hi again — still grinning.</b>\nLas Vegas · dry vials · tools to respect, offered with care.\nWhat are we looking at?",
     "<b>You said hi. A host showed up waving.</b>\nOfficial TrueHold Wellness floor team. Nature packed the kit. Science opened the door.\nPick a name or ask a light question.",
-    "<b>Welcome back.</b>\nSeat's warm. Ownership stays with you.\nSheet, Order, Prep, or Team — your call."
+    "<b>Welcome back.</b>\nSeat's warm. We'll go at your pace.\nSheet, Order, Prep, or Team — your call."
   ],
   "jokes": [
     "I only ship dry vials. My humor, unfortunately, also arrives dehydrated.",
@@ -75,11 +75,11 @@
     "If peptides had a frequent-flier program I would still need you to be in Las Vegas."
   ],
   "smalltalk": [
-    "<b>I can do that.</b>\nTap a name for a tile, Sheet for the locked PDF, Team if you want a person.\nI stay on approved notes — no guessing, no dosing in chat. You stay in charge of the body.",
-    "<b>Curious is allowed.</b>\nI will stick to the locked sheets and the Las Vegas / dry-vial rules.\nAsk away, or tap the menu. The people deserve the truth.",
+    "<b>I can do that.</b>\nTap a name for a tile, Sheet for the locked PDF, Team if you want a person.\nI stay on approved notes — no guessing, no dosing in chat. You're still in charge of the body.",
+    "<b>Curious is welcome.</b>\nI will stick to the locked sheets and the Las Vegas / dry-vial rules.\nAsk away, or tap the menu. We'll keep the facts kind and clear.",
     "<b>Got you.</b>\nMenu is right there. We care that you get well. I am better with buttons than with medical advice — on purpose."
   ],
   "thanks": [
-    "<b>Anytime.</b>\nI will be here waving when you say hi.\nIf this house helped, tell others. Need a vial? Tap a name."
+    "<b>Anytime.</b>\nI will be here waving when you say hi.\nIf this house helped, you're welcome to tell others. Need a vial? Tap a name."
   ]
 }

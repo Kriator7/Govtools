@@ -204,7 +204,7 @@ def test_talk_answers_house_creed_in_the_current_host_voice():
     assert spoken.source == "seed-creed"
     assert "wynn" in spoken.text.lower()
     assert "orange" in lower or "vitamin" in lower
-    assert "hostage" in lower or "people" in lower or "access" in lower
+    assert "care" in lower or "learn" in lower or "people" in lower or "kitchen" in lower
     assert "reconstitut" not in lower
     assert "units =" not in lower
     assert "http" not in lower

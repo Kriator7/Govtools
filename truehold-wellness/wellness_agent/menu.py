@@ -222,8 +222,8 @@ def after_pick_keyboard(product_id: str, host: dict[str, Any] | None = None) -> 
     if rec["weight_loss"]:
         rows.append(
             [
-                _button("Yes — I have fasted", f"w:fast:{product_id}:yes", style=tone),
-                _button("Not yet", f"w:fast:{product_id}:no", style=tone),
+                _button("Yes, I have", f"w:fast:{product_id}:yes", style=tone),
+                _button("Not yet — that's okay", f"w:fast:{product_id}:no", style=tone),
             ]
         )
     rows.extend(
@@ -455,7 +455,7 @@ def send_prep_card(telegram, chat_id: str, product: dict | None = None) -> None:
     else:
         extra = (
             f"{house_experience()}\n"
-            "Tap a name. Each vial has a prep-state question — fasting for weight-loss tools.\n"
+            "Tap a name. Weight-loss tools include a gentle fasting question — no quiz, just care.\n"
             "Mix math stays on Sheet."
         )
         markup = quick_menu_keyboard(str(chat_id))

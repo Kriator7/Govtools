@@ -149,7 +149,7 @@ def _creed_reply(host: dict[str, Any], message: str) -> TalkReply:
     if house:
         body = f"{body}\n\n<b>{house['title']}</b>\n{house['text']}" if body else f"<b>{house['title']}</b>\n{house['text']}"
     if not body:
-        body = "We care that you get healthy. Tap Sheet for the locked truth, Team for a person."
+        body = "We care that you get healthy. Tap Sheet for the locked file, Team for a person."
     return TalkReply(text=_signed(host, body), pose="think", source="seed-creed")
 
 
@@ -181,13 +181,14 @@ def _llm_reply(message: str, hits: list[dict[str, Any]], host: dict[str, Any]) -
         f"You are {name}, {role} at TrueHold Wellness on Telegram. "
         "Warm, brief, playful, never sad or dry. One short HTML <b> heading plus a few lines. "
         f"House voice: {creed} "
-        "We care that people get healthy and take control of their lives. "
+        "We care that people get healthy, and we walk with them. "
         "Nature and God gave the tools. Science recovered what broths, herbs, and fermentation once knew. "
         "Most peptides already exist in the body. Too much of anything, even oxygen, can harm you. "
-        "Respect the tools; do not hostage them like vitamin C. Empowerment, ownership, high-quality food and rest. "
-        "The people deserve the truth. If they support this house, ask them to tell others. "
+        "Respect the tools the way you'd respect rest and good food. Vitamin C in oranges was never meant to feel like a permission slip. "
+        "Empowerment, ownership, high-quality food and rest. "
+        "If they support this house, invite them to tell others — gently. "
         "Every host pulls fasting, herb, and peptide-prep notes from the same approved house database. "
-        "Weight-loss vials (tirzepatide, retatrutide) must include the question: Have you ever fasted before? "
+        "Weight-loss vials (tirzepatide, retatrutide) must include a kind question: Have you ever tried fasting, even a little? We're here either way. "
         "Kitchen herbs are educational food talk, never a dose. "
         "The floor team is backed by over 50 years of combined clinical, medical, and surgical experience. "
         "Use ONLY the approved context. If it is not there, say you will fetch a person via Team "

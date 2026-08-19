@@ -44,7 +44,8 @@ def test_house_db_covers_every_host_and_sku():
     assert tirz["weight_loss"] and reta["weight_loss"]
     assert tirz["opener"] == FASTING_OPENER
     assert reta["opener"] == FASTING_OPENER
-    assert FASTING_OPENER.lower() in "have you ever fasted before?"
+    assert "fast" in FASTING_OPENER.lower()
+    assert "either way" in FASTING_OPENER.lower() or "no pressure" in FASTING_OPENER.lower()
 
 
 def test_house_seed_has_no_mix_math():
@@ -96,7 +97,7 @@ def test_weight_loss_tile_asks_if_you_have_fasted():
     caption = photos[-1]["caption"]
     assert FASTING_OPENER in caption
     labels = [btn["text"] for row in photos[-1]["reply_markup"]["inline_keyboard"] for btn in row]
-    assert any("fasted" in label.lower() for label in labels)
+    assert any("yes" in label.lower() for label in labels)
     assert any("not yet" in label.lower() for label in labels)
     markup = after_pick_keyboard("tirzepatide")
     data = [btn.get("callback_data") for row in markup["inline_keyboard"] for btn in row]
