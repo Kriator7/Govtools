@@ -43,6 +43,7 @@ from wellness_agent.session_store import (
 )
 from wellness_agent.telegram_copy import (
     BOT_COMMANDS,
+    CELEBRATE_EFFECT_ID,
     CUSTOMER_COMMANDS,
     CUSTOMER_HELP,
     GREET_AGAIN,
@@ -167,7 +168,13 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             sender=sender,
         )
 
-    if text.lower() in {"i'll type my number", "ill type my number", "i will type my number"}:
+    if text.lower() in {
+        "i'll type my number",
+        "ill type my number",
+        "i will type my number",
+        "✏️ type it",
+        "type it",
+    }:
         set_awaiting_phone(chat_id, True)
         telegram.send_message(chat_id, TYPE_PHONE)
         return {"ok": True, "action": "type-phone", "chat_id": chat_id}
@@ -246,6 +253,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             chat_id,
             service_path(),
             CUSTOMER_CONFIRM.format(detail=detail),
+            message_effect_id=CELEBRATE_EFFECT_ID,
         )
         if not client_phone(chat_id):
             ask_for_phone(telegram, chat_id)

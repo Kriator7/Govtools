@@ -12,7 +12,7 @@ class _FakeTelegram:
         self.sent.append({"chat_id": chat_id, "text": text, "reply_markup": reply_markup, "parse_mode": parse_mode})
         return {"ok": True}
 
-    def send_document(self, chat_id, path, caption="", reply_markup=None, filename=None):
+    def send_document(self, chat_id, path, caption="", reply_markup=None, filename=None, parse_mode=None, message_effect_id=None):
         self.sent.append(
             {
                 "chat_id": chat_id,
@@ -20,17 +20,21 @@ class _FakeTelegram:
                 "caption": caption,
                 "reply_markup": reply_markup,
                 "filename": filename,
+                "parse_mode": parse_mode,
+                "message_effect_id": message_effect_id,
             }
         )
         return {"ok": True}
 
-    def send_photo(self, chat_id, path, caption="", reply_markup=None):
+    def send_photo(self, chat_id, path, caption="", reply_markup=None, parse_mode=None, message_effect_id=None):
         self.sent.append(
             {
                 "chat_id": chat_id,
                 "photo": str(path),
                 "caption": caption,
                 "reply_markup": reply_markup,
+                "parse_mode": parse_mode,
+                "message_effect_id": message_effect_id,
             }
         )
         return {"ok": True}
@@ -75,8 +79,8 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
         for row in (item.get("reply_markup") or {}).get("inline_keyboard") or []
         for btn in row
     ]
-    assert "Yes — Las Vegas resident" in ask_buttons
-    assert "Not in Las Vegas" in ask_buttons
+    assert "✅ Vegas" in ask_buttons
+    assert "📍 Not LV" in ask_buttons
     confirm = handle_telegram_update(_tap("w:yes:klow:2", callback_id="cb2"), tg)
     assert confirm["action"] == "order-confirm"
     assert confirm["product"] == "klow"
@@ -87,7 +91,7 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert inbox.payments.new is False
     assert "Inventory:" in inbox.orders.detail
     texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
-    assert any("Got it. The TrueHold team will call" in text for text in texts)
+    assert any("You're in" in text for text in texts)
     assert any("required documentation" in text for text in texts)
     assert any("Las Vegas" in text for text in texts)
     assert any("dry" in text.lower() for text in texts)
@@ -110,10 +114,15 @@ def test_info_sheet_sends_telegram_pdf_not_website_link():
     assert "trueholdwellness.com" not in caption
     assert "http" not in caption.lower()
     labels = [btn["text"] for row in docs[0]["reply_markup"]["inline_keyboard"] for btn in row]
-    assert labels == ["Order this", "See menu"]
+    assert "🛒 Order" in labels
+    assert "🛠️ Prep" in labels
+    assert "⬅️ Menu" in labels
+    assert "📅 Team" in labels
     assert "url" not in str(docs[0]["reply_markup"])
     assert docs[0]["filename"] == "TrueHold Wellness locked information sheet — Semax.pdf"
     assert docs[0]["document"].endswith(docs[0]["filename"])
+    assert docs[0]["parse_mode"] == "HTML"
+    assert "<b>" in caption
 
 
 def test_nad_info_sheet_is_telegram_file_not_shop_page():
@@ -168,7 +177,7 @@ def test_order_without_phone_does_not_touch_inventory():
     result = handle_telegram_update(_tap("w:yes:klow:2"), tg)
     assert result["action"] == "need-phone"
     assert load_stock()["products"]["klow"]["on_hand"] == 5
-    assert any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
+    assert any("Share my phone" in str(item.get("reply_markup") or "") for item in tg.sent)
 
 
 def test_slash_order_matching_sku_uses_same_inventory_path():
@@ -191,3 +200,48 @@ def test_slash_order_matching_sku_uses_same_inventory_path():
     assert result["action"] == "order-confirm"
     assert result["product"] == "semax"
     assert load_stock()["products"]["semax"]["on_hand"] == 2
+
+
+def test_prep_card_is_policy_only_not_dosing():
+    tg = _FakeTelegram()
+    result = handle_telegram_update(_tap("w:prep:semax"), tg)
+    assert result["action"] == "prep"
+    photos = [item for item in tg.sent if "photo" in item]
+    assert photos
+    caption = photos[-1]["caption"]
+    assert "Prep" in caption
+    assert "Las Vegas" in caption
+    assert "dry" in caption.lower()
+    assert "units" not in caption.lower()
+    assert "reconstitut" not in caption.lower()
+    assert photos[-1]["parse_mode"] == "HTML"
+    labels = [btn["text"] for row in photos[-1]["reply_markup"]["inline_keyboard"] for btn in row]
+    assert "📄 Sheet" in labels
+    assert "🛒 Order" in labels
+    assert "url" not in str(photos[-1]["reply_markup"])
+
+
+def test_order_confirm_plays_celebrate_effect():
+    from wellness_agent.clients import save_client_phone
+    from wellness_agent.telegram_copy import CELEBRATE_EFFECT_ID
+
+    save_client_phone("88", "7025550100", source="typed", user_id="88")
+    tg = _FakeTelegram()
+    confirm = handle_telegram_update(_tap("w:yes:semax:1", callback_id="cb9"), tg)
+    assert confirm["action"] == "order-confirm"
+    photos = [item for item in tg.sent if "photo" in item]
+    assert any(item.get("message_effect_id") == CELEBRATE_EFFECT_ID for item in photos)
+    assert any("You're in" in (item.get("caption") or "") for item in photos)
+    assert "cb9" in tg.callbacks
+
+
+def test_quick_menu_uses_emoji_name_grid():
+    tg = _FakeTelegram()
+    handle_telegram_update(_tap("w:menu"), tg)
+    menus = [item for item in tg.sent if (item.get("reply_markup") or {}).get("inline_keyboard")]
+    labels = [btn["text"] for row in menus[-1]["reply_markup"]["inline_keyboard"] for btn in row]
+    assert "🧠 Semax" in labels
+    assert "⚡ NAD+" in labels
+    assert "🛠️ Prep" in labels
+    assert "📅 Team" in labels
+    assert menus[-1]["parse_mode"] == "HTML"

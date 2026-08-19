@@ -26,25 +26,34 @@ from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
 from wellness_agent.session_store import pending_order, set_awaiting_phone, set_pending_order
 from wellness_agent.stock import record_order_row, staff_inventory_line
-from wellness_agent.telegram_copy import CALL_AND_DOCS, INTRODUCTION, PAYMENT_COPY, SERVICE_POLICY
+from wellness_agent.telegram_copy import (
+    CALL_AND_DOCS,
+    CELEBRATE_EFFECT_ID,
+    INTRODUCTION,
+    PARSE_MODE,
+)
 
 MENU_INTRO = (
-    "Quick menu — tap one name. We will send that tile.\n"
-    f"{SERVICE_POLICY}\n"
-    "Educational information only. "
-    f"{CALL_AND_DOCS}."
+    "<b>Menu</b>\n"
+    "Tap a name — one picture, short buttons.\n"
+    "Las Vegas · dry vials only"
 )
 
 CUSTOMER_CONFIRM = (
-    f"Got it. The TrueHold team will call to confirm, consult, and complete required documentation.\n"
+    "<b>You're in 🎉</b>\n"
     "{detail}\n"
-    f"{SERVICE_POLICY} Consult before payment. Educational only.\n"
-    f"{PAYMENT_COPY}"
+    "\n"
+    "<b>Next</b>\n"
+    "The team calls to confirm, consult, and complete required documentation.\n"
+    "\n"
+    "Las Vegas · dry vials only · educational only\n"
+    "Zelle on the call · debit via Team"
 )
 
 ASK_PHONE = (
+    "<b>Phone</b>\n"
     "Telegram cannot share your number unless you send it.\n"
-    "Share your phone, or type it, so we can call to confirm, consult, "
+    "Share it, or type it, so we can call to confirm, consult, "
     "and complete required documentation."
 )
 
@@ -60,6 +69,22 @@ NEED_PHONE = (
     "and complete required documentation."
 )
 
+PRODUCT_EMOJI = {
+    "tirzepatide": "💉",
+    "retatrutide": "🔥",
+    "semax": "🧠",
+    "nad": "⚡",
+    "klow": "🌿",
+    "mots-c": "🔋",
+    "ss-31": "💎",
+    "ghk-cu": "✨",
+}
+
+TOASTS = {
+    "yes": "You're in 🎉",
+    "prep": "Prep 🛠️",
+}
+
 
 def _button(text: str, data: str) -> dict[str, str]:
     return {"text": text, "callback_data": data}
@@ -69,12 +94,17 @@ def _keyboard(rows: list[list[dict[str, str]]]) -> dict[str, Any]:
     return {"inline_keyboard": rows}
 
 
+def _product_button(item: dict[str, Any]) -> dict[str, str]:
+    emoji = PRODUCT_EMOJI.get(item["id"], "•")
+    return _button(f"{emoji} {item['name']}", f"w:tile:{item['id']}")
+
+
 def contact_keyboard() -> dict[str, Any]:
     """Reply keyboard: request_contact. https://core.telegram.org/bots/api#keyboardbutton"""
     return {
         "keyboard": [
-            [{"text": "Share my phone number", "request_contact": True}],
-            [{"text": "I'll type my number"}],
+            [{"text": "📱 Share my phone", "request_contact": True}],
+            [{"text": "✏️ Type it"}],
         ],
         "resize_keyboard": True,
         "one_time_keyboard": True,
@@ -90,22 +120,22 @@ def quick_menu_keyboard() -> dict[str, Any]:
     rows: list[list[dict[str, str]]] = []
     row: list[dict[str, str]] = []
     for item in items:
-        row.append(_button(item["name"], f"w:tile:{item['id']}"))
+        row.append(_product_button(item))
         if len(row) == 2:
             rows.append(row)
             row = []
     if row:
         rows.append(row)
-    rows.append([_button("Talk to the team", "w:team")])
+    rows.append([_button("🛠️ Prep", "w:prep"), _button("📅 Team", "w:team")])
     return _keyboard(rows)
 
 
 def after_pick_keyboard(product_id: str) -> dict[str, Any]:
     return _keyboard(
         [
-            [_button("Order this", f"w:qty:{product_id}")],
-            [_button("View PDF in Telegram", f"w:info:{product_id}")],
-            [_button("See menu", "w:menu")],
+            [_button("🛒 Order", f"w:qty:{product_id}"), _button("📄 Sheet", f"w:info:{product_id}")],
+            [_button("🛠️ Prep", f"w:prep:{product_id}"), _button("📅 Team", "w:team")],
+            [_button("⬅️ Menu", "w:menu")],
         ]
     )
 
@@ -114,8 +144,8 @@ def info_sheet_keyboard(product_id: str) -> dict[str, Any]:
     """No URL buttons — a shop URL here lands in Telegram Links instead of Files."""
     return _keyboard(
         [
-            [_button("Order this", f"w:qty:{product_id}")],
-            [_button("See menu", "w:menu")],
+            [_button("🛒 Order", f"w:qty:{product_id}"), _button("🛠️ Prep", f"w:prep:{product_id}")],
+            [_button("📅 Team", "w:team"), _button("⬅️ Menu", "w:menu")],
         ]
     )
 
@@ -124,12 +154,11 @@ def qty_keyboard(product_id: str) -> dict[str, Any]:
     return _keyboard(
         [
             [
-                _button("1 vial", f"w:ask:{product_id}:1"),
-                _button("2 vials", f"w:ask:{product_id}:2"),
-                _button("3 vials", f"w:ask:{product_id}:3"),
+                _button("1", f"w:ask:{product_id}:1"),
+                _button("2", f"w:ask:{product_id}:2"),
+                _button("3", f"w:ask:{product_id}:3"),
             ],
-            [_button("Talk to the team", "w:team")],
-            [_button("See menu", "w:menu")],
+            [_button("📅 Team", "w:team"), _button("⬅️ Menu", "w:menu")],
         ]
     )
 
@@ -137,9 +166,8 @@ def qty_keyboard(product_id: str) -> dict[str, Any]:
 def confirm_keyboard(product_id: str, qty: str) -> dict[str, Any]:
     return _keyboard(
         [
-            [_button("Yes — Las Vegas resident", f"w:yes:{product_id}:{qty}")],
-            [_button("Not in Las Vegas", "w:team")],
-            [_button("Pick something else", "w:menu")],
+            [_button("✅ Vegas", f"w:yes:{product_id}:{qty}"), _button("📍 Not LV", "w:team")],
+            [_button("⬅️ Menu", "w:menu")],
         ]
     )
 
@@ -150,11 +178,25 @@ def send_brand_photo(
     path: Path,
     caption: str,
     reply_markup: dict[str, Any] | None = None,
+    *,
+    parse_mode: str | None = PARSE_MODE,
+    message_effect_id: str | None = None,
 ) -> None:
     if hasattr(telegram, "send_photo"):
-        telegram.send_photo(chat_id, path, caption=caption, reply_markup=reply_markup)
-        return
-    telegram.send_message(chat_id, caption, reply_markup=reply_markup)
+        try:
+            telegram.send_photo(
+                chat_id,
+                path,
+                caption=caption,
+                reply_markup=reply_markup,
+                parse_mode=parse_mode,
+                message_effect_id=message_effect_id,
+            )
+            return
+        except TypeError:
+            telegram.send_photo(chat_id, path, caption=caption, reply_markup=reply_markup)
+            return
+    telegram.send_message(chat_id, caption, reply_markup=reply_markup, parse_mode=parse_mode)
 
 
 def parse_interest_qty(detail: str) -> str:
@@ -173,7 +215,7 @@ def send_introduction_menu(telegram, chat_id: str) -> None:
 
 
 def send_quick_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> None:
-    caption = MENU_INTRO if include_blurb else "Tap one name:"
+    caption = MENU_INTRO if include_blurb else "<b>Menu</b>\nTap a name:"
     send_brand_photo(telegram, chat_id, hero_path(), caption, quick_menu_keyboard())
 
 
@@ -184,33 +226,75 @@ def send_picture_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> 
 
 
 def send_product_tile(telegram, chat_id: str, product: dict) -> None:
+    from html import escape
+
     ensure_cards()
     path = card_path(product)
     caption = (
-        f"{product['name']}\n{product['vial']}\n"
-        f"{SERVICE_POLICY}\n"
-        "Order this, view the PDF in Telegram, or go back to the menu."
+        f"<b>{escape(str(product['name']))}</b>\n"
+        f"{escape(str(product['vial']))}\n"
+        "\n"
+        "<b>Prep</b> Las Vegas · dry vials only\n"
+        "Tap a button — Order, Sheet, Prep, or Team."
     )
     send_brand_photo(telegram, chat_id, path, caption, after_pick_keyboard(product["id"]))
+
+
+def send_prep_card(telegram, chat_id: str, product: dict | None = None) -> None:
+    """Prep policy only. Mix and dosing stay on the locked PDF, not in chat."""
+    from html import escape
+
+    if product:
+        heading = f"<b>🛠️ Prep</b> · {escape(str(product['name']))}"
+        vial = escape(str(product["vial"]))
+        extra = f"{vial}\nMix and starting amounts are on the locked sheet — tap Sheet."
+        markup = after_pick_keyboard(product["id"])
+    else:
+        heading = "<b>🛠️ Prep</b>"
+        extra = "Tap a name, then Sheet, for that vial’s locked information sheet."
+        markup = quick_menu_keyboard()
+    caption = (
+        f"{heading}\n"
+        "\n"
+        "Las Vegas residents only\n"
+        "Dry vials only — we do not ship mixed product\n"
+        f"{CALL_AND_DOCS}.\n"
+        "\n"
+        f"{extra}"
+    )
+    send_brand_photo(telegram, chat_id, service_path(), caption, markup)
 
 
 def send_info_pdf(telegram, chat_id: str, product: dict) -> None:
     caption = format_product_caption(product)
     path = telegram_file_path(product)
     filename = locked_sheet_filename(product)
+    markup = info_sheet_keyboard(product["id"])
     if hasattr(telegram, "send_document"):
         try:
             telegram.send_document(
                 chat_id,
                 path,
                 caption=caption,
-                reply_markup=info_sheet_keyboard(product["id"]),
+                reply_markup=markup,
                 filename=filename,
+                parse_mode=PARSE_MODE,
             )
+            return
         except TypeError:
-            telegram.send_document(chat_id, path, caption=caption)
-        return
-    telegram.send_message(chat_id, caption, reply_markup=info_sheet_keyboard(product["id"]))
+            try:
+                telegram.send_document(
+                    chat_id,
+                    path,
+                    caption=caption,
+                    reply_markup=markup,
+                    filename=filename,
+                )
+                return
+            except TypeError:
+                telegram.send_document(chat_id, path, caption=caption)
+                return
+    telegram.send_message(chat_id, caption, reply_markup=markup, parse_mode=PARSE_MODE)
 
 
 def ask_for_phone(telegram, chat_id: str, *, extra: str | None = None) -> None:
@@ -259,6 +343,8 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
         chat_id,
         service_path(),
         CUSTOMER_CONFIRM.format(detail=detail),
+        after_pick_keyboard(product["id"]),
+        message_effect_id=CELEBRATE_EFFECT_ID,
     )
     try:
         send_info_pdf(telegram, chat_id, product)
@@ -296,14 +382,14 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
     message = query.get("message") or {}
     chat = message.get("chat") or {}
     chat_id = str(chat.get("id") or "")
+    parts = data.split(":")
+    action = parts[1] if len(parts) >= 2 else ""
     if hasattr(telegram, "answer_callback_query") and callback_id:
-        telegram.answer_callback_query(callback_id)
+        telegram.answer_callback_query(callback_id, text=TOASTS.get(action))
     if not chat_id:
         return {"ok": True, "ignored": True, "action": "callback-no-chat"}
-    parts = data.split(":")
     if len(parts) < 2 or parts[0] != "w":
         return {"ok": True, "ignored": True, "action": "callback-unknown"}
-    action = parts[1]
     sku = parts[2] if len(parts) > 2 else ""
     qty = parts[3] if len(parts) > 3 else ""
     if action == "menu":
@@ -314,6 +400,9 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
 
         send_schedule(telegram, chat_id)
         return {"ok": True, "action": "schedule", "chat_id": chat_id}
+    if action == "prep" and not sku:
+        send_prep_card(telegram, chat_id)
+        return {"ok": True, "action": "prep", "chat_id": chat_id}
     try:
         product = find_product(sku) if sku else None
     except UnknownProductError as exc:
@@ -327,28 +416,36 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
     if action == "info":
         send_info_pdf(telegram, chat_id, product)
         return {"ok": True, "action": "info", "chat_id": chat_id, "product": product["id"]}
+    if action == "prep":
+        send_prep_card(telegram, chat_id, product)
+        return {"ok": True, "action": "prep", "chat_id": chat_id, "product": product["id"]}
     if action == "qty":
+        from html import escape
+
         send_brand_photo(
             telegram,
             chat_id,
             service_path(),
-            f"How many {product['name']} dry vials?\n"
-            "Interest order only. "
-            f"{SERVICE_POLICY} {CALL_AND_DOCS}.\n"
-            f"{PAYMENT_COPY}",
+            f"<b>How many?</b>\n"
+            f"{escape(str(product['name']))} · dry vials\n"
+            "\n"
+            "Las Vegas · we call to complete docs",
             qty_keyboard(product["id"]),
         )
         return {"ok": True, "action": "qty", "chat_id": chat_id, "product": product["id"]}
     if action == "ask" and qty in {"1", "2", "3"}:
+        from html import escape
+
         send_brand_photo(
             telegram,
             chat_id,
             service_path(),
-            f"Send this interest order to the TrueHold team?\n"
-            f"{qty}x {product['name']} ({product['vial']})\n"
-            f"{SERVICE_POLICY}\n"
-            f"{CALL_AND_DOCS}. Confirm only if you are a Las Vegas resident.\n"
-            f"{PAYMENT_COPY}",
+            f"<b>Confirm</b>\n"
+            f"{escape(qty)}× {escape(str(product['name']))}\n"
+            f"{escape(str(product['vial']))}\n"
+            "\n"
+            "Las Vegas residents only\n"
+            f"{CALL_AND_DOCS}.",
             confirm_keyboard(product["id"], qty),
         )
         return {

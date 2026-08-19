@@ -117,13 +117,27 @@ def format_catalog() -> str:
 
 
 def format_product_caption(product: dict[str, Any]) -> str:
-    """Caption for sendDocument. No http(s) URLs — Telegram Links would open the shop."""
+    """Short HTML caption for sendDocument. No http(s) URLs — Telegram Links would open the shop.
+
+    HTML style: https://core.telegram.org/bots/api#html-style
+    """
+    from html import escape
+
+    name = escape(str(product["name"]))
+    vial = escape(str(product["vial"]))
     return (
-        f"TrueHold Wellness locked information sheet — {product['name']}\n"
-        f"{product['vial']}\n"
-        "This is the locked information sheet as a Telegram file. "
-        "Open it in this chat (Files). It is not a shop page and not a website.\n"
-        "Educational only. Dry (lyophilized) vial. Protocol details reviewed case by case.\n"
-        "Prep and local delivery: Las Vegas residents only.\n"
-        "Local Las Vegas: Zelle is best — the team shares Zelle details on the confirmation call."
+        f"<b>TrueHold Wellness</b>\n"
+        f"locked information sheet\n"
+        f"\n"
+        f"<b>{name}</b>\n"
+        f"{vial}\n"
+        f"\n"
+        f"<b>Sheet</b>\n"
+        f"Telegram file — open in Files. Not a shop page.\n"
+        f"\n"
+        f"<b>Prep</b>\n"
+        f"Las Vegas · dry vials only · Educational only\n"
+        f"\n"
+        f"<b>Pay</b>\n"
+        f"Zelle on the call · debit via Team"
     )

@@ -47,13 +47,22 @@ class WellnessTelegram:
         text: str,
         reply_markup: dict[str, Any] | None = None,
         parse_mode: str | None = None,
+        message_effect_id: str | None = None,
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {"chat_id": chat_id, "text": text}
         if parse_mode:
             payload["parse_mode"] = parse_mode
         if reply_markup:
             payload["reply_markup"] = reply_markup
-        data = self._post("sendMessage", payload)
+        if message_effect_id:
+            payload["message_effect_id"] = message_effect_id
+        try:
+            data = self._post("sendMessage", payload)
+        except RuntimeError:
+            if not message_effect_id:
+                raise
+            payload.pop("message_effect_id", None)
+            data = self._post("sendMessage", payload)
         return {"provider_message_id": str((data.get("result") or {}).get("message_id")), "raw": data}
 
     def send_photo(
@@ -62,25 +71,21 @@ class WellnessTelegram:
         path: str | Path,
         caption: str = "",
         reply_markup: dict[str, Any] | None = None,
+        parse_mode: str | None = None,
+        message_effect_id: str | None = None,
     ) -> dict[str, Any]:
         """sendPhoto: https://core.telegram.org/bots/api#sendphoto"""
-        file_path = Path(path)
-        payload: dict[str, Any] = {"chat_id": chat_id}
-        if caption:
-            payload["caption"] = caption[:1024]
-        if reply_markup:
-            payload["reply_markup"] = json.dumps(reply_markup)
-        with file_path.open("rb") as handle, httpx.Client(timeout=60) as client:
-            response = client.post(
-                self._url("sendPhoto"),
-                data=payload,
-                files={"photo": (file_path.name, handle, "image/jpeg")},
-            )
-            response.raise_for_status()
-            data = response.json()
-        if not data.get("ok"):
-            raise RuntimeError(data.get("description") or "Telegram sendPhoto failed")
-        return {"provider_message_id": str((data.get("result") or {}).get("message_id")), "raw": data}
+        return self._send_file(
+            "sendPhoto",
+            chat_id,
+            path,
+            field="photo",
+            mime="image/jpeg",
+            caption=caption,
+            reply_markup=reply_markup,
+            parse_mode=parse_mode,
+            message_effect_id=message_effect_id,
+        )
 
     def send_document(
         self,
@@ -89,25 +94,69 @@ class WellnessTelegram:
         caption: str = "",
         reply_markup: dict[str, Any] | None = None,
         filename: str | None = None,
+        parse_mode: str | None = None,
+        message_effect_id: str | None = None,
     ) -> dict[str, Any]:
         """sendDocument: https://core.telegram.org/bots/api#senddocument"""
         file_path = Path(path)
-        payload: dict[str, Any] = {"chat_id": chat_id}
-        if caption:
-            payload["caption"] = caption[:1024]
-        if reply_markup:
-            payload["reply_markup"] = json.dumps(reply_markup)
+        return self._send_file(
+            "sendDocument",
+            chat_id,
+            file_path,
+            field="document",
+            mime="application/pdf",
+            caption=caption,
+            reply_markup=reply_markup,
+            parse_mode=parse_mode,
+            message_effect_id=message_effect_id,
+            filename=filename or file_path.name,
+        )
+
+    def _send_file(
+        self,
+        method: str,
+        chat_id: str,
+        path: str | Path,
+        *,
+        field: str,
+        mime: str,
+        caption: str = "",
+        reply_markup: dict[str, Any] | None = None,
+        parse_mode: str | None = None,
+        message_effect_id: str | None = None,
+        filename: str | None = None,
+    ) -> dict[str, Any]:
+        file_path = Path(path)
         name = filename or file_path.name
-        with file_path.open("rb") as handle, httpx.Client(timeout=60) as client:
-            response = client.post(
-                self._url("sendDocument"),
-                data=payload,
-                files={"document": (name, handle, "application/pdf")},
-            )
-            response.raise_for_status()
-            data = response.json()
-        if not data.get("ok"):
-            raise RuntimeError(data.get("description") or "Telegram sendDocument failed")
+
+        def _post(effect: str | None) -> dict[str, Any]:
+            payload: dict[str, Any] = {"chat_id": chat_id}
+            if caption:
+                payload["caption"] = caption[:1024]
+            if parse_mode:
+                payload["parse_mode"] = parse_mode
+            if reply_markup:
+                payload["reply_markup"] = json.dumps(reply_markup)
+            if effect:
+                payload["message_effect_id"] = effect
+            with file_path.open("rb") as handle, httpx.Client(timeout=60) as client:
+                response = client.post(
+                    self._url(method),
+                    data=payload,
+                    files={field: (name, handle, mime)},
+                )
+                response.raise_for_status()
+                data = response.json()
+            if not data.get("ok"):
+                raise RuntimeError(data.get("description") or f"Telegram {method} failed")
+            return data
+
+        try:
+            data = _post(message_effect_id)
+        except (RuntimeError, httpx.HTTPStatusError):
+            if not message_effect_id:
+                raise
+            data = _post(None)
         return {"provider_message_id": str((data.get("result") or {}).get("message_id")), "raw": data}
 
     def answer_callback_query(self, callback_query_id: str, text: str | None = None) -> dict[str, Any]:

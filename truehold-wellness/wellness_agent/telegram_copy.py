@@ -20,31 +20,33 @@ SERVICE_POLICY = (
 )
 
 SHOP_URL = "https://trueholdwellness.com/shop"
+# HTML captions: https://core.telegram.org/bots/api#formatting-options
+PARSE_MODE = "HTML"
+# Free 🎉 party-popper effect (confetti + light sound) in private chats.
+# message_effect_id: https://core.telegram.org/bots/api#sendmessage
+# Free effects: https://telegram.org/blog/message-effects-and-more
+CELEBRATE_EFFECT_ID = "5046509860389126442"
 PAYMENT_COPY = (
     "Local Las Vegas: Zelle is best — the team shares Zelle details on the confirmation call. "
     "Prefer debit card instead of Zelle? Pay on the website."
 )
 
 INTRODUCTION = (
-    "Welcome to TrueHold Wellness.\n"
+    "<b>Welcome to TrueHold Wellness</b>\n"
     "\n"
-    "Hello — we are glad you are here. This is the official TrueHold Wellness "
-    "Telegram shop. We help Las Vegas residents with educational research-peptide "
-    "information and take interest orders for dry (lyophilized) vials only.\n"
+    "Hello — we are glad you are here. Official Telegram shop for Las Vegas residents. "
+    "Educational research-peptide information. Dry (lyophilized) vials only.\n"
     "\n"
-    "How it works:\n"
-    "1. Tap a name below. We send that one product tile — not the whole catalog.\n"
-    "2. View PDF in Telegram, or Order this for 1, 2, or 3 dry vials.\n"
-    "3. Confirm you are a Las Vegas resident. We log the order, adjust inventory, "
-    f"and {CALL_AND_DOCS.lower()} before any payment.\n"
+    "<b>How it works</b>\n"
+    "1. Tap a name\n"
+    "2. Sheet or Order\n"
+    f"3. We call to confirm, consult, and complete required documentation\n"
     "\n"
-    f"{SERVICE_POLICY}\n"
-    "Need a person instead? /schedule"
+    "Prep and local delivery: Las Vegas residents only.\n"
+    "Need a person? tap Team"
 )
 
-GREET_AGAIN = (
-    "Hi again. Send /menu for the quick list, or tap a name already on screen."
-)
+GREET_AGAIN = "Hi again. Tap a name on the menu, or send /menu."
 
 CUSTOMER_HELP = (
     f"TrueHold Wellness (@{REQUIRED_USERNAME})\n"
@@ -87,15 +89,18 @@ def _mailto_href() -> str:
 
 
 SCHEDULE = (
-    "TrueHold Wellness — book with the team\n"
-    "Phone: (702) 879-8783 or (702) 879-TRUE\n"
+    "<b>📅 Team</b>\n"
+    "Phone: (702) 879-8783 · (702) 879-TRUE\n"
     f'Email: <a href="{_mailto_href()}">{TEAM_EMAIL}</a>\n'
-    "Tap the email to open your mail app. Our address is already filled in — "
-    "type your question and send.\n"
-    f"{SERVICE_POLICY}\n"
-    f"{PAYMENT_COPY}\n"
-    f'Debit-card checkout: <a href="{SHOP_URL}">{SHOP_URL}</a>\n'
-    "Telegram interest orders are for Las Vegas residents only.\n"
+    "Tap email to open your mail app — our address is filled in.\n"
+    "\n"
+    "<b>Prep</b>\n"
+    "Las Vegas residents only · dry vials only\n"
+    "\n"
+    "<b>Pay</b>\n"
+    "Zelle on the confirmation call · debit on the website\n"
+    f'<a href="{SHOP_URL}">trueholdwellness.com/shop</a>\n'
+    "\n"
     "Protocol details are reviewed case by case. "
     "This bot does not provide dosing, reconstitution, or administration instructions in chat."
 )
@@ -105,8 +110,11 @@ def schedule_keyboard() -> dict:
     """copy_text: https://core.telegram.org/bots/api#copytextbutton"""
     return {
         "inline_keyboard": [
-            [{"text": "Copy email address", "copy_text": {"text": TEAM_EMAIL}}],
-            [{"text": "Pay by debit card on the site", "url": SHOP_URL}],
+            [
+                {"text": "📧 Email", "copy_text": {"text": TEAM_EMAIL}},
+                {"text": "💳 Debit", "url": SHOP_URL},
+            ],
+            [{"text": "⬅️ Menu", "callback_data": "w:menu"}],
         ]
     }
 

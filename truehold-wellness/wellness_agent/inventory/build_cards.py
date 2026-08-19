@@ -53,7 +53,7 @@ def build_card(product: dict) -> Path:
     draw.multiline_text((56, 360), vial, font=vial_font, fill=CREAM, spacing=6)
     draw.text((56, 500), "Dry (lyophilized) vial  ·  Educational information", font=meta_font, fill=GOLD_SOFT)
     draw.text((56, 548), "Prep and local delivery: Las Vegas residents only", font=meta_font, fill=CREAM)
-    draw.text((56, 620), "Tap Order this when you are ready.", font=small_font, fill=GOLD)
+    draw.text((56, 620), "Tap Order  ·  Sheet  ·  Prep", font=small_font, fill=GOLD)
     paste_logo(image, box=128, margin=40)
     image.save(path, format="JPEG", quality=92)
     return path

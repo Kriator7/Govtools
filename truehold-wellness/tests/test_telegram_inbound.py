@@ -119,8 +119,8 @@ def test_start_plays_welcome_with_logo_and_does_not_grant_staff():
     assert not any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
     menus = [item for item in tg.sent if (item.get("reply_markup") or {}).get("inline_keyboard")]
     labels = [btn["text"] for row in menus[0]["reply_markup"]["inline_keyboard"] for btn in row]
-    assert "KLOW" in labels
-    assert "Tirzepatide" in labels
+    assert any("KLOW" in label for label in labels)
+    assert any("Tirzepatide" in label for label in labels)
 
 
 def test_hello_after_start_does_not_repeat_intro():
@@ -152,8 +152,8 @@ def test_hello_plays_intro_once_then_does_not_repeat():
     menus = [item for item in tg.sent if (item.get("reply_markup") or {}).get("inline_keyboard")]
     assert menus
     labels = [btn["text"] for row in menus[0]["reply_markup"]["inline_keyboard"] for btn in row]
-    assert "KLOW" in labels
-    assert "Tirzepatide" in labels
+    assert any("KLOW" in label for label in labels)
+    assert any("Tirzepatide" in label for label in labels)
     tg.sent.clear()
     again = handle_telegram_update(_msg("Hey there!", chat_id=99), tg)
     assert again["action"] == "greet-again"
@@ -215,10 +215,10 @@ def test_schedule_email_opens_client_mail_not_gmail_web():
         for btn in row
     ]
     assert buttons
-    assert buttons[0]["text"] == "Copy email address"
+    assert buttons[0]["text"] == "📧 Email"
     assert buttons[0]["copy_text"]["text"] == TEAM_EMAIL
     assert "url" not in buttons[0]
-    assert buttons[1]["text"] == "Pay by debit card on the site"
+    assert buttons[1]["text"] == "💳 Debit"
     assert buttons[1]["url"] == "https://trueholdwellness.com/shop"
     texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
     assert any("Zelle" in text for text in texts)
@@ -301,7 +301,7 @@ def test_customer_order_does_not_leak_inbox_snapshot():
     order = handle_telegram_update(_msg("/order 2x starter kit", chat_id=99), tg)
     assert order["action"] == "order"
     texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
-    assert any("Got it. The TrueHold team will call" in text for text in texts)
+    assert any("You're in" in text for text in texts)
     assert any("required documentation" in text for text in texts)
     assert not any("waiver" in text.lower() for text in texts)
     assert not any("TrueHold Wellness alert — order" in text for text in texts)
