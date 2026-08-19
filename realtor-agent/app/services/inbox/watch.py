@@ -111,7 +111,7 @@ def poll_forever(db: Session, *, once: bool = False, source: MessageSource | Non
     watcher = InboxWatchService(db, settings, source=source)
     while True:
         result = watcher.poll_once()
-        print(json.dumps(_jsonable(result), default=str))
+        print(json.dumps(_jsonable(result), default=str), flush=True)
         if once:
             return 0 if result.get("ok") or not result.get("errors") else 1
         time.sleep(max(15, int(settings.imap_poll_seconds)))
