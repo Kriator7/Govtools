@@ -95,10 +95,10 @@ python -m wellness_agent.inventory.build_brand
 
 Live shop SKUs from https://trueholdwellness.com/sitemap.ols.xml.
 
-| Already in the new agent (old locked sheets, kept as-is) | Added to complete the shop |
-| --- | --- |
-| Tirzepatide, NAD+, Semax, Retatrutide PDFs | KLOW, MOTS-c, SS-31, GHK-Cu educational sheets |
-| Logo at `inventory/assets/logo.jpeg` | Orders workbook at `inventory/workbooks/trueholdwellness-orders.xlsx` |
+| Live SKU | Vial in stock | Sheet |
+| --- | --- | --- |
+| All eight shop SKUs | mg on the label | Rebuilt by `python -m wellness_agent.inventory.build_pdfs` — molecule, data, risks, FDA, mix, 0.5 mL syringe |
+| Logo at `inventory/assets/logo.jpeg` | | Orders workbook at `inventory/workbooks/trueholdwellness-orders.xlsx` |
 
 The Deleted Account Telegram chat still holds Finder copies of the old files. They are **not** pulled automatically. To import them:
 
@@ -122,7 +122,13 @@ python -m wellness_agent.inventory.build_pdfs
 python -m wellness_agent.inventory.build_workbook
 ```
 
-Telegram: `/menu` then **See info sheet** sends the PDF. Generated sheets for the four extra SKUs are educational only — they do not invent reconstitution or dosing. Protocol details stay case-by-case (`/schedule`).
+Telegram: `/menu` then **View PDF in Telegram** sends the sheet. Every PDF is written for the milligram vial in stock (molecule, testing data, risks, FDA status, reconstitution, and U-100 / 0.5 mL syringe marks). Mix math is checked in `wellness_agent/inventory/protocol.py` before a sheet is built. The bot still does not dose in chat.
+
+```bash
+python -m wellness_agent.inventory.build_pdfs
+```
+
+If `ingest-files` overwrites PDFs with Finder copies, rebuild with `build_pdfs` to restore the vial-specific sheets.
 
 ## Isolation
 

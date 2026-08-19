@@ -103,19 +103,48 @@ def test_telegram_catalog_and_product_sheet():
     assert "Zelle" in docs[0]["caption"]
 
 
-def test_generated_sheets_are_educational_only():
+def test_all_sheets_are_vial_specific_and_segmented():
     from pypdf import PdfReader
 
-    for sku in ("klow", "mots-c", "ss-31", "ghk-cu"):
-        reader = PdfReader(str(pdf_path(find_product(sku))))
-        text = "\n".join((page.extract_text() or "") for page in reader.pages).lower()
-        assert "educational information only" in text
-        assert "does not provide dosing" in text
-        assert "25 units" not in text
-        assert "draw 2 ml" not in text
-        assert "las vegas" in text
-        assert "dry (lyophilized)" in text
-        assert "required documentation" in text
+    from wellness_agent.inventory.build_pdfs import build_missing
+    from wellness_agent.inventory.protocol import PROTOCOLS
+
+    build_missing()
+    required = (
+        "what it is",
+        "how it works in the body",
+        "testing data",
+        "have people hurt themselves",
+        "fda",
+        "reconstitution for this exact vial",
+        "0.5 ml",
+        "educational information only",
+        "las vegas",
+        "dry (lyophilized)",
+        "required documentation",
+    )
+    for item in products():
+        reader = PdfReader(str(pdf_path(item)))
+        text = "\n".join((page.extract_text() or "") for page in reader.pages)
+        lower = text.lower()
+        for phrase in required:
+            assert phrase in lower, (item["id"], phrase)
+        proto = PROTOCOLS[item["id"]]
+        assert f"{proto['bac_ml']:g} ml" in lower or f"{proto['bac_ml']:.1f} ml" in lower
+        assert f"{proto['start_units']:g} units" in lower
+        assert "not medical advice" in lower
+        if item["id"] == "tirzepatide":
+            assert "25" in text
+            assert "2.5" in text
+            assert "mounjaro" in lower
+        if item["id"] == "nad":
+            assert "1000" in text
+            assert "50" in text
+        if item["id"] == "retatrutide":
+            assert "not fda-approved" in lower or "not fda approved" in lower
+        if item["id"] == "ss-31":
+            assert "forzinity" in lower
+            assert "barth" in lower
 
 
 def test_orders_workbook_covers_all_skus_and_inbox_columns():
