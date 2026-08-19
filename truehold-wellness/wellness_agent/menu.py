@@ -29,6 +29,7 @@ from wellness_agent.session_store import pending_order, set_awaiting_phone, set_
 from wellness_agent.stock import record_order_row, staff_inventory_line
 from wellness_agent.team import (
     advance_on_greet,
+    button_style,
     current_host,
     effect_id,
     favorite_id,
@@ -106,17 +107,24 @@ TOASTS = {
 }
 
 
-def _button(text: str, data: str) -> dict[str, str]:
-    return {"text": text, "callback_data": data}
+def _button(text: str, data: str, *, style: str | None = None) -> dict[str, Any]:
+    """Inline callback button. style: primary (blue), success (green), danger (red).
+
+    https://core.telegram.org/bots/api#inlinekeyboardbutton
+    """
+    payload: dict[str, Any] = {"text": text, "callback_data": data}
+    if style in {"primary", "success", "danger"}:
+        payload["style"] = style
+    return payload
 
 
-def _keyboard(rows: list[list[dict[str, str]]]) -> dict[str, Any]:
+def _keyboard(rows: list[list[dict[str, Any]]]) -> dict[str, Any]:
     return {"inline_keyboard": rows}
 
 
-def _product_button(item: dict[str, Any]) -> dict[str, str]:
+def _product_button(item: dict[str, Any], *, style: str | None = None) -> dict[str, Any]:
     emoji = PRODUCT_EMOJI.get(item["id"], "•")
-    return _button(f"{emoji} {item['name']}", f"w:tile:{item['id']}")
+    return _button(f"{emoji} {item['name']}", f"w:tile:{item['id']}", style=style)
 
 
 def contact_keyboard() -> dict[str, Any]:
@@ -135,32 +143,39 @@ def remove_keyboard() -> dict[str, Any]:
     return {"remove_keyboard": True}
 
 
-def host_action_rows(chat_id: str, host: dict[str, Any] | None = None) -> list[list[dict[str, str]]]:
+def host_action_rows(chat_id: str, host: dict[str, Any] | None = None) -> list[list[dict[str, Any]]]:
     host = host or current_host(chat_id)
+    tone = button_style(host)
     fav = favorite_id(chat_id)
-    rows: list[list[dict[str, str]]] = []
+    rows: list[list[dict[str, Any]]] = []
     if fav == host["id"]:
-        rows.append([_button(f"✅ {host['icon']} {host['name']} is yours", "w:host:pick")])
+        rows.append([_button(f"✅ {host['icon']} {host['name']} is yours", "w:host:pick", style=tone)])
     else:
-        pair = [_button(f"⭐ Favorite {host['name']}", "w:host:fav")]
+        pair = [_button(f"⭐ Favorite {host['name']}", "w:host:fav", style=tone)]
         if not fav:
-            pair.append(_button("🔁 Next teammate", "w:host:next"))
+            pair.append(_button("🔁 Next teammate", "w:host:next", style=tone))
         rows.append(pair)
     if tour_complete(chat_id) and not fav:
         rows.append(
             [
-                _button("🔁 Rotate again", "w:host:rotate"),
-                _button("👥 Pick a favorite", "w:host:pick"),
+                _button("🔁 Rotate again", "w:host:rotate", style=tone),
+                _button("👥 Pick a favorite", "w:host:pick", style=tone),
             ]
         )
     return rows
 
 
 def pick_host_keyboard() -> dict[str, Any]:
-    rows: list[list[dict[str, str]]] = []
-    row: list[dict[str, str]] = []
+    rows: list[list[dict[str, Any]]] = []
+    row: list[dict[str, Any]] = []
     for item in members():
-        row.append(_button(f"{item['icon']} {item['name']}", f"w:host:set:{item['id']}"))
+        row.append(
+            _button(
+                f"{item['icon']} {item['name']}",
+                f"w:host:set:{item['id']}",
+                style=button_style(item),
+            )
+        )
         if len(row) == 2:
             rows.append(row)
             row = []
@@ -171,11 +186,13 @@ def pick_host_keyboard() -> dict[str, Any]:
 
 
 def quick_menu_keyboard(chat_id: str | None = None, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    host = host or (current_host(chat_id) if chat_id else None)
+    tone = button_style(host)
     items = products()
-    rows: list[list[dict[str, str]]] = []
-    row: list[dict[str, str]] = []
+    rows: list[list[dict[str, Any]]] = []
+    row: list[dict[str, Any]] = []
     for item in items:
-        row.append(_product_button(item))
+        row.append(_product_button(item, style=tone))
         if len(row) == 2:
             rows.append(row)
             row = []
@@ -185,52 +202,71 @@ def quick_menu_keyboard(chat_id: str | None = None, host: dict[str, Any] | None 
         rows.extend(host_action_rows(str(chat_id), host))
     rows.append(
         [
-            _button("🛠️ Prep", "w:prep"),
-            _button("📅 Team", "w:team"),
-            _button("📸 Crew", "w:crew"),
+            _button("🛠️ Prep", "w:prep", style=tone),
+            _button("📅 Team", "w:team", style=tone),
+            _button("📸 Crew", "w:crew", style=tone),
         ]
     )
     return _keyboard(rows)
 
 
-def after_pick_keyboard(product_id: str) -> dict[str, Any]:
-    return _keyboard(
-        [
-            [_button("🛒 Order", f"w:qty:{product_id}"), _button("📄 Sheet", f"w:info:{product_id}")],
-            [_button("🛠️ Prep", f"w:prep:{product_id}"), _button("📅 Team", "w:team")],
-            [_button("⬅️ Menu", "w:menu")],
-        ]
-    )
-
-
-def info_sheet_keyboard(product_id: str) -> dict[str, Any]:
-    """No URL buttons — a shop URL here lands in Telegram Links instead of Files."""
-    return _keyboard(
-        [
-            [_button("🛒 Order", f"w:qty:{product_id}"), _button("🛠️ Prep", f"w:prep:{product_id}")],
-            [_button("📅 Team", "w:team"), _button("⬅️ Menu", "w:menu")],
-        ]
-    )
-
-
-def qty_keyboard(product_id: str) -> dict[str, Any]:
+def after_pick_keyboard(product_id: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    tone = button_style(host)
     return _keyboard(
         [
             [
-                _button("1", f"w:ask:{product_id}:1"),
-                _button("2", f"w:ask:{product_id}:2"),
-                _button("3", f"w:ask:{product_id}:3"),
+                _button("🛒 Order", f"w:qty:{product_id}", style="success"),
+                _button("📄 Sheet", f"w:info:{product_id}", style=tone),
             ],
-            [_button("📅 Team", "w:team"), _button("⬅️ Menu", "w:menu")],
+            [
+                _button("🛠️ Prep", f"w:prep:{product_id}", style=tone),
+                _button("📅 Team", "w:team", style=tone),
+            ],
+            [_button("⬅️ Menu", "w:menu", style=tone)],
         ]
     )
 
 
-def confirm_keyboard(product_id: str, qty: str) -> dict[str, Any]:
+def info_sheet_keyboard(product_id: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    """No URL buttons — a shop URL here lands in Telegram Links instead of Files."""
+    tone = button_style(host)
     return _keyboard(
         [
-            [_button("✅ Vegas", f"w:yes:{product_id}:{qty}"), _button("📍 Not LV", "w:team")],
-            [_button("⬅️ Menu", "w:menu")],
+            [
+                _button("🛒 Order", f"w:qty:{product_id}", style="success"),
+                _button("🛠️ Prep", f"w:prep:{product_id}", style=tone),
+            ],
+            [
+                _button("📅 Team", "w:team", style=tone),
+                _button("⬅️ Menu", "w:menu", style=tone),
+            ],
+        ]
+    )
+
+
+def qty_keyboard(product_id: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    tone = button_style(host)
+    return _keyboard(
+        [
+            [
+                _button("1", f"w:ask:{product_id}:1", style=tone),
+                _button("2", f"w:ask:{product_id}:2", style=tone),
+                _button("3", f"w:ask:{product_id}:3", style=tone),
+            ],
+            [_button("📅 Team", "w:team", style=tone), _button("⬅️ Menu", "w:menu", style=tone)],
+        ]
+    )
+
+
+def confirm_keyboard(product_id: str, qty: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    tone = button_style(host)
+    return _keyboard(
+        [
+            [
+                _button("✅ Vegas", f"w:yes:{product_id}:{qty}", style="success"),
+                _button("📍 Not LV", "w:team", style="danger"),
+            ],
+            [_button("⬅️ Menu", "w:menu", style=tone)],
         ]
     )
 
@@ -297,7 +333,7 @@ def parse_interest_qty(detail: str) -> str:
 
 
 def send_introduction_menu(telegram, chat_id: str) -> None:
-    send_brand_photo(telegram, chat_id, logo_path(), INTRODUCTION, quick_menu_keyboard())
+    send_brand_photo(telegram, chat_id, logo_path(), INTRODUCTION, quick_menu_keyboard(str(chat_id)))
 
 
 def send_greet_again(telegram, chat_id: str, text: str = "hi") -> None:
@@ -389,7 +425,9 @@ def send_product_tile(telegram, chat_id: str, product: dict) -> None:
         "<b>Prep</b> Las Vegas · dry vials only\n"
         "Tap a button — Order, Sheet, Prep, or Team."
     )
-    send_brand_photo(telegram, chat_id, path, caption, after_pick_keyboard(product["id"]))
+    send_brand_photo(
+        telegram, chat_id, path, caption, after_pick_keyboard(product["id"], current_host(chat_id))
+    )
 
 
 def send_prep_card(telegram, chat_id: str, product: dict | None = None) -> None:
@@ -400,7 +438,7 @@ def send_prep_card(telegram, chat_id: str, product: dict | None = None) -> None:
         heading = f"<b>🛠️ Prep</b> · {escape(str(product['name']))}"
         vial = escape(str(product["vial"]))
         extra = f"{vial}\nMix and starting amounts are on the locked sheet — tap Sheet."
-        markup = after_pick_keyboard(product["id"])
+        markup = after_pick_keyboard(product["id"], current_host(chat_id))
     else:
         heading = "<b>🛠️ Prep</b>"
         extra = "Tap a name, then Sheet, for that vial’s locked information sheet."
@@ -434,7 +472,7 @@ def send_team_card(telegram, chat_id: str) -> None:
         chat_id,
         "soon",
         flavor_caption(host, "soon", SCHEDULE),
-        schedule_keyboard(),
+        schedule_keyboard(style=button_style(host)),
         host=host,
     )
 
@@ -445,7 +483,7 @@ def send_info_pdf(telegram, chat_id: str, product: dict) -> None:
     caption = format_product_caption(product)
     path = telegram_file_path(product)
     filename = locked_sheet_filename(product)
-    markup = info_sheet_keyboard(product["id"])
+    markup = info_sheet_keyboard(product["id"], current_host(chat_id))
     replace_prior_sheet(telegram, str(chat_id), product["id"])
     result = None
     if hasattr(telegram, "send_document"):
@@ -529,7 +567,7 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
             "cheer",
             CUSTOMER_CONFIRM.format(detail=detail) + f"\n\n{host['icon']} {pose_line(host, 'soon')}",
         ),
-        after_pick_keyboard(product["id"]),
+        after_pick_keyboard(product["id"], host),
         host=host,
         effect=True,
     )
@@ -678,7 +716,7 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
                 "\n"
                 "Las Vegas · we call to complete docs",
             ),
-            qty_keyboard(product["id"]),
+            qty_keyboard(product["id"], host),
             host=host,
         )
         return {"ok": True, "action": "qty", "chat_id": chat_id, "product": product["id"]}
@@ -700,7 +738,7 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
                 "Las Vegas residents only\n"
                 f"{CALL_AND_DOCS}.",
             ),
-            confirm_keyboard(product["id"], qty),
+            confirm_keyboard(product["id"], qty, host),
             host=host,
         )
         return {

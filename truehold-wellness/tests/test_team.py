@@ -1,9 +1,10 @@
 from wellness_agent.inventory.build_agent import POSES, agent_path, crew_source, portrait_path
 from wellness_agent.knowledge.talk import reply
-from wellness_agent.menu import handle_menu_callback
+from wellness_agent.menu import confirm_keyboard, handle_menu_callback, quick_menu_keyboard
 from wellness_agent.session_store import mark_intro_played
 from wellness_agent.team import (
     advance_on_greet,
+    button_style,
     current_host,
     effect_id,
     favorite_id,
@@ -71,9 +72,23 @@ def test_floor_team_has_twenty_distinct_hosts():
     assert len({row["name"] for row in rows}) == 20
     assert len({row["icon"] for row in rows}) == 20
     for row in rows:
-        for key in ("role", "color", "style", "hello", "present", "think", "work", "cheer", "soon", "joke", "effect"):
+        for key in (
+            "role",
+            "color",
+            "button_style",
+            "style",
+            "hello",
+            "present",
+            "think",
+            "work",
+            "cheer",
+            "soon",
+            "joke",
+            "effect",
+        ):
             assert row.get(key), f"{row['id']} missing {key}"
         assert str(row["color"]).startswith("#")
+        assert row["button_style"] in {"primary", "success", "danger"}
         assert row["effect"] in {"party", "fire", "heart", "thumbs"}
         assert effect_id(row)
         blob = " ".join(
@@ -169,6 +184,25 @@ def test_talk_signs_the_current_host_and_still_refuses_dose_math():
 def test_all_poses_exist_for_theo():
     for pose in POSES:
         assert portrait_path(pose, "theo").is_file()
+
+
+def test_host_keyboards_use_telegram_button_style():
+    """Telegram only allows primary/success/danger — not arbitrary hex.
+
+    https://core.telegram.org/bots/api#inlinekeyboardbutton
+    """
+    assert button_style({"button_style": "primary"}) == "primary"
+    theo = quick_menu_keyboard("style-theo")
+    styles = {btn.get("style") for row in theo["inline_keyboard"] for btn in row if btn.get("callback_data", "").startswith("w:tile:")}
+    assert styles == {"primary"}
+    set_favorite("style-mira", "mira")
+    mira = quick_menu_keyboard("style-mira")
+    styles = {btn.get("style") for row in mira["inline_keyboard"] for btn in row if btn.get("callback_data", "").startswith("w:tile:")}
+    assert styles == {"success"}
+    confirm = confirm_keyboard("klow", "1")
+    by_text = {btn["text"]: btn.get("style") for row in confirm["inline_keyboard"] for btn in row}
+    assert by_text["✅ Vegas"] == "success"
+    assert by_text["📍 Not LV"] == "danger"
 
 
 def test_crew_class_photo_exists():

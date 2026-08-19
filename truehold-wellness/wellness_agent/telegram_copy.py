@@ -116,15 +116,22 @@ SCHEDULE = (
 )
 
 
-def schedule_keyboard() -> dict:
-    """copy_text: https://core.telegram.org/bots/api#copytextbutton"""
+def schedule_keyboard(style: str | None = None) -> dict:
+    """copy_text: https://core.telegram.org/bots/api#copytextbutton
+
+    style: https://core.telegram.org/bots/api#inlinekeyboardbutton
+    """
+    email = {"text": "📧 Email", "copy_text": {"text": TEAM_EMAIL}}
+    debit = {"text": "💳 Debit", "url": SHOP_URL}
+    menu = {"text": "⬅️ Menu", "callback_data": "w:menu"}
+    if style in {"primary", "success", "danger"}:
+        email["style"] = style
+        debit["style"] = style
+        menu["style"] = style
     return {
         "inline_keyboard": [
-            [
-                {"text": "📧 Email", "copy_text": {"text": TEAM_EMAIL}},
-                {"text": "💳 Debit", "url": SHOP_URL},
-            ],
-            [{"text": "⬅️ Menu", "callback_data": "w:menu"}],
+            [email, debit],
+            [menu],
         ]
     }
 

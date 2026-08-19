@@ -47,6 +47,17 @@ def effect_id(member: dict[str, Any]) -> str:
     return str(effects.get(member.get("effect") or "party") or "")
 
 
+def button_style(member: dict[str, Any] | None) -> str | None:
+    """Telegram button color. primary=blue, success=green, danger=red.
+
+    https://core.telegram.org/bots/api#inlinekeyboardbutton
+    """
+    value = str((member or {}).get("button_style") or "")
+    if value in {"primary", "success", "danger"}:
+        return value
+    return None
+
+
 POSE_KEYS = {
     "wave": "hello",
     "present": "present",
