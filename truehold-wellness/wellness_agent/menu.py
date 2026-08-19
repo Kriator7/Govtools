@@ -29,6 +29,7 @@ from wellness_agent.session_store import pending_order, set_awaiting_phone, set_
 from wellness_agent.stock import record_order_row, staff_inventory_line
 from wellness_agent.team import (
     advance_on_greet,
+    button_label,
     button_style,
     current_host,
     effect_id,
@@ -151,15 +152,15 @@ def host_action_rows(chat_id: str, host: dict[str, Any] | None = None) -> list[l
     if fav == host["id"]:
         rows.append([_button(f"✅ {host['icon']} {host['name']} is yours", "w:host:pick", style=tone)])
     else:
-        pair = [_button(f"⭐ Favorite {host['name']}", "w:host:fav", style=tone)]
+        pair = [_button(f"{host['icon']} Favorite {host['name']}", "w:host:fav", style=tone)]
         if not fav:
-            pair.append(_button("🔁 Next teammate", "w:host:next", style=tone))
+            pair.append(_button(button_label(host, "next"), "w:host:next", style=tone))
         rows.append(pair)
     if tour_complete(chat_id) and not fav:
         rows.append(
             [
-                _button("🔁 Rotate again", "w:host:rotate", style=tone),
-                _button("👥 Pick a favorite", "w:host:pick", style=tone),
+                _button(button_label(host, "rotate"), "w:host:rotate", style=tone),
+                _button(button_label(host, "pick"), "w:host:pick", style=tone),
             ]
         )
     return rows
@@ -181,7 +182,7 @@ def pick_host_keyboard(host: dict[str, Any] | None = None) -> dict[str, Any]:
             row = []
     if row:
         rows.append(row)
-    rows.append([_button("⬅️ Menu", "w:menu", style=button_style(host))])
+    rows.append([_button(button_label(host, "menu"), "w:menu", style=button_style(host))])
     return _keyboard(rows)
 
 
@@ -202,9 +203,9 @@ def quick_menu_keyboard(chat_id: str | None = None, host: dict[str, Any] | None 
         rows.extend(host_action_rows(str(chat_id), host))
     rows.append(
         [
-            _button("🛠️ Prep", "w:prep", style=tone),
-            _button("📅 Team", "w:team", style=tone),
-            _button("📸 Crew", "w:crew", style=tone),
+            _button(button_label(host, "prep"), "w:prep", style=tone),
+            _button(button_label(host, "team"), "w:team", style=tone),
+            _button(button_label(host, "crew"), "w:crew", style=tone),
         ]
     )
     return _keyboard(rows)
@@ -215,14 +216,14 @@ def after_pick_keyboard(product_id: str, host: dict[str, Any] | None = None) -> 
     return _keyboard(
         [
             [
-                _button("🛒 Order", f"w:qty:{product_id}", style="success"),
-                _button("📄 Sheet", f"w:info:{product_id}", style=tone),
+                _button(button_label(host, "order"), f"w:qty:{product_id}", style="success"),
+                _button(button_label(host, "sheet"), f"w:info:{product_id}", style=tone),
             ],
             [
-                _button("🛠️ Prep", f"w:prep:{product_id}", style=tone),
-                _button("📅 Team", "w:team", style=tone),
+                _button(button_label(host, "prep"), f"w:prep:{product_id}", style=tone),
+                _button(button_label(host, "team"), "w:team", style=tone),
             ],
-            [_button("⬅️ Menu", "w:menu", style=tone)],
+            [_button(button_label(host, "menu"), "w:menu", style=tone)],
         ]
     )
 
@@ -233,12 +234,12 @@ def info_sheet_keyboard(product_id: str, host: dict[str, Any] | None = None) -> 
     return _keyboard(
         [
             [
-                _button("🛒 Order", f"w:qty:{product_id}", style="success"),
-                _button("🛠️ Prep", f"w:prep:{product_id}", style=tone),
+                _button(button_label(host, "order"), f"w:qty:{product_id}", style="success"),
+                _button(button_label(host, "prep"), f"w:prep:{product_id}", style=tone),
             ],
             [
-                _button("📅 Team", "w:team", style=tone),
-                _button("⬅️ Menu", "w:menu", style=tone),
+                _button(button_label(host, "team"), "w:team", style=tone),
+                _button(button_label(host, "menu"), "w:menu", style=tone),
             ],
         ]
     )
@@ -249,11 +250,14 @@ def qty_keyboard(product_id: str, host: dict[str, Any] | None = None) -> dict[st
     return _keyboard(
         [
             [
-                _button("1", f"w:ask:{product_id}:1", style=tone),
-                _button("2", f"w:ask:{product_id}:2", style=tone),
-                _button("3", f"w:ask:{product_id}:3", style=tone),
+                _button(button_label(host, "qty1"), f"w:ask:{product_id}:1", style=tone),
+                _button(button_label(host, "qty2"), f"w:ask:{product_id}:2", style=tone),
+                _button(button_label(host, "qty3"), f"w:ask:{product_id}:3", style=tone),
             ],
-            [_button("📅 Team", "w:team", style=tone), _button("⬅️ Menu", "w:menu", style=tone)],
+            [
+                _button(button_label(host, "team"), "w:team", style=tone),
+                _button(button_label(host, "menu"), "w:menu", style=tone),
+            ],
         ]
     )
 
@@ -263,10 +267,10 @@ def confirm_keyboard(product_id: str, qty: str, host: dict[str, Any] | None = No
     return _keyboard(
         [
             [
-                _button("✅ Vegas", f"w:yes:{product_id}:{qty}", style="success"),
-                _button("📍 Not LV", "w:team", style="danger"),
+                _button(button_label(host, "vegas"), f"w:yes:{product_id}:{qty}", style="success"),
+                _button(button_label(host, "not_lv"), "w:team", style="danger"),
             ],
-            [_button("⬅️ Menu", "w:menu", style=tone)],
+            [_button(button_label(host, "menu"), "w:menu", style=tone)],
         ]
     )
 
@@ -472,7 +476,7 @@ def send_team_card(telegram, chat_id: str) -> None:
         chat_id,
         "soon",
         flavor_caption(host, "soon", SCHEDULE),
-        schedule_keyboard(style=button_style(host)),
+        schedule_keyboard(style=button_style(host), host=host),
         host=host,
     )
 

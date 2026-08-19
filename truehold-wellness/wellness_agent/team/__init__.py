@@ -2,7 +2,7 @@
 
 Tour state lives in gitignored data/team_hosts.json so /start sessions do not
 wipe who the customer has already met. Same core replies; each host adds icon,
-color, effect, and a few flavor lines from roster.json.
+color, Telegram button color, a themed emoji kit, effect, and flavor lines.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from wellness_agent.envfile import PACKAGE_ROOT
+from wellness_agent.team.buttons import DEFAULT_BUTTONS, KITS
 
 ROSTER_PATH = Path(__file__).resolve().parent / "roster.json"
 
@@ -56,6 +57,15 @@ def button_style(member: dict[str, Any] | None) -> str | None:
     if value in {"primary", "success", "danger"}:
         return value
     return None
+
+
+def button_label(member: dict[str, Any] | None, key: str) -> str:
+    """Host-themed button text. Action words stay; emoji kit follows the host."""
+    fallback = DEFAULT_BUTTONS.get(key) or key
+    if not member:
+        return fallback
+    kit = KITS.get(str(member.get("id") or ""), {})
+    return str(kit.get(key) or fallback)
 
 
 POSE_KEYS = {

@@ -4,6 +4,7 @@ from wellness_agent.menu import confirm_keyboard, handle_menu_callback, pick_hos
 from wellness_agent.session_store import mark_intro_played
 from wellness_agent.team import (
     advance_on_greet,
+    button_label,
     button_style,
     current_host,
     effect_id,
@@ -16,6 +17,7 @@ from wellness_agent.team import (
     skip_to_next,
     tour_complete,
 )
+from wellness_agent.team.buttons import DEFAULT_BUTTONS, KITS
 from wellness_agent.telegram_inbound import handle_telegram_update
 
 
@@ -92,6 +94,12 @@ def test_floor_team_has_twenty_distinct_hosts():
         assert row["button_style"] in {"primary", "success", "danger"}
         assert row["effect"] in {"party", "fire", "heart", "thumbs"}
         assert effect_id(row)
+        assert row["id"] in KITS
+        kit = KITS[row["id"]]
+        assert kit["prep"] != DEFAULT_BUTTONS["prep"]
+        assert "Prep" in kit["prep"]
+        assert "Team" in kit["team"]
+        assert "Crew" in kit["crew"]
         blob = " ".join(
             str(row[key]) for key in ("hello", "present", "think", "work", "cheer", "soon", "joke")
         ).lower()
@@ -99,6 +107,7 @@ def test_floor_team_has_twenty_distinct_hosts():
         assert "inject" not in blob
         assert "bac water" not in blob
         assert "http" not in blob
+    assert len({KITS[row["id"]]["prep"] for row in rows}) == 20
 
 
 def test_portraits_exist_for_every_host_and_pose():
@@ -153,7 +162,7 @@ def test_greet_again_rotates_hosts_and_can_lock_a_favorite():
         for btn in row
     ]
     assert any("Favorite Theo" in label for label in labels)
-    assert any("Next teammate" in label for label in labels)
+    assert any("Next" in label for label in labels)
     nxt = handle_menu_callback(_tap("w:host:next"), tg)
     assert nxt["action"] == "host-next"
     assert nxt["host"] == "mira"
@@ -208,7 +217,19 @@ def test_host_keyboards_use_telegram_button_style():
     names = {btn["text"]: btn.get("style") for row in picker["inline_keyboard"] for btn in row}
     assert names["🧬 Mira"] == "success"
     assert names["🌸 Lila"] == "danger"
-    assert names["⬅️ Menu"] == "danger"
+    assert names[button_label(get_member("vega"), "menu")] == "danger"
+    theo = get_member("theo")
+    mira = get_member("mira")
+    assert button_label(theo, "prep") == "⚡ Prep"
+    assert button_label(mira, "prep") == "🧬 Prep"
+    assert button_label(None, "prep") == "🛠️ Prep"
+    set_favorite("kit-mira", "mira")
+    mira_menu = quick_menu_keyboard("kit-mira")
+    chrome = [btn["text"] for row in mira_menu["inline_keyboard"] for btn in row]
+    assert "🧬 Prep" in chrome
+    assert "🥼 Team" in chrome
+    assert "🔬 Crew" in chrome
+    assert "🛠️ Prep" not in chrome
 
 
 def test_crew_class_photo_exists():

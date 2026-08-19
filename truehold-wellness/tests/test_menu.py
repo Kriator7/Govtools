@@ -1,5 +1,6 @@
 from wellness_agent.menu import handle_menu_callback
 from wellness_agent.snapshot import load_current_inbox
+from wellness_agent.team import button_label, current_host
 from wellness_agent.telegram_inbound import handle_telegram_update
 
 
@@ -103,9 +104,7 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert not any("waiver" in text.lower() for text in texts)
     assert not any("TrueHold Wellness alert — order" in text for text in texts)
     assert not any("document" in item for item in tg.sent)
-    assert "📄 Sheet" in ask_buttons or any(
-        "📄 Sheet" in str(item.get("reply_markup") or "") for item in tg.sent
-    )
+    assert any("Sheet" in str(item.get("reply_markup") or "") for item in tg.sent)
     assert "cb2" in tg.callbacks
 
 
@@ -122,10 +121,11 @@ def test_info_sheet_sends_telegram_pdf_not_website_link():
     assert "trueholdwellness.com" not in caption
     assert "http" not in caption.lower()
     labels = [btn["text"] for row in docs[0]["reply_markup"]["inline_keyboard"] for btn in row]
-    assert "🛒 Order" in labels
-    assert "🛠️ Prep" in labels
-    assert "⬅️ Menu" in labels
-    assert "📅 Team" in labels
+    host = current_host("88")
+    assert button_label(host, "order") in labels
+    assert button_label(host, "prep") in labels
+    assert button_label(host, "menu") in labels
+    assert button_label(host, "team") in labels
     assert "url" not in str(docs[0]["reply_markup"])
     assert docs[0]["filename"] == "TrueHold Wellness locked information sheet — Semax.pdf"
     assert docs[0]["document"].endswith(docs[0]["filename"])
@@ -236,8 +236,9 @@ def test_prep_card_is_policy_only_not_dosing():
     assert "reconstitut" not in caption.lower()
     assert photos[-1]["parse_mode"] == "HTML"
     labels = [btn["text"] for row in photos[-1]["reply_markup"]["inline_keyboard"] for btn in row]
-    assert "📄 Sheet" in labels
-    assert "🛒 Order" in labels
+    host = current_host("88")
+    assert button_label(host, "sheet") in labels
+    assert button_label(host, "order") in labels
     assert "url" not in str(photos[-1]["reply_markup"])
 
 
@@ -262,6 +263,7 @@ def test_quick_menu_uses_emoji_name_grid():
     labels = [btn["text"] for row in menus[-1]["reply_markup"]["inline_keyboard"] for btn in row]
     assert "🧠 Semax" in labels
     assert "⚡ NAD+" in labels
-    assert "🛠️ Prep" in labels
-    assert "📅 Team" in labels
+    host = current_host("88")
+    assert button_label(host, "prep") in labels
+    assert button_label(host, "team") in labels
     assert menus[-1]["parse_mode"] == "HTML"

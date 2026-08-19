@@ -221,10 +221,13 @@ def test_schedule_email_opens_client_mail_not_gmail_web():
         for btn in row
     ]
     assert buttons
-    assert buttons[0]["text"] == "📧 Email"
+    from wellness_agent.team import button_label, current_host
+
+    host = current_host("44")
+    assert buttons[0]["text"] == button_label(host, "email")
     assert buttons[0]["copy_text"]["text"] == TEAM_EMAIL
     assert "url" not in buttons[0]
-    assert buttons[1]["text"] == "💳 Debit"
+    assert buttons[1]["text"] == button_label(host, "debit")
     assert buttons[1]["url"] == "https://trueholdwellness.com/shop"
     texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
     assert any("Zelle" in text for text in texts)
