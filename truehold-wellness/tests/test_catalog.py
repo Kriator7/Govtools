@@ -136,6 +136,8 @@ def test_orders_workbook_covers_all_skus_and_inbox_columns():
     assert "Peptides" in wb.sheetnames
     ids = [row[0] for row in wb["Inventory"].iter_rows(min_row=2, values_only=True) if row[0]]
     assert ids == [item["id"] for item in products()]
+    headers = [cell.value for cell in wb["Inventory"][1]]
+    assert "on_hand" in headers
 
 
 def test_ingest_files_copies_legacy_pdfs_and_workbook(tmp_path):
@@ -143,6 +145,7 @@ def test_ingest_files_copies_legacy_pdfs_and_workbook(tmp_path):
 
     from wellness_agent.cli import main
     from wellness_agent.ingest_files import ingest_legacy
+    from wellness_agent.stock import load_stock
 
     pdf = tmp_path / "klow.pdf"
     pdf.write_bytes((pdf_path(find_product("klow"))).read_bytes())
@@ -150,15 +153,21 @@ def test_ingest_files_copies_legacy_pdfs_and_workbook(tmp_path):
     extra.write_text("ignore", encoding="utf-8")
     wb = Workbook()
     ws = wb.active
-    ws.title = "Orders"
-    ws.append(["order_id", "sku_id", "qty"])
-    ws.append(["THW-TEST-1", "semax", 2])
+    ws.title = "Inventory"
+    ws.append(["sku_id", "name", "on_hand"])
+    ws.append(["klow", "KLOW", 12])
+    ws.append(["semax", "Semax", None])
+    orders = wb.create_sheet("Orders")
+    orders.append(["order_id", "sku_id", "qty"])
+    orders.append(["THW-TEST-1", "semax", 2])
     xlsx = tmp_path / "trueholdwellness-orders.xlsx"
     wb.save(xlsx)
     result = ingest_legacy(tmp_path)
     assert "klow.pdf" in result["copied_pdfs"]
     assert "notes.txt" in result["skipped"]
     assert result["workbook"] == "trueholdwellness-orders.xlsx"
+    assert load_stock()["products"]["klow"]["on_hand"] == 12
+    assert load_stock()["products"]["semax"]["on_hand"] is None
     assert main(["ingest-files", "--path", str(tmp_path)]) == 0
 
 

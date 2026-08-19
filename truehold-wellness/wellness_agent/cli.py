@@ -56,6 +56,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help=f"Set @{REQUIRED_USERNAME} name, description, and command menu",
     )
     sub.add_parser("catalog", help="Print the live TrueHold Wellness shop inventory")
+    sub.add_parser("stock", help="Print on-hand inventory counts and recent adjustments")
     product = sub.add_parser("product", help="Resolve a SKU and print its locked-sheet path")
     product.add_argument("query", help="Product name or alias, for example klow or tirzepatide")
     ingest = sub.add_parser(
@@ -143,6 +144,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         from wellness_agent.catalog import format_catalog
 
         sys.stdout.write(format_catalog())
+        return 0
+    if args.command == "stock":
+        from wellness_agent.stock import format_stock
+
+        sys.stdout.write(format_stock())
         return 0
     if args.command == "product":
         from wellness_agent.catalog import UnknownProductError, find_product, pdf_path

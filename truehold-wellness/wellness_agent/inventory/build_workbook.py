@@ -72,6 +72,10 @@ def build_workbook(dest: Path | None = None) -> Path:
         "Policy: prep and local delivery for Las Vegas residents only.",
         "Shipping is dry (lyophilized) vials only.",
         "The team calls to confirm, consult, and complete required documentation.",
+        "",
+        "Fill Inventory.on_hand with live vial counts, then ingest-files.",
+        "Telegram interest orders decrement on-hand the same way as before.",
+        "Leave on_hand blank until you have a real count — do not invent stock.",
     ]
     for idx, line in enumerate(lines, start=2):
         cover[f"A{idx}"] = line
@@ -88,13 +92,14 @@ def build_workbook(dest: Path | None = None) -> Path:
             item["pdf"],
             item["shop_url"],
             "Las Vegas prep/delivery; dry-vial ship only",
+            None,
         ]
         for item in products()
     ]
     _sheet(
         wb,
         "Inventory",
-        ["sku_id", "name", "vial", "form", "category", "pdf", "shop_url", "fulfillment"],
+        ["sku_id", "name", "vial", "form", "category", "pdf", "shop_url", "fulfillment", "on_hand"],
         inventory_rows,
     )
     _sheet(

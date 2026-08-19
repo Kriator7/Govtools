@@ -74,6 +74,7 @@ def test_customer_copy_uses_documentation_not_waivers():
     from wellness_agent import catalog, clients, menu
     from wellness_agent.telegram_copy import CUSTOMER_HELP, INTRODUCTION, SCHEDULE
 
+    assert len(INTRODUCTION) <= 1024
     blob = "\n".join(
         [
             INTRODUCTION,
@@ -95,37 +96,59 @@ def test_customer_copy_uses_documentation_not_waivers():
     assert "las vegas" in blob
     assert "zelle" in blob
     assert "debit card" in blob
+    assert "how it works" in INTRODUCTION.lower()
+    assert "welcome to truehold wellness" in INTRODUCTION.lower()
 
 
-def test_start_asks_to_say_hi_and_does_not_grant_staff():
+def test_start_plays_welcome_with_logo_and_does_not_grant_staff():
     tg = _FakeTelegram()
     result = handle_telegram_update(_msg("/start", chat_id=99), tg)
-    assert result["action"] == "say-hi"
+    assert result["action"] == "intro"
     assert result["staff"] is False
     assert load_operator_chats() == []
     assert load_operator_user_ids() == []
-    texts = [item.get("text") or "" for item in tg.sent]
-    assert any("Say hi to start" in text for text in texts)
+    texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
+    blob = "\n".join(texts).lower()
+    assert "welcome to truehold wellness" in blob
+    assert "how it works" in blob
+    assert "tap a name" in blob
     assert not any("Linked as TrueHold Wellness operator" in text for text in texts)
+    photos = [item for item in tg.sent if "photo" in item]
+    assert len(photos) == 1
+    assert photos[0]["photo"].endswith("logo.jpeg")
+    assert not any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
+    menus = [item for item in tg.sent if (item.get("reply_markup") or {}).get("inline_keyboard")]
+    labels = [btn["text"] for row in menus[0]["reply_markup"]["inline_keyboard"] for btn in row]
+    assert "KLOW" in labels
+    assert "Tirzepatide" in labels
+
+
+def test_hello_after_start_does_not_repeat_intro():
+    tg = _FakeTelegram()
+    handle_telegram_update(_msg("/start", chat_id=99), tg)
+    tg.sent.clear()
+    hello = handle_telegram_update(_msg("hello", chat_id=99), tg)
+    assert hello["action"] == "greet-again"
     assert not any("photo" in item for item in tg.sent)
+    assert any("Hi again" in (item.get("text") or "") for item in tg.sent)
 
 
 def test_hello_plays_intro_once_then_does_not_repeat():
     tg = _FakeTelegram()
-    handle_telegram_update(_msg("/start", chat_id=99), tg)
     hello = handle_telegram_update(_msg("hello", chat_id=99), tg)
     assert hello["action"] == "intro"
     texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
-    assert any("welcome to TrueHold Wellness" in text for text in texts)
-    assert any("Las Vegas residents only" in text for text in texts)
-    assert any("dry (lyophilized) vials only" in text for text in texts)
-    assert any("required documentation" in text for text in texts)
+    blob = "\n".join(texts).lower()
+    assert "welcome to truehold wellness" in blob
+    assert "las vegas residents only" in blob
+    assert "dry (lyophilized) vials only" in blob
+    assert "required documentation" in blob
+    assert "how it works" in blob
     assert not any("waiver" in text.lower() for text in texts)
-    assert any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
+    assert not any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
     photos = [item for item in tg.sent if "photo" in item]
-    assert len(photos) == 2
-    assert photos[0]["photo"].endswith("hero.jpg")
-    assert photos[1]["photo"].endswith("service.jpg")
+    assert len(photos) == 1
+    assert photos[0]["photo"].endswith("logo.jpeg")
     menus = [item for item in tg.sent if (item.get("reply_markup") or {}).get("inline_keyboard")]
     assert menus
     labels = [btn["text"] for row in menus[0]["reply_markup"]["inline_keyboard"] for btn in row]
@@ -138,23 +161,39 @@ def test_hello_plays_intro_once_then_does_not_repeat():
     assert any("Hi again" in (item.get("text") or "") for item in tg.sent)
 
 
+def test_menu_does_not_ask_for_phone():
+    tg = _FakeTelegram()
+    result = handle_telegram_update(_msg("/menu", chat_id=55), tg)
+    assert result["action"] == "menu"
+    photos = [item for item in tg.sent if "photo" in item]
+    assert photos
+    assert photos[0]["photo"].endswith("hero.jpg")
+    assert not any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
+
+
 def test_good_morning_is_a_salutation_on_first_visit():
     tg = _FakeTelegram()
     result = handle_telegram_update(_msg("Good morning", chat_id=44), tg)
     assert result["action"] == "intro"
     photos = [item for item in tg.sent if "photo" in item]
     assert photos
-    assert photos[0]["photo"].endswith("hero.jpg")
+    assert photos[0]["photo"].endswith("logo.jpeg")
     assert not any(str(item.get("photo") or "").endswith("klow.jpg") for item in tg.sent)
     assert any((item.get("reply_markup") or {}).get("inline_keyboard") for item in tg.sent)
+    assert not any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
 
 
-def test_unrelated_first_message_asks_for_hi():
+def test_unrelated_first_message_plays_welcome():
     tg = _FakeTelegram()
     result = handle_telegram_update(_msg("what do you sell", chat_id=44), tg)
-    assert result["action"] == "say-hi"
-    assert any("Say hi to start" in (item.get("text") or "") for item in tg.sent)
-    assert not any("photo" in item for item in tg.sent)
+    assert result["action"] == "intro"
+    captions = [item.get("caption") or "" for item in tg.sent]
+    assert any("Welcome to TrueHold Wellness" in text for text in captions)
+    assert any("How it works" in text for text in captions)
+    photos = [item for item in tg.sent if "photo" in item]
+    assert photos
+    assert photos[0]["photo"].endswith("logo.jpeg")
+    assert not any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
 
 
 def test_schedule_email_opens_client_mail_not_gmail_web():
@@ -205,6 +244,20 @@ def test_staff_inbox_allowed(monkeypatch):
     assert any("Orders:" in (item.get("text") or "") for item in tg.sent)
 
 
+def test_staff_stock_allowed(monkeypatch):
+    monkeypatch.setenv("WELLNESS_OPERATOR_USER_IDS", "42")
+    from wellness_agent.stock import set_on_hand
+
+    set_on_hand("klow", 10)
+    tg = _FakeTelegram()
+    result = handle_telegram_update(_msg("/stock", chat_id=42, user_id=42), tg)
+    assert result["action"] == "stock"
+    texts = [item.get("text") or "" for item in tg.sent]
+    assert any("on-hand inventory" in text.lower() for text in texts)
+    assert any("KLOW" in text for text in texts)
+    assert any("10 on hand" in text for text in texts)
+
+
 def test_staff_claim_from_telegram_never_grants(monkeypatch):
     monkeypatch.setenv("WELLNESS_OPERATOR_CLAIM_TOKEN", "correct-token-value")
     tg = _FakeTelegram()
@@ -218,7 +271,7 @@ def test_staff_claim_from_telegram_never_grants(monkeypatch):
 
 def test_admin_and_operator_commands_never_grant():
     tg = _FakeTelegram()
-    for command in ("/admin", "/operator", "/grant", "/staff"):
+    for command in ("/admin", "/operator", "/grant", "/staff", "/stock"):
         result = handle_telegram_update(_msg(command, chat_id=88, user_id=88), tg)
         assert result["action"] == "staff-denied"
 

@@ -85,6 +85,7 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert "klow" in inbox.orders.detail.lower()
     assert "7025550100" in inbox.orders.detail.replace("-", "") or "+17025550100" in inbox.orders.detail
     assert inbox.payments.new is False
+    assert "Inventory:" in inbox.orders.detail
     texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
     assert any("Got it. The TrueHold team will call" in text for text in texts)
     assert any("required documentation" in text for text in texts)
@@ -112,3 +113,66 @@ def test_info_sheet_sends_telegram_pdf_not_website_link():
     labels = [btn["text"] for row in docs[0]["reply_markup"]["inline_keyboard"] for btn in row]
     assert labels == ["Order this", "Pay by debit card on the site", "See menu"]
     assert docs[0]["filename"] == "Semax info sheet.pdf"
+
+
+def test_interest_order_decrements_on_hand_when_set():
+    from wellness_agent.clients import save_client_phone
+    from wellness_agent.stock import load_stock, set_on_hand
+
+    save_client_phone("88", "7025550100", source="typed", user_id="88")
+    set_on_hand("klow", 10)
+    tg = _FakeTelegram()
+    confirm = handle_telegram_update(_tap("w:yes:klow:2", callback_id="cb2"), tg)
+    assert confirm["action"] == "order-confirm"
+    state = load_stock()
+    assert state["products"]["klow"]["on_hand"] == 8
+    inbox = load_current_inbox()
+    assert "10 → 8 on hand" in inbox.orders.detail
+
+
+def test_interest_order_logs_adjustment_when_on_hand_unset():
+    from wellness_agent.clients import save_client_phone
+    from wellness_agent.stock import load_stock
+
+    save_client_phone("88", "7025550100", source="typed", user_id="88")
+    tg = _FakeTelegram()
+    confirm = handle_telegram_update(_tap("w:yes:klow:1", callback_id="cb3"), tg)
+    assert confirm["action"] == "order-confirm"
+    state = load_stock()
+    assert state["products"]["klow"]["on_hand"] is None
+    assert state["adjustments"][-1]["delta"] == -1
+    inbox = load_current_inbox()
+    assert "on-hand not set yet" in inbox.orders.detail
+
+
+def test_order_without_phone_does_not_touch_inventory():
+    from wellness_agent.stock import load_stock, set_on_hand
+
+    set_on_hand("klow", 5)
+    tg = _FakeTelegram()
+    result = handle_telegram_update(_tap("w:yes:klow:2"), tg)
+    assert result["action"] == "need-phone"
+    assert load_stock()["products"]["klow"]["on_hand"] == 5
+    assert any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
+
+
+def test_slash_order_matching_sku_uses_same_inventory_path():
+    from wellness_agent.clients import save_client_phone
+    from wellness_agent.stock import load_stock, set_on_hand
+
+    save_client_phone("99", "7025550199", source="typed", user_id="99")
+    set_on_hand("semax", 4)
+    tg = _FakeTelegram()
+    result = handle_telegram_update(
+        {
+            "message": {
+                "text": "/order 2x semax",
+                "chat": {"id": 99, "type": "private"},
+                "from": {"id": 99},
+            }
+        },
+        tg,
+    )
+    assert result["action"] == "order-confirm"
+    assert result["product"] == "semax"
+    assert load_stock()["products"]["semax"]["on_hand"] == 2

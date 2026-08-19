@@ -57,6 +57,34 @@ def _cell(value: Any) -> str:
     return str(value).strip()
 
 
+def on_hand_counts(workbook: dict[str, Any]) -> dict[str, int]:
+    sheets = workbook.get("sheets") or {}
+    inventory: list[dict[str, str]] = []
+    for name, rows in sheets.items():
+        if str(name).strip().lower() == "inventory" and isinstance(rows, list):
+            inventory = rows
+            break
+    known = {item["id"] for item in products()}
+    counts: dict[str, int] = {}
+    for record in inventory:
+        if not isinstance(record, dict):
+            continue
+        sku = (record.get("sku_id") or record.get("sku") or "").strip()
+        if sku not in known:
+            continue
+        raw = record.get("on_hand")
+        if raw is None:
+            raw = record.get("onhand") or ""
+        text = str(raw).strip()
+        if not text:
+            continue
+        try:
+            counts[sku] = int(float(text))
+        except (TypeError, ValueError):
+            continue
+    return counts
+
+
 def parse_workbook(path: Path) -> dict[str, Any]:
     from openpyxl import load_workbook
 
@@ -103,6 +131,11 @@ def ingest_legacy(source_dir: Path | None = None) -> dict[str, Any]:
             shutil.copy2(path, IMPORTED_XLSX)
             workbook = parse_workbook(path)
             LEDGER_JSON.write_text(json.dumps(workbook, indent=2), encoding="utf-8")
+            counts = on_hand_counts(workbook)
+            if counts:
+                from wellness_agent.stock import apply_on_hand_map
+
+                apply_on_hand_map(counts)
             continue
         skipped.append(path.name)
     known = {item["pdf"] for item in products()}

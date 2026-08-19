@@ -16,6 +16,7 @@ data/inbox_state.json
 data/email_seen.json
 data/sessions.json
 data/clients.json
+data/stock.json
 data/order_ledger.json
 data/imports/trueholdwellness-orders.xlsx
 data/imports/legacy/*

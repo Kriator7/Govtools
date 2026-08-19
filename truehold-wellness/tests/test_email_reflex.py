@@ -31,16 +31,21 @@ def test_start_does_not_link_customer_as_operator():
     tg = _FakeTelegram()
     handle_telegram_update({"message": {"text": "/start", "chat": {"id": 501}, "from": {"id": 501}}}, tg)
     assert load_operator_chats() == []
-    assert any("say hi" in (item.get("text") or "").lower() for item in tg.sent)
+    texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
+    assert any("welcome to truehold wellness" in text.lower() for text in texts)
+    assert not any("Linked as TrueHold Wellness operator" in text for text in texts)
 
 
 def test_order_marks_orders_new_and_keeps_other_categories():
+    from wellness_agent.clients import save_client_phone
+
+    save_client_phone("502", "7025550102", source="typed", user_id="502")
     tg = _FakeTelegram()
     result = handle_telegram_update(
         {"message": {"text": "/order 2x klow", "chat": {"id": 502}, "from": {"id": 502}}},
         tg,
     )
-    assert result["action"] == "order"
+    assert result["action"] == "order-confirm"
     assert result["product"] == "klow"
     inbox = load_current_inbox()
     assert inbox.orders.new is True

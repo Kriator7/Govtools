@@ -8,6 +8,7 @@ does not expose it unless the client shares contact
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -19,10 +20,11 @@ from wellness_agent.catalog import (
     products,
 )
 from wellness_agent.clients import client_phone, phone_line_for_staff
-from wellness_agent.inventory.build_brand import hero_path, service_path
+from wellness_agent.inventory.build_brand import hero_path, logo_path, service_path
 from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
 from wellness_agent.session_store import pending_order, set_awaiting_phone, set_pending_order
+from wellness_agent.stock import record_order_row, staff_inventory_line
 from wellness_agent.telegram_copy import CALL_AND_DOCS, INTRODUCTION, PAYMENT_COPY, SERVICE_POLICY, SHOP_URL
 
 MENU_INTRO = (
@@ -154,8 +156,19 @@ def send_brand_photo(
     telegram.send_message(chat_id, caption, reply_markup=reply_markup)
 
 
+def parse_interest_qty(detail: str) -> str:
+    text = str(detail or "").strip()
+    match = re.search(r"\b([1-3])\s*x\b", text, flags=re.I)
+    if match:
+        return match.group(1)
+    match = re.match(r"([1-3])\b", text)
+    if match:
+        return match.group(1)
+    return "1"
+
+
 def send_introduction_menu(telegram, chat_id: str) -> None:
-    send_brand_photo(telegram, chat_id, hero_path(), INTRODUCTION, quick_menu_keyboard())
+    send_brand_photo(telegram, chat_id, logo_path(), INTRODUCTION, quick_menu_keyboard())
 
 
 def send_quick_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> None:
@@ -217,7 +230,22 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
             "qty": qty,
         }
     detail = f"{qty}x {product['name']} ({product['vial']})"
-    staff_detail = f"{detail}\n{phone_line_for_staff(chat_id)}"
+    inventory_line = staff_inventory_line(
+        product["id"],
+        int(qty),
+        reason="telegram-interest-order",
+        detail=f"chat {chat_id} {detail}",
+    )
+    try:
+        record_order_row(
+            product,
+            qty,
+            chat_id=str(chat_id),
+            phone=client_phone(chat_id),
+        )
+    except Exception as exc:
+        inventory_line = f"{inventory_line} Workbook update skipped: {exc}."
+    staff_detail = f"{detail}\n{phone_line_for_staff(chat_id)}\n{inventory_line}"
     result = fire_reflex(
         "order",
         f"Telegram interest order: {staff_detail}",

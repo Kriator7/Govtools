@@ -21,9 +21,11 @@ from wellness_agent.menu import (
     CUSTOMER_CONFIRM,
     PHONE_THANKS,
     TYPE_PHONE,
+    _place_interest_order,
     ask_for_phone,
     complete_pending_order_if_ready,
     handle_menu_callback,
+    parse_interest_qty,
     remove_keyboard,
     send_brand_photo,
     send_info_pdf,
@@ -45,7 +47,6 @@ from wellness_agent.telegram_copy import (
     CUSTOMER_HELP,
     GREET_AGAIN,
     HELP,
-    SAY_HI,
     SCHEDULE,
     STAFF_COMMANDS,
     STAFF_HELP,
@@ -126,8 +127,6 @@ def _record_phone(telegram, chat_id: str, phone: str, *, source: str, sender: di
 def _send_introduction(telegram, chat_id: str) -> None:
     send_introduction_menu(telegram, chat_id)
     mark_intro_played(chat_id)
-    if not client_phone(chat_id):
-        ask_for_phone(telegram, chat_id)
 
 
 def _send_sheet(telegram, chat_id: str, query: str) -> dict:
@@ -190,6 +189,11 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             alert = compose_alert(AlertTrigger(type="business", headline="business inbox"))
             telegram.send_message(chat_id, format_alert(alert))
             return {"ok": True, "action": "inbox", "chat_id": chat_id, "staff": True}
+        if command == "stock" and staff:
+            from wellness_agent.stock import format_stock
+
+            telegram.send_message(chat_id, format_stock())
+            return {"ok": True, "action": "stock", "chat_id": chat_id, "staff": True}
         telegram.send_message(chat_id, STAFF_DENIED)
         return {"ok": False, "action": "staff-denied", "chat_id": chat_id}
 
@@ -201,12 +205,10 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             begin_session(chat_id)
             if staff:
                 telegram.send_message(chat_id, STAFF_HELP)
-            telegram.send_message(chat_id, SAY_HI)
-            return {"ok": True, "action": "say-hi", "chat_id": chat_id, "staff": staff}
+            _send_introduction(telegram, chat_id)
+            return {"ok": True, "action": "intro", "chat_id": chat_id, "staff": staff}
         mark_intro_played(chat_id)
         send_quick_menu(telegram, chat_id)
-        if not client_phone(chat_id):
-            ask_for_phone(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id, "staff": staff}
 
     if command == "schedule":
@@ -229,6 +231,9 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             mark_intro_played(chat_id)
             send_quick_menu(telegram, chat_id)
             return {"ok": True, "action": "menu", "chat_id": chat_id}
+        product = _matched_product(detail)
+        if product:
+            return _place_interest_order(telegram, chat_id, product, parse_interest_qty(detail))
         staff_detail = f"{detail}\n{phone_line_for_staff(chat_id)}"
         result = fire_reflex(
             "order",
@@ -244,16 +249,13 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         )
         if not client_phone(chat_id):
             ask_for_phone(telegram, chat_id)
-        product = _matched_product(detail)
-        if product:
-            send_info_pdf(telegram, chat_id, product)
         return {
             "ok": True,
             "action": "order",
             "chat_id": chat_id,
             "detail": detail,
             "notified": result.status,
-            "product": None if product is None else product["id"],
+            "product": None,
         }
 
     if text and (is_salutation(text) or is_salutation(command)):
@@ -265,8 +267,8 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
 
     if text:
         if intro_pending(chat_id):
-            telegram.send_message(chat_id, SAY_HI)
-            return {"ok": True, "action": "say-hi", "chat_id": chat_id}
+            _send_introduction(telegram, chat_id)
+            return {"ok": True, "action": "intro", "chat_id": chat_id}
         telegram.send_message(
             chat_id,
             "Tap one name on the quick menu. Send /menu to see it again.",

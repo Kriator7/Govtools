@@ -48,15 +48,16 @@ Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_
 
 ### Customer picture menu
 
-1. `/start` welcomes them and asks them to **say hi**.
-2. Hello, hey, good morning, or another salutation plays the introduction once for that session, then a **quick menu** (names only).
-3. Tap one name — we send **that tile**, not every SKU photo. Intro, menu, quantity, and phone steps also send a navy/gold molecule banner (not every SKU photo).
+1. `/start` (or a first hello) sends the official TrueHold Wellness logo with a warm welcome and a short explainer of how ordering works, plus the **quick menu** (names only). It does not ask for a phone yet.
+2. Hello, hey, or good morning after that is a short “hi again” — the intro plays once per session.
+3. Tap one name — we send **that tile**, not every SKU photo. Quantity and phone steps also send a navy/gold molecule banner.
 4. **Order this** → 1 / 2 / 3 dry vials → **Yes — Las Vegas resident**.
 5. **View PDF in Telegram** sends the information sheet as a PDF in the chat (tap to view or download). It does not open the product webpage.
 6. Local Las Vegas: **Zelle is best** (details on the confirmation call). Debit card instead of Zelle: **Pay by debit card on the site**.
-7. Telegram cannot expose a phone unless the client shares it. The bot asks them to **Share my phone number** or type it so the team can call to confirm, consult, and complete required documentation.
-8. **Prep and local delivery are for Las Vegas residents only.** Shipping is **dry (lyophilized) vials only** — not reconstituted product.
-9. Staff are notified with the number (or a note that it is missing). The customer gets a short confirmation plus the PDF in Telegram.
+7. Phone is asked only after an order (or `/schedule`). Telegram cannot expose a phone unless the client shares it (**Share my phone number** or type it) so the team can call to confirm, consult, and complete required documentation.
+8. A confirmed interest order **decrements on-hand inventory** (when Inventory.on_hand is set) and appends a row to the working `trueholdwellness-orders.xlsx` ledger, same as the old agent.
+9. **Prep and local delivery are for Las Vegas residents only.** Shipping is **dry (lyophilized) vials only** — not reconstituted product.
+10. Staff are notified with the number (or a note that it is missing) plus the inventory adjustment. The customer gets a short confirmation plus the PDF in Telegram.
 
 Public BotFather commands are only `/start` `/menu` `/schedule` `/help`. `/inbox` is not in the customer menu.
 
@@ -80,8 +81,8 @@ Wrong or missing staff identity replies `That command is for TrueHold staff only
 3. `python -m wellness_agent whoami` — must return `THWellness_bot`.
 4. `python -m wellness_agent configure-telegram` — customer command menu by default; staff `/inbox` only on operator chats.
 5. `python -m wellness_agent telegram-poll`
-6. In Telegram as a customer: `/start`, say hi, tap one name, share a phone, order 1–3 vials. `/schedule` shows `trueholdwellness@gmail.com` as a tappable email that opens the client’s mail app with our address filled in.
-7. In Telegram as staff: `/inbox` after allowlisting.
+6. In Telegram as a customer: `/start` for the welcome, tap one name, order 1–3 vials, then share a phone if asked. `/schedule` shows `trueholdwellness@gmail.com` as a tappable email that opens the client’s mail app with our address filled in.
+7. In Telegram as staff: `/inbox` and `/stock` after allowlisting.
 
 Rebuild picture cards and brand graphics:
 
@@ -115,6 +116,7 @@ Matching PDFs overwrite `inventory/pdfs/`. The xlsx is stored as the live ledger
 
 ```bash
 python -m wellness_agent catalog
+python -m wellness_agent stock
 python -m wellness_agent product klow
 python -m wellness_agent.inventory.build_pdfs
 python -m wellness_agent.inventory.build_workbook

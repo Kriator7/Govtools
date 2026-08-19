@@ -1,7 +1,7 @@
 """Per-chat conversation session for TrueHold Wellness Telegram.
 
-A session starts on /start (or first message). The introduction plays once
-per session, when the visitor sends a salutation. File is gitignored.
+A session starts on /start (or first message). /start and the first hello
+play the introduction with the official logo. File is gitignored.
 """
 
 from __future__ import annotations

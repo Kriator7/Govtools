@@ -7,8 +7,7 @@ from wellness_agent.identity import REQUIRED_USERNAME
 SAY_HI = (
     "Welcome to TrueHold Wellness.\n"
     "\n"
-    "Say hi to start the conversation.\n"
-    "Hello, hey, or good morning all work."
+    "Send /start, or just say hello, and we will show you how ordering works."
 )
 
 CALL_AND_DOCS = (
@@ -27,13 +26,19 @@ PAYMENT_COPY = (
 )
 
 INTRODUCTION = (
-    "Hi — welcome to TrueHold Wellness.\n"
+    "Welcome to TrueHold Wellness.\n"
     "\n"
-    "We help Las Vegas residents with educational research-peptide information.\n"
+    "Hello — we are glad you are here. This is the official TrueHold Wellness "
+    "Telegram shop. We help Las Vegas residents with educational research-peptide "
+    "information and take interest orders for dry (lyophilized) vials only.\n"
+    "\n"
+    "How it works:\n"
+    "1. Tap a name below. We send that one product tile — not the whole catalog.\n"
+    "2. View PDF in Telegram, or Order this for 1, 2, or 3 dry vials.\n"
+    "3. Confirm you are a Las Vegas resident. We log the order, adjust inventory, "
+    f"and {CALL_AND_DOCS.lower()} before any payment.\n"
+    "\n"
     f"{SERVICE_POLICY}\n"
-    f"{CALL_AND_DOCS} before any payment.\n"
-    "\n"
-    "Tap one name on the quick menu. We will send that tile.\n"
     "Need a person instead? /schedule"
 )
 
@@ -43,7 +48,7 @@ GREET_AGAIN = (
 
 CUSTOMER_HELP = (
     f"TrueHold Wellness (@{REQUIRED_USERNAME})\n"
-    "Say hi to start. Then tap one name — we send that tile, not the whole list.\n"
+    "Send /start for a welcome, then tap one name — we send that tile, not the whole list.\n"
     "/menu — quick menu\n"
     "/schedule — talk to the TrueHold team\n"
     "/help — this message\n"
@@ -55,6 +60,7 @@ CUSTOMER_HELP = (
 STAFF_HELP = (
     f"Staff mode on @{REQUIRED_USERNAME}. Customers do not see these commands.\n"
     "/inbox — full business inbox snapshot\n"
+    "/stock — on-hand inventory\n"
     "/menu — same picture menu customers use\n"
     "Order and email-reflex alerts arrive in this chat.\n"
     "This bot is not realtor-agent / @PirateEye_bot."
@@ -115,7 +121,7 @@ def send_schedule(telegram, chat_id: str) -> None:
         telegram.send_message(chat_id, SCHEDULE, reply_markup=schedule_keyboard())
 
 CUSTOMER_COMMANDS = (
-    {"command": "start", "description": "Say hi to start"},
+    {"command": "start", "description": "Welcome to TrueHold Wellness"},
     {"command": "menu", "description": "Quick menu — tap one name"},
     {"command": "schedule", "description": "Talk to the TrueHold team"},
     {"command": "help", "description": "How to order"},
@@ -123,6 +129,7 @@ CUSTOMER_COMMANDS = (
 
 STAFF_COMMANDS = CUSTOMER_COMMANDS + (
     {"command": "inbox", "description": "Staff: full business inbox snapshot"},
+    {"command": "stock", "description": "Staff: on-hand inventory"},
 )
 
 # Public BotFather menu is customer-only so clients are not shown staff commands.
