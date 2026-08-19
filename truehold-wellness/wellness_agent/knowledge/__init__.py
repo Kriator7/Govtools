@@ -93,9 +93,18 @@ def seed_approved_knowledge() -> dict[str, int]:
             count["snippets"] += 1
     for item in products():
         sku_id = f"sku-{item['id']}"
+        rec_text = ""
+        try:
+            from wellness_agent.knowledge.house import peptide_record
+
+            rec = peptide_record(item["id"])
+            rec_text = f" Opener: {rec['opener']} Prep: {rec['prep']}"
+        except Exception:
+            rec_text = ""
         text = (
             f"{item['name']} is a live TrueHold Wellness SKU. "
-            f"Vial in stock: {item['vial']}. Dry lyophilized vial. Educational only. "
+            f"Vial in stock: {item['vial']}. Dry lyophilized vial. Educational only."
+            f"{rec_text} "
             "Tap the name for the tile, Sheet for the locked PDF. Mix details stay on the sheet."
         )
         conn.execute(
@@ -109,6 +118,14 @@ def seed_approved_knowledge() -> dict[str, int]:
             (item["id"], locked_sheet_filename(item), pdf),
         )
         count["documents"] += 1
+    from wellness_agent.knowledge.house import seed_rows
+
+    for row_id, kind, title, text in seed_rows():
+        conn.execute(
+            "INSERT OR REPLACE INTO snippets(id, kind, title, text, source, approved) VALUES (?,?,?,?,?,1)",
+            (row_id, kind, title, text, "house"),
+        )
+        count["snippets"] += 1
     conn.commit()
     conn.close()
     return count
@@ -161,6 +178,30 @@ def retrieve(query: str, *, limit: int = 6) -> list[dict[str, Any]]:
                     "herbs",
                     "ownership",
                     "hostage",
+                )
+            ):
+                score += 2
+        if row["kind"] in {"fasting", "herb", "prep", "bio", "house"}:
+            score += 1
+            if any(
+                part in needle
+                for part in (
+                    "fast",
+                    "fasting",
+                    "herb",
+                    "herbs",
+                    "ginger",
+                    "peppermint",
+                    "chamomile",
+                    "broth",
+                    "bio",
+                    "who",
+                    "prep",
+                    "sleep",
+                    "window",
+                    "experience",
+                    "clinical",
+                    "surgical",
                 )
             ):
                 score += 2

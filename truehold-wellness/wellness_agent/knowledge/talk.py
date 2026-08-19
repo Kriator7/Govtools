@@ -13,8 +13,21 @@ from typing import Any
 
 import httpx
 
-from wellness_agent.greetings import is_creed_request
+from wellness_agent.greetings import (
+    fasting_answer,
+    is_bio_request,
+    is_creed_request,
+    is_fasting_request,
+    is_herb_request,
+)
 from wellness_agent.knowledge import active_promo, pick_snippet, retrieve, seed_approved_knowledge
+from wellness_agent.knowledge.house import (
+    FASTING_OPENER,
+    format_fasting_followup,
+    format_host_bio,
+    peptide_record,
+)
+from wellness_agent.session_store import focus_sku
 from wellness_agent.team import current_host, flavor_caption
 
 # Block chat-side protocol talk. Vial sizes like "20 mg" in catalog lines are allowed in retrieval,
@@ -56,6 +69,31 @@ def reply(
         return TalkReply(text=body, pose="wave", source="seed-hello")
     if is_creed_request(text):
         return _creed_reply(host, text)
+    focused = peptide_record(focus_sku(chat_id) or "") if chat_id else peptide_record("")
+    if focused.get("weight_loss"):
+        answer = fasting_answer(text)
+        if answer is not None:
+            return TalkReply(
+                text=_signed(host, format_fasting_followup(experienced=answer)),
+                pose="think",
+                source="seed-fasting",
+            )
+    if is_bio_request(text):
+        return TalkReply(text=format_host_bio(host), pose="present", source="seed-bio")
+    if is_fasting_request(text):
+        hits = retrieve(text) or retrieve("intermittent fasting eating window")
+        top = next((row for row in hits if row.get("kind") == "fasting"), hits[0] if hits else None)
+        body = format_fasting_followup(experienced=True)
+        if top:
+            body = f"<b>{top['title']}</b>\n{top['text']}\n\n<b>{FASTING_OPENER}</b>"
+        return TalkReply(text=_signed(host, body), pose="think", source="seed-fasting")
+    if is_herb_request(text):
+        hits = retrieve(text)
+        herb_hits = [row for row in hits if row.get("kind") == "herb"]
+        if herb_hits:
+            lines = [f"<b>{row['title']}</b>\n{row['text']}" for row in herb_hits[:3]]
+            lines.append("Kitchen/educational only. Not a prescription. Mix math stays on Sheet.")
+            return TalkReply(text=_signed(host, "\n\n".join(lines)), pose="think", source="seed-herb")
     if re.search(r"\b(thanks|thank you|thx|appreciate)\b", lowered):
         return TalkReply(
             text=_signed(host, pick_snippet("thanks", salt=chat_id)),
@@ -69,11 +107,16 @@ def reply(
             return generated
     if hits and hits[0]["kind"] == "product":
         product = hits[0]
+        source = str(product.get("source") or "")
+        sku = source.split(":", 1)[1] if source.startswith("catalog:") else ""
+        rec = peptide_record(sku)
+        opener = rec["opener"] if sku else "Tap the name on the menu, or Sheet for the locked file."
         return TalkReply(
             text=_signed(
                 host,
                 f"<b>{product['title']}</b>\n"
-                f"{product['text']}\n"
+                f"{product['text']}\n\n"
+                f"<b>{opener}</b>\n"
                 "Tap the name on the menu, or Sheet for the locked file.",
             ),
             pose="present",
@@ -143,6 +186,10 @@ def _llm_reply(message: str, hits: list[dict[str, Any]], host: dict[str, Any]) -
         "Most peptides already exist in the body. Too much of anything, even oxygen, can harm you. "
         "Respect the tools; do not hostage them like vitamin C. Empowerment, ownership, high-quality food and rest. "
         "The people deserve the truth. If they support this house, ask them to tell others. "
+        "Every host pulls fasting, herb, and peptide-prep notes from the same approved house database. "
+        "Weight-loss vials (tirzepatide, retatrutide) must include the question: Have you ever fasted before? "
+        "Kitchen herbs are educational food talk, never a dose. "
+        "The floor team is backed by over 50 years of combined clinical, medical, and surgical experience. "
         "Use ONLY the approved context. If it is not there, say you will fetch a person via Team "
         "and offer the tap-menu. Never give dosing, reconstitution, injection, or medical advice. "
         "Never invent products, prices, or sales. Never include http links. "

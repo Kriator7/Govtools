@@ -25,7 +25,7 @@ from wellness_agent.inventory.build_agent import agent_path, crew_path, ensure_h
 from wellness_agent.inventory.build_brand import logo_path, service_path
 from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
-from wellness_agent.session_store import pending_order, set_awaiting_phone, set_pending_order
+from wellness_agent.session_store import pending_order, set_awaiting_phone, set_focus_sku, set_pending_order
 from wellness_agent.stock import record_order_row, staff_inventory_line
 from wellness_agent.team import (
     advance_on_greet,
@@ -106,6 +106,7 @@ TOASTS = {
     "rotate": "Tour reset",
     "set": "Favorite locked",
     "pick": "Pick a favorite",
+    "fast": "Fasting notes",
 }
 
 
@@ -213,8 +214,19 @@ def quick_menu_keyboard(chat_id: str | None = None, host: dict[str, Any] | None 
 
 
 def after_pick_keyboard(product_id: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    from wellness_agent.knowledge.house import peptide_record
+
     tone = button_style(host)
-    return _keyboard(
+    rec = peptide_record(product_id)
+    rows: list[list[dict[str, Any]]] = []
+    if rec["weight_loss"]:
+        rows.append(
+            [
+                _button("Yes — I have fasted", f"w:fast:{product_id}:yes", style=tone),
+                _button("Not yet", f"w:fast:{product_id}:no", style=tone),
+            ]
+        )
+    rows.extend(
         [
             [
                 _button(button_label(host, "order"), f"w:qty:{product_id}", style="success"),
@@ -227,6 +239,7 @@ def after_pick_keyboard(product_id: str, host: dict[str, Any] | None = None) -> 
             [_button(button_label(host, "menu"), "w:menu", style=tone)],
         ]
     )
+    return _keyboard(rows)
 
 
 def info_sheet_keyboard(product_id: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -420,51 +433,59 @@ def send_picture_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> 
 
 
 def send_product_tile(telegram, chat_id: str, product: dict) -> None:
-    from html import escape
+    from wellness_agent.knowledge.house import format_prep_caption
 
     ensure_cards()
     path = card_path(product)
-    caption = (
-        f"<b>{escape(str(product['name']))}</b>\n"
-        f"{escape(str(product['vial']))}\n"
-        "\n"
-        "<b>Prep</b> Las Vegas · dry vials only\n"
-        "Tap a button — Order, Sheet, Prep, or Team."
-    )
+    set_focus_sku(chat_id, product["id"])
+    caption = format_prep_caption(product)
     send_brand_photo(
         telegram, chat_id, path, caption, after_pick_keyboard(product["id"], current_host(chat_id))
     )
 
 
 def send_prep_card(telegram, chat_id: str, product: dict | None = None) -> None:
-    """Prep policy only. Mix and dosing stay on the locked PDF, not in chat."""
-    from html import escape
+    """Prep state from the house DB. Mix and dosing stay on the locked PDF."""
+    from wellness_agent.knowledge.house import format_prep_caption, house_experience
 
     if product:
-        heading = f"<b>🛠️ Prep</b> · {escape(str(product['name']))}"
-        vial = escape(str(product["vial"]))
-        extra = f"{vial}\nMix and starting amounts are on the locked sheet — tap Sheet."
+        extra = format_prep_caption(product)
         markup = after_pick_keyboard(product["id"], current_host(chat_id))
+        set_focus_sku(chat_id, product["id"])
     else:
-        heading = "<b>🛠️ Prep</b>"
-        extra = "Tap a name, then Sheet, for that vial’s locked information sheet."
+        extra = (
+            f"{house_experience()}\n"
+            "Tap a name. Each vial has a prep-state question — fasting for weight-loss tools.\n"
+            "Mix math stays on Sheet."
+        )
         markup = quick_menu_keyboard(str(chat_id))
-    caption = (
-        f"{heading}\n"
-        "\n"
-        "Las Vegas residents only\n"
-        "Dry vials only — we do not ship mixed product\n"
-        f"{CALL_AND_DOCS}.\n"
-        "\n"
-        f"{extra}"
-    )
     host = current_host(chat_id)
     send_host_photo(
         telegram,
         chat_id,
         "think",
-        flavor_caption(host, "think", caption),
+        flavor_caption(host, "think", extra),
         markup,
+        host=host,
+    )
+
+
+def send_fasting_card(telegram, chat_id: str, product: dict, *, experienced: bool) -> None:
+    from wellness_agent.knowledge.house import FASTING_OPENER, format_fasting_followup
+
+    set_focus_sku(chat_id, product["id"])
+    host = current_host(chat_id)
+    extra = (
+        f"<b>{product['name']}</b>\n"
+        f"{FASTING_OPENER}\n\n"
+        f"{format_fasting_followup(experienced=experienced)}"
+    )
+    send_host_photo(
+        telegram,
+        chat_id,
+        "think",
+        flavor_caption(host, "think", extra),
+        after_pick_keyboard(product["id"], host),
         host=host,
     )
 
@@ -700,6 +721,15 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
     if action in {"pick", "tile"}:
         send_product_tile(telegram, chat_id, product)
         return {"ok": True, "action": "tile", "chat_id": chat_id, "product": product["id"]}
+    if action == "fast":
+        send_fasting_card(telegram, chat_id, product, experienced=qty == "yes")
+        return {
+            "ok": True,
+            "action": "fast",
+            "chat_id": chat_id,
+            "product": product["id"],
+            "fasted": qty == "yes",
+        }
     if action == "info":
         send_info_pdf(telegram, chat_id, product)
         return {"ok": True, "action": "info", "chat_id": chat_id, "product": product["id"]}

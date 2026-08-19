@@ -118,6 +118,19 @@ def set_pending_order(chat_id: str, product_id: str | None, qty: str | None) -> 
     _save(state)
 
 
+def set_focus_sku(chat_id: str, product_id: str | None) -> None:
+    chat_id = str(chat_id)
+    state = _load()
+    entry = _chat(state, chat_id)
+    entry["focus_sku"] = str(product_id) if product_id else None
+    _save(state)
+
+
+def focus_sku(chat_id: str) -> str | None:
+    value = _chat(_load(), str(chat_id)).get("focus_sku")
+    return str(value) if value else None
+
+
 def pending_order(chat_id: str) -> dict | None:
     raw = _chat(_load(), str(chat_id)).get("pending_order")
     return dict(raw) if isinstance(raw, dict) else None
