@@ -78,7 +78,7 @@ Wrong or missing staff identity replies `That command is for TrueHold staff only
 3. `python -m wellness_agent whoami` — must return `THWellness_bot`.
 4. `python -m wellness_agent configure-telegram` — customer command menu by default; staff `/inbox` only on operator chats.
 5. `python -m wellness_agent telegram-poll`
-6. In Telegram as a customer: `/start`, say hi, tap one name, share a phone, order 1–3 vials.
+6. In Telegram as a customer: `/start`, say hi, tap one name, share a phone, order 1–3 vials. `/schedule` shows `trueholdwellness@gmail.com` as a tappable email that opens the client’s mail app with our address filled in.
 7. In Telegram as staff: `/inbox` after allowlisting.
 
 Rebuild picture cards and brand graphics:

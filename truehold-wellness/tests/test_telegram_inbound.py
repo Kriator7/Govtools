@@ -9,8 +9,15 @@ class _FakeTelegram:
         self.sent = []
         self.callbacks = []
 
-    def send_message(self, chat_id, text, reply_markup=None):
-        self.sent.append({"chat_id": chat_id, "text": text, "reply_markup": reply_markup})
+    def send_message(self, chat_id, text, reply_markup=None, parse_mode=None):
+        self.sent.append(
+            {
+                "chat_id": chat_id,
+                "text": text,
+                "reply_markup": reply_markup,
+                "parse_mode": parse_mode,
+            }
+        )
         return {"ok": True}
 
     def send_document(self, chat_id, path, caption=""):
@@ -140,14 +147,15 @@ def test_unrelated_first_message_asks_for_hi():
     assert not any("photo" in item for item in tg.sent)
 
 
-def test_schedule_email_opens_gmail_not_telegram():
-    from wellness_agent.telegram_copy import GMAIL_COMPOSE_URL, SCHEDULE
+def test_schedule_email_opens_client_mail_not_gmail_web():
+    from wellness_agent.telegram_copy import MAILTO_URL, SCHEDULE, TEAM_EMAIL
 
-    assert "t.me" not in GMAIL_COMPOSE_URL
-    assert GMAIL_COMPOSE_URL.startswith("https://mail.google.com/mail/")
-    assert "trueholdwellness@gmail.com" in GMAIL_COMPOSE_URL
+    assert TEAM_EMAIL in SCHEDULE
+    assert MAILTO_URL.startswith("mailto:trueholdwellness@gmail.com?")
+    assert "subject=" in MAILTO_URL
+    assert "mail.google.com" not in SCHEDULE
+    assert "t.me" not in MAILTO_URL
     assert "@GMAIL" not in SCHEDULE
-    assert "@gmail" not in SCHEDULE
     tg = _FakeTelegram()
     result = handle_telegram_update(_msg("/schedule", chat_id=44), tg)
     assert result["action"] == "schedule"
@@ -158,9 +166,13 @@ def test_schedule_email_opens_gmail_not_telegram():
         for btn in row
     ]
     assert buttons
-    assert buttons[0]["text"] == "Email on Gmail"
-    assert buttons[0]["url"] == GMAIL_COMPOSE_URL
-    assert "t.me" not in buttons[0]["url"]
+    assert buttons[0]["text"] == "Copy email address"
+    assert buttons[0]["copy_text"]["text"] == TEAM_EMAIL
+    assert "url" not in buttons[0]
+    texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
+    assert any(TEAM_EMAIL in text for text in texts)
+    assert any("mailto:" in text for text in texts)
+    assert any(item.get("parse_mode") == "HTML" for item in tg.sent)
 
 
 def test_customer_inbox_is_denied():

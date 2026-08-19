@@ -1,5 +1,7 @@
 """Public Telegram copy for TrueHold Wellness (@THWellness_bot)."""
 
+from urllib.parse import quote
+
 from wellness_agent.identity import REQUIRED_USERNAME
 
 SAY_HI = (
@@ -52,17 +54,29 @@ STAFF_HELP = (
 )
 
 TEAM_EMAIL = "trueholdwellness@gmail.com"
-# HTTPS Gmail compose — Telegram URL buttons require http/https, not mailto.
-# https://core.telegram.org/bots/api#inlinekeyboardbutton
-GMAIL_COMPOSE_URL = (
-    "https://mail.google.com/mail/?view=cm&fs=1&to=trueholdwellness@gmail.com"
+EMAIL_SUBJECT = "Question for TrueHold Wellness"
+EMAIL_BODY = "Hi TrueHold team,\n\nI have a question:\n\n"
+# mailto opens the client's own mail app with To/subject/body filled.
+# Telegram URL buttons only allow http/https, so this lives in the message as HTML.
+# https://core.telegram.org/bots/api#formatting-options
+MAILTO_URL = (
+    f"mailto:{TEAM_EMAIL}"
+    f"?subject={quote(EMAIL_SUBJECT)}"
+    f"&body={quote(EMAIL_BODY)}"
 )
+SCHEDULE_PARSE_MODE = "HTML"
+
+
+def _mailto_href() -> str:
+    return MAILTO_URL.replace("&", "&amp;")
+
 
 SCHEDULE = (
     "TrueHold Wellness — book with the team\n"
     "Phone: (702) 879-8783 or (702) 879-TRUE\n"
-    "Email: trueholdwellness at gmail.com\n"
-    "Tap Email on Gmail below to write us.\n"
+    f'Email: <a href="{_mailto_href()}">{TEAM_EMAIL}</a>\n'
+    "Tap the email to open your mail app. Our address is already filled in — "
+    "type your question and send.\n"
     "Shop: https://trueholdwellness.com/shop\n"
     f"{SERVICE_POLICY}\n"
     "Telegram interest orders are for Las Vegas residents only.\n"
@@ -72,11 +86,24 @@ SCHEDULE = (
 
 
 def schedule_keyboard() -> dict:
+    """copy_text: https://core.telegram.org/bots/api#copytextbutton"""
     return {
         "inline_keyboard": [
-            [{"text": "Email on Gmail", "url": GMAIL_COMPOSE_URL}],
+            [{"text": "Copy email address", "copy_text": {"text": TEAM_EMAIL}}],
         ]
     }
+
+
+def send_schedule(telegram, chat_id: str) -> None:
+    try:
+        telegram.send_message(
+            chat_id,
+            SCHEDULE,
+            reply_markup=schedule_keyboard(),
+            parse_mode=SCHEDULE_PARSE_MODE,
+        )
+    except TypeError:
+        telegram.send_message(chat_id, SCHEDULE, reply_markup=schedule_keyboard())
 
 CUSTOMER_COMMANDS = (
     {"command": "start", "description": "Say hi to start"},

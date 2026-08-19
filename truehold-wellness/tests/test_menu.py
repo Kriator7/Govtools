@@ -8,8 +8,8 @@ class _FakeTelegram:
         self.sent = []
         self.callbacks = []
 
-    def send_message(self, chat_id, text, reply_markup=None):
-        self.sent.append({"chat_id": chat_id, "text": text, "reply_markup": reply_markup})
+    def send_message(self, chat_id, text, reply_markup=None, parse_mode=None):
+        self.sent.append({"chat_id": chat_id, "text": text, "reply_markup": reply_markup, "parse_mode": parse_mode})
         return {"ok": True}
 
     def send_document(self, chat_id, path, caption=""):
