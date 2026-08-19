@@ -114,6 +114,8 @@ def test_floor_team_has_twenty_one_distinct_hosts():
         assert "inject" not in blob
         assert "bac water" not in blob
         assert "http" not in blob
+        assert "unprotected" not in blob
+        assert "no cage" not in blob
     assert len({KITS[row["id"]]["prep"] for row in rows}) == 21
 
 
