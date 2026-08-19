@@ -71,23 +71,26 @@ def test_floor_team_has_twenty_distinct_hosts():
     assert len({row["name"] for row in rows}) == 20
     assert len({row["icon"] for row in rows}) == 20
     for row in rows:
-        for key in ("role", "color", "style", "hello", "present", "think", "cheer", "joke", "effect"):
+        for key in ("role", "color", "style", "hello", "present", "think", "work", "cheer", "soon", "joke", "effect"):
             assert row.get(key), f"{row['id']} missing {key}"
         assert str(row["color"]).startswith("#")
         assert row["effect"] in {"party", "fire", "heart", "thumbs"}
         assert effect_id(row)
-        blob = " ".join(str(row[key]) for key in ("hello", "present", "think", "cheer", "joke")).lower()
+        blob = " ".join(
+            str(row[key]) for key in ("hello", "present", "think", "work", "cheer", "soon", "joke")
+        ).lower()
         assert "units =" not in blob
         assert "inject" not in blob
         assert "bac water" not in blob
         assert "http" not in blob
 
 
-def test_portraits_exist_for_every_host():
+def test_portraits_exist_for_every_host_and_pose():
     for row in members():
-        path = portrait_path("wave", row["id"])
-        assert path.is_file(), row["id"]
-        assert path.stat().st_size > 1000
+        for pose in POSES:
+            path = portrait_path(pose, row["id"])
+            assert path.is_file(), f"{row['id']}-{pose}"
+            assert path.stat().st_size > 1000
 
 
 def test_host_cards_are_named_for_the_member():

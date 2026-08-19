@@ -32,9 +32,10 @@ from wellness_agent.menu import (
     send_info_pdf,
     send_introduction_menu,
     send_quick_menu,
+    send_team_card,
     send_theo_talk,
 )
-from wellness_agent.team import current_host, flavor_caption
+from wellness_agent.team import current_host, flavor_caption, pose_line
 from wellness_agent.models import AlertTrigger
 from wellness_agent.reflex import fire_reflex
 from wellness_agent.session_store import (
@@ -52,7 +53,6 @@ from wellness_agent.telegram_copy import (
     SCHEDULE,
     STAFF_COMMANDS,
     STAFF_HELP,
-    send_schedule,
 )
 
 __all__ = [
@@ -270,7 +270,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         return {"ok": True, "action": "menu", "chat_id": chat_id, "staff": staff}
 
     if command == "schedule":
-        send_schedule(telegram, chat_id)
+        send_team_card(telegram, chat_id)
         if not client_phone(chat_id):
             ask_for_phone(telegram, chat_id)
         return {"ok": True, "action": "schedule", "chat_id": chat_id}
@@ -304,7 +304,11 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             telegram,
             chat_id,
             "cheer",
-            flavor_caption(host, "cheer", CUSTOMER_CONFIRM.format(detail=detail)),
+            flavor_caption(
+                host,
+                "cheer",
+                CUSTOMER_CONFIRM.format(detail=detail) + f"\n\n{host['icon']} {pose_line(host, 'soon')}",
+            ),
             host=host,
             effect=True,
         )

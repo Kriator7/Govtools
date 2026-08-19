@@ -29,7 +29,7 @@ from wellness_agent.inventory.graphics import (
 
 PORTRAIT_DIR = ASSETS / "agent"
 CARD_DIR = ASSETS / "agent_cards"
-POSES = ("wave", "present", "cheer", "think")
+POSES = ("wave", "present", "think", "work", "cheer", "soon")
 SIZE = (1280, 720)
 
 
@@ -87,9 +87,10 @@ def build_agent_card(pose: str, member_id: str | None = None) -> Path:
         image = vertical_gradient(SIZE, (2, 8, 18), NAVY_DEEP)
     image = _left_scrim(image)
     accent = theme_rgb(str(member.get("color") or ""))
+    pose_seed = POSES.index(name) if name in POSES else 0
     image = paste_overlay(
         image,
-        tech_hud_overlay(SIZE, seed=8 + POSES.index(name) + 17 * abs(hash(member["id"])) % 50, accent=accent),
+        tech_hud_overlay(SIZE, seed=8 + pose_seed + 17 * abs(hash(member["id"])) % 50, accent=accent),
     )
     draw = ImageDraw.Draw(image)
     gold_bars(draw, SIZE, thickness=10, fill=accent)

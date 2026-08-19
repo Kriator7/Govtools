@@ -32,13 +32,14 @@ class _FakeTelegram:
         )
         return {"ok": True}
 
-    def send_photo(self, chat_id, path, caption="", reply_markup=None):
+    def send_photo(self, chat_id, path, caption="", reply_markup=None, parse_mode=None, message_effect_id=None):
         self.sent.append(
             {
                 "chat_id": chat_id,
                 "photo": str(path),
                 "caption": caption,
                 "reply_markup": reply_markup,
+                "parse_mode": parse_mode,
             }
         )
         return {"ok": True}

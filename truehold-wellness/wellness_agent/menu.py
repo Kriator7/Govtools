@@ -34,6 +34,7 @@ from wellness_agent.team import (
     favorite_id,
     flavor_caption,
     members,
+    pose_line,
     rotate_again,
     set_favorite,
     skip_to_next,
@@ -397,6 +398,20 @@ def send_prep_card(telegram, chat_id: str, product: dict | None = None) -> None:
     )
 
 
+def send_team_card(telegram, chat_id: str) -> None:
+    from wellness_agent.telegram_copy import SCHEDULE, schedule_keyboard
+
+    host = current_host(chat_id)
+    send_host_photo(
+        telegram,
+        chat_id,
+        "soon",
+        flavor_caption(host, "soon", SCHEDULE),
+        schedule_keyboard(),
+        host=host,
+    )
+
+
 def send_info_pdf(telegram, chat_id: str, product: dict) -> None:
     from wellness_agent.sheet_store import remember_sheet_message, replace_prior_sheet
 
@@ -482,7 +497,11 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
         telegram,
         chat_id,
         "cheer",
-        flavor_caption(host, "cheer", CUSTOMER_CONFIRM.format(detail=detail)),
+        flavor_caption(
+            host,
+            "cheer",
+            CUSTOMER_CONFIRM.format(detail=detail) + f"\n\n{host['icon']} {pose_line(host, 'soon')}",
+        ),
         after_pick_keyboard(product["id"]),
         host=host,
         effect=True,
@@ -592,9 +611,7 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
         send_quick_menu(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id}
     if action == "team":
-        from wellness_agent.telegram_copy import send_schedule
-
-        send_schedule(telegram, chat_id)
+        send_team_card(telegram, chat_id)
         return {"ok": True, "action": "schedule", "chat_id": chat_id}
     if action == "prep" and not sku:
         send_prep_card(telegram, chat_id)
@@ -622,10 +639,10 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
         send_host_photo(
             telegram,
             chat_id,
-            "think",
+            "work",
             flavor_caption(
                 host,
-                "think",
+                "work",
                 f"<b>How many?</b>\n"
                 f"{escape(str(product['name']))} · dry vials\n"
                 "\n"

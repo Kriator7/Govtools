@@ -47,10 +47,21 @@ def effect_id(member: dict[str, Any]) -> str:
     return str(effects.get(member.get("effect") or "party") or "")
 
 
+POSE_KEYS = {
+    "wave": "hello",
+    "present": "present",
+    "think": "think",
+    "work": "work",
+    "cheer": "cheer",
+    "soon": "soon",
+}
+
+
 def pose_line(member: dict[str, Any], pose: str) -> str:
-    if pose == "wave":
+    key = POSE_KEYS.get(pose, pose)
+    if key == "hello":
         return str(member.get("hello") or "")
-    return str(member.get(pose) or member.get("hello") or "")
+    return str(member.get(key) or member.get("hello") or "")
 
 
 def flavor_caption(

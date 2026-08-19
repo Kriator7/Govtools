@@ -56,7 +56,7 @@ def reply(
     if re.search(r"\b(thanks|thank you|thx|appreciate)\b", lowered):
         return TalkReply(
             text=_signed(host, pick_snippet("thanks", salt=chat_id)),
-            pose="wave",
+            pose="soon",
             source="seed-thanks",
         )
     hits = retrieve(text)
@@ -129,7 +129,12 @@ def _llm_reply(message: str, hits: list[dict[str, Any]], host: dict[str, Any]) -
         return None
     if not content or _BLOCK.search(content) or "http" in content.lower():
         return None
-    pose = "think" if hits and hits[0]["kind"] in {"policy", "product"} else "present"
+    if hits and hits[0]["kind"] == "product":
+        pose = "work"
+    elif hits and hits[0]["kind"] == "policy":
+        pose = "think"
+    else:
+        pose = "present"
     return TalkReply(text=_signed(host, content.strip()), pose=pose, source="llm")
 
 
