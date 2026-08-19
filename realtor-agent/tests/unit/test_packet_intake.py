@@ -6,10 +6,10 @@ from app.models.investor import Investor
 from app.models.realtor import Realtor
 from app.models.realtor_packet import RealtorPacket
 from app.services.inbox.apply import PacketIntakeService
-from app.services.inbox.classify import is_packet_candidate
+from app.services.inbox.classify import is_damian_sender, is_packet_candidate
 from app.services.inbox.message import parse_rfc822
 from app.services.inbox.redact import redact_text
-from app.services.seed import DAMIAN_NAME, TEST_REALTOR_NAME, seed_realtor, upsert_damian_realtor
+from app.services.seed import DAMIAN_EMAIL, DAMIAN_NAME, TEST_REALTOR_NAME, seed_realtor, upsert_damian_realtor
 
 
 PACKET_1_BODY = """Packet 1 — Who you are
@@ -171,3 +171,24 @@ def test_upsert_damian_does_not_reuse_test_operator(db):
     damian = upsert_damian_realtor(db, {"name": DAMIAN_NAME, "email": test.email})
     assert damian.id != test.id
     assert damian.name == DAMIAN_NAME
+
+
+def test_binder_thehomefinderlv_sender_is_applied(db, tmp_path, monkeypatch):
+    monkeypatch.setenv("INBOX_STORAGE_PATH", str(tmp_path / "inbox"))
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    raw = _rfc822(
+        sender=f"Home Finder LV <{DAMIAN_EMAIL}>",
+        to="jrupe7@gmail.com",
+        subject="Re: document packet",
+        body=PACKET_1_BODY.replace("damian@homefinderrealty.example", DAMIAN_EMAIL),
+    )
+    inbound = parse_rfc822(raw, account="jrupe7@gmail.com", uid="6")
+    assert is_damian_sender(inbound)
+    result = PacketIntakeService(db).apply_message(inbound)
+    db.commit()
+    assert result["status"] == "applied"
+    damian = db.query(Realtor).filter(Realtor.email == DAMIAN_EMAIL).one()
+    assert damian.name == DAMIAN_NAME
+    assert damian.license_number == "S.00654321"

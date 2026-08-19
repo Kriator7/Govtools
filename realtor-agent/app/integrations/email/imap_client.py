@@ -13,9 +13,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Protocol
 
 from app.services.inbox.message import InboundMessage, parse_rfc822
+from app.services.seed import DAMIAN_EMAIL
 
 GMAIL_PACKET_QUERY = (
-    "(einbinder OR damian OR \"home finder\" OR homefinder "
+    f"(einbinder OR damian OR from:{DAMIAN_EMAIL} OR from:thehomefinderlv.com "
+    'OR "home finder" OR homefinder OR thehomefinderlv '
     'OR "packet 1" OR "packet 2" OR "packet 3" OR "packet 4" OR "packet 5" '
     'OR "packet 6" OR "packet 7" OR "packet 8" OR "packet 9" OR "packet 10" '
     'OR "buy box" OR "investor list")'
@@ -79,6 +81,8 @@ def _search_uids(client: imaplib.IMAP4, lookback_days: int) -> list[bytes]:
     for criteria in (
         ("SINCE", since, "FROM", "einbinder"),
         ("SINCE", since, "FROM", "homefinder"),
+        ("FROM", DAMIAN_EMAIL),
+        ("FROM", "thehomefinderlv.com"),
     ):
         try:
             typ, data = client.uid("SEARCH", None, *criteria)

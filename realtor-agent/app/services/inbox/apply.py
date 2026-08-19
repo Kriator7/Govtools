@@ -19,7 +19,7 @@ from app.services.inbox.classify import classify_packets, is_packet_candidate
 from app.services.inbox.message import Attachment, InboundMessage
 from app.services.inbox.parse import extract_packet_fields
 from app.services.inbox.redact import looks_like_secret_filename, redact_text
-from app.services.seed import upsert_damian_realtor
+from app.services.seed import DAMIAN_EMAIL, upsert_damian_realtor
 from app.utilities.ids import next_public_id
 from app.utilities.parsing import as_bool, as_int
 
@@ -35,12 +35,17 @@ class PacketIntakeService:
         self._import_cache: dict[str, dict] = {}
 
     def apply_message(self, message: InboundMessage) -> dict:
-        extra_from = [
-            row.email
+        extra_from = {DAMIAN_EMAIL.lower()}
+        extra_from.update(
+            row.email.lower()
             for row in self.db.query(Realtor).filter(Realtor.email.isnot(None)).all()
             if row.email and "einbinder" in (row.name or "").lower()
-        ]
-        if not is_packet_candidate(message, self.settings.imap_watch_address, extra_from=extra_from):
+        )
+        if not is_packet_candidate(
+            message,
+            self.settings.imap_watch_address,
+            extra_from=sorted(extra_from),
+        ):
             return {"status": PacketStatus.IGNORED.value, "message_id": message.message_id, "reason": "not a Damian packet reply"}
         packets = classify_packets(message)
         saved_files = self._store_raw(message)

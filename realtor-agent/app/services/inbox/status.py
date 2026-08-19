@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
 from app.models.realtor_packet import RealtorPacket
-from app.services.seed import DAMIAN_BROKERAGE, DAMIAN_NAME
+from app.services.seed import DAMIAN_BROKERAGE, DAMIAN_EMAIL, DAMIAN_NAME
 
 
 PACKET_TITLES = {
@@ -35,7 +35,7 @@ def write_intake_snapshot(db: Session, settings: Settings | None = None) -> Path
         f"# Damian packet intake snapshot",
         "",
         f"Watch address: `{settings.imap_watch_address}`",
-        f"Live realtor target: {DAMIAN_NAME} / {DAMIAN_BROKERAGE}",
+        f"Live realtor target: {DAMIAN_NAME} / {DAMIAN_BROKERAGE} (`{DAMIAN_EMAIL}`)",
         "",
         "SMS and email relays stay on. This snapshot is written by `inbox-poll`.",
         "",

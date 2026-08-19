@@ -6,11 +6,15 @@ import re
 
 from app.services.inbox.message import InboundMessage
 
+from app.services.seed import DAMIAN_EMAIL
+
 DAMIAN_SENDER_NEEDLES = (
     "einbinder",
     "home finder",
     "homefinder",
     "homefinderrealty",
+    "thehomefinderlv",
+    DAMIAN_EMAIL,
 )
 
 IGNORE_SENDER_NEEDLES = (

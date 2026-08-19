@@ -14,6 +14,7 @@ TEST_INVESTOR_NAME = "Pirates IG LLC"
 MOCK_SMS_NUMBER = "+15555550100"
 DAMIAN_NAME = "Damian Einbinder"
 DAMIAN_BROKERAGE = "Home Finder Realty"
+DAMIAN_EMAIL = "binder@thehomefinderlv.com"
 
 
 def seed_realtor(db: Session) -> Realtor:
@@ -164,8 +165,12 @@ def upsert_damian_realtor(db: Session, fields: dict | None = None) -> Realtor:
         .order_by(Realtor.created_at.asc())
         .first()
     )
-    if realtor is None and fields.get("email"):
-        realtor = db.query(Realtor).filter(Realtor.email == fields["email"]).one_or_none()
+    if realtor is None:
+        realtor = (
+            db.query(Realtor)
+            .filter(Realtor.email == (fields.get("email") or DAMIAN_EMAIL))
+            .one_or_none()
+        )
         if realtor is not None and realtor.name == TEST_REALTOR_NAME:
             realtor = None
     if realtor is None:
@@ -173,6 +178,7 @@ def upsert_damian_realtor(db: Session, fields: dict | None = None) -> Realtor:
             public_id=next_public_id(db, "RLT"),
             name=fields.get("name") or DAMIAN_NAME,
             brokerage=fields.get("brokerage") or DAMIAN_BROKERAGE,
+            email=fields.get("email") or DAMIAN_EMAIL,
             license_state="NV",
             timezone=fields.get("timezone") or "America/Los_Angeles",
             notification_settings={"telegram": True, "email": True, "sms": True, "critical_failures": True},
@@ -209,3 +215,5 @@ def _apply_damian_fields(realtor: Realtor, fields: dict) -> None:
         if note not in existing:
             realtor.notes = f"{existing}\n{note}".strip()
     realtor.license_state = realtor.license_state or "NV"
+    if not realtor.email:
+        realtor.email = DAMIAN_EMAIL

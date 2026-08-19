@@ -2,7 +2,7 @@
 
 The Pirates IG LLC Numbers sheets remain **test templates only**. They are not live client data.
 
-The user asked us to watch `jrupe7@gmail.com` for Damian Einbinder / Home Finder Realty replies to the packet request and apply those replies to packet data.
+The user asked us to watch `jrupe7@gmail.com` for Damian Einbinder / Home Finder Realty replies (`binder@thehomefinderlv.com`) to the packet request and apply those replies to packet data.
 
 `jrupe7@gmail.com` is a **separate Gmail account** from the CardanoMint SMTP login. Inbox polling uses Gmail IMAP ([IMAP/SMTP](https://developers.google.com/workspace/gmail/imap/imap-smtp)) and a Gmail App Password ([App passwords](https://support.google.com/accounts/answer/185833)). Without a `jrupe7` App Password (`IMAP_PASSWORD` / `JRUPE7_IMAP_PASSWORD`), the watcher falls back to `cardanomint@gmail.com` and still only applies mail from Damian / Home Finder — it does not scrape Zillow or other listing mail.
 
@@ -39,7 +39,8 @@ SMS and email **relays stay on**. Do not text Damian or investors from this envi
 | SMS relay | on; live Twilio blocked without `SMS_RELAY_TO` | `SMS_RELAY_TO` = your test phone |
 | Email copy of investor notices | on | `NOTIFY_EMAIL_COPY` |
 | Test investor template | Pirates IG LLC rules from the Numbers workbook | seed only |
-| Live realtor | created when Packet 1 arrives | inbox-poll |
+| Live realtor email | `binder@thehomefinderlv.com` | Packet 1 / `DAMIAN_EMAIL` |
+| Live realtor | created when Packet 1 arrives, or from `binder@thehomefinderlv.com` mail | inbox-poll |
 
 Template matching rules (for tests, not production traffic):
 

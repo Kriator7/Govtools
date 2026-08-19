@@ -195,7 +195,7 @@ EMAIL_SMTP_STARTTLS=true
 Source: https://developers.google.com/workspace/gmail/imap/imap-smtp  
 App passwords: https://support.google.com/accounts/answer/185833
 
-Watch `jrupe7@gmail.com` for Damian Einbinder replies to [`REALTOR_DOCUMENT_CHECKLIST.md`](REALTOR_DOCUMENT_CHECKLIST.md). When a matching email arrives, `inbox-poll` writes the fields onto Damian’s realtor / investor records.
+Watch `jrupe7@gmail.com` for Damian Einbinder replies (`binder@thehomefinderlv.com`) to [`REALTOR_DOCUMENT_CHECKLIST.md`](REALTOR_DOCUMENT_CHECKLIST.md). When a matching email arrives, `inbox-poll` writes the fields onto Damian’s realtor / investor records.
 
 1. Create a Gmail App Password on **`jrupe7@gmail.com`** (this is not the CardanoMint SMTP password).
 2. Set:
