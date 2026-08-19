@@ -55,6 +55,7 @@ from wellness_agent.session_store import (
     mark_intro_played,
     set_awaiting_phone,
     set_discount_code,
+    set_nav_return,
 )
 from wellness_agent.telegram_copy import (
     BOT_COMMANDS,
@@ -240,6 +241,13 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         telegram.send_message(chat_id, TYPE_PHONE)
         return {"ok": True, "action": "type-phone", "chat_id": chat_id}
 
+    if text.lower().strip() in {"⬅️ menu", "menu"}:
+        set_awaiting_phone(chat_id, False)
+        mark_intro_played(chat_id)
+        telegram.send_message(chat_id, "Menu", reply_markup=remove_keyboard())
+        send_quick_menu(telegram, chat_id)
+        return {"ok": True, "action": "menu", "chat_id": chat_id}
+
     command = _command(text)
     staff = is_operator(user_id, chat_id, chat_type)
 
@@ -298,6 +306,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         return {"ok": True, "action": "menu", "chat_id": chat_id, "staff": staff}
 
     if command == "schedule":
+        set_nav_return(chat_id, screen="menu")
         send_team_card(telegram, chat_id)
         if not client_phone(chat_id):
             ask_for_phone(telegram, chat_id)

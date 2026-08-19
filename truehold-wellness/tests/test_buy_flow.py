@@ -88,6 +88,13 @@ def test_buy_keyboards_stack_primary_cta_in_the_same_slot():
         BUY_PREP,
         BUY_SHIP,
         BUY_PICKUP,
+        "⬅️ Back",
+        "⬅️ Menu",
+    }
+    assert {btn["text"] for row in qty["inline_keyboard"] for btn in row} >= {
+        BUY_QTY_1,
+        "⬅️ Back",
+        "⬅️ Menu",
     }
 
 

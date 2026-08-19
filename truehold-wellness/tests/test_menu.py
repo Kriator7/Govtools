@@ -1,4 +1,6 @@
 from wellness_agent.menu import (
+    BUY_BACK,
+    BUY_MENU,
     BUY_NOT_LV,
     BUY_ORDER,
     BUY_PREP,
@@ -171,7 +173,8 @@ def test_info_sheet_sends_telegram_pdf_not_website_link():
     host = current_host("88")
     assert BUY_ORDER in labels
     assert button_label(host, "prep") in labels
-    assert button_label(host, "menu") in labels
+    assert "⬅️ Menu" in labels
+    assert "⬅️ Back" in labels
     assert button_label(host, "team") in labels
     assert "url" not in str(docs[0]["reply_markup"])
     assert docs[0]["filename"] == "TrueHold Wellness locked information sheet — Semax.pdf"
@@ -314,3 +317,72 @@ def test_quick_menu_uses_emoji_name_grid():
     assert button_label(host, "prep") in labels
     assert button_label(host, "team") in labels
     assert menus[-1]["parse_mode"] == "HTML"
+
+
+def _labels(item: dict) -> list[str]:
+    return [
+        btn["text"]
+        for row in (item.get("reply_markup") or {}).get("inline_keyboard") or []
+        for btn in row
+    ]
+
+
+def test_team_card_has_back_and_menu_distinct_from_copy_email():
+    tg = _FakeTelegram()
+    handle_menu_callback(_tap("w:tile:nad")["callback_query"], tg)
+    team = handle_menu_callback(_tap("w:team:nad")["callback_query"], tg)
+    assert team["action"] == "schedule"
+    photos = [item for item in tg.sent if "photo" in item]
+    labels = _labels(photos[-1])
+    data = [
+        btn.get("callback_data")
+        for row in photos[-1]["reply_markup"]["inline_keyboard"]
+        for btn in row
+    ]
+    assert "📧 Copy email" in labels
+    assert "💳 Debit" in labels
+    assert BUY_BACK in labels
+    assert BUY_MENU in labels
+    assert "🕊️ Menu" not in labels
+    assert "🕊️ Email" not in labels
+    assert "w:back" in data
+    assert "w:menu" in data
+    back = handle_menu_callback(_tap("w:back", callback_id="back1")["callback_query"], tg)
+    assert back == {"ok": True, "action": "tile", "chat_id": "88", "product": "nad"}
+    after = [item for item in tg.sent if "photo" in item][-1]
+    assert "nad" in str(after.get("photo") or "").lower()
+    assert BUY_ORDER in _labels(after)
+
+
+def test_team_from_menu_back_returns_to_menu():
+    tg = _FakeTelegram()
+    handle_menu_callback(_tap("w:menu")["callback_query"], tg)
+    handle_menu_callback(_tap("w:team")["callback_query"], tg)
+    back = handle_menu_callback(_tap("w:back", callback_id="back2")["callback_query"], tg)
+    assert back["action"] == "menu"
+    labels = _labels(tg.sent[-1])
+    assert "🧠 Semax" in labels
+
+
+def test_team_from_not_lv_back_returns_to_fulfillment():
+    tg = _FakeTelegram()
+    handle_menu_callback(_tap("w:qty:nad")["callback_query"], tg)
+    handle_menu_callback(_tap("w:ask:nad:1")["callback_query"], tg)
+    handle_menu_callback(_tap("w:team:nad:1")["callback_query"], tg)
+    back = handle_menu_callback(_tap("w:back", callback_id="back3")["callback_query"], tg)
+    assert back == {"ok": True, "action": "ask", "chat_id": "88", "product": "nad", "qty": "1"}
+    cards = [item for item in tg.sent if "2 of 2" in str(item.get("caption") or "")]
+    assert cards
+    labels = _labels(cards[-1])
+    assert BUY_PREP in labels
+    assert BUY_BACK in labels
+    assert BUY_MENU in labels
+
+
+def test_team_menu_opens_quick_menu():
+    tg = _FakeTelegram()
+    handle_menu_callback(_tap("w:team:nad")["callback_query"], tg)
+    result = handle_menu_callback(_tap("w:menu", callback_id="menu2")["callback_query"], tg)
+    assert result["action"] == "menu"
+    labels = _labels(tg.sent[-1])
+    assert "🧠 Semax" in labels

@@ -270,4 +270,4 @@ def test_telegram_files_pack_has_all_locked_sheets():
     markup = info_sheet_keyboard("nad")
     assert "url" not in str(markup)
     labels = [btn["text"] for row in markup["inline_keyboard"] for btn in row]
-    assert labels == [BUY_ORDER, "🛠️ Prep", "📅 Team", "⬅️ Menu"]
+    assert labels == [BUY_ORDER, "🛠️ Prep", "📅 Team", "⬅️ Back", "⬅️ Menu"]

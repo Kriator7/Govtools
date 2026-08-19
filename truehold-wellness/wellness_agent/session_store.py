@@ -161,6 +161,29 @@ def discount_code(chat_id: str) -> str | None:
     return str(value).strip().upper() if value else None
 
 
+def set_nav_return(
+    chat_id: str,
+    *,
+    screen: str,
+    product_id: str | None = None,
+    qty: str | None = None,
+) -> None:
+    chat_id = str(chat_id)
+    state = _load()
+    entry = _chat(state, chat_id)
+    entry["nav_return"] = {
+        "screen": screen,
+        "product_id": product_id,
+        "qty": qty,
+    }
+    _save(state)
+
+
+def nav_return(chat_id: str) -> dict | None:
+    raw = _chat(_load(), str(chat_id)).get("nav_return")
+    return dict(raw) if isinstance(raw, dict) else None
+
+
 def ensure_session(chat_id: str) -> dict:
     chat_id = str(chat_id)
     now = time.time()

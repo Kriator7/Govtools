@@ -225,14 +225,16 @@ def test_schedule_email_opens_client_mail_not_gmail_web():
         for btn in row
     ]
     assert buttons
-    from wellness_agent.team import button_label, current_host
-
-    host = current_host("44")
-    assert buttons[0]["text"] == button_label(host, "email")
+    assert buttons[0]["text"] == "📧 Copy email"
     assert buttons[0]["copy_text"]["text"] == TEAM_EMAIL
     assert "url" not in buttons[0]
-    assert buttons[1]["text"] == button_label(host, "debit")
+    assert buttons[1]["text"] == "💳 Debit"
     assert buttons[1]["url"] == "https://trueholdwellness.com/shop"
+    labels = [btn["text"] for btn in buttons]
+    assert "⬅️ Back" in labels
+    assert "⬅️ Menu" in labels
+    assert "🕊️ Menu" not in labels
+    assert "🕊️ Email" not in labels
     texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
     assert any("Zelle" in text for text in texts)
     assert any(TEAM_EMAIL in text for text in texts)
@@ -329,3 +331,24 @@ def test_group_member_cannot_use_chat_allowlist(monkeypatch):
         tg,
     )
     assert result["action"] == "staff-denied"
+
+
+def test_phone_prompt_menu_button_leaves_the_wait():
+    from wellness_agent.menu import ask_for_phone
+    from wellness_agent.session_store import awaiting_phone
+
+    tg = _FakeTelegram()
+    ask_for_phone(tg, "88")
+    assert awaiting_phone("88") is True
+    assert any("⬅️ Menu" in str(item.get("reply_markup") or "") for item in tg.sent)
+    result = handle_telegram_update(_msg("⬅️ Menu", chat_id=88), tg)
+    assert result["action"] == "menu"
+    assert awaiting_phone("88") is False
+    labels = [
+        btn["text"]
+        for item in tg.sent
+        for row in (item.get("reply_markup") or {}).get("inline_keyboard") or []
+        for btn in row
+    ]
+    assert "🧠 Semax" in labels
+    assert any((item.get("reply_markup") or {}).get("remove_keyboard") for item in tg.sent)
