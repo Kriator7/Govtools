@@ -46,7 +46,9 @@ python -m app.cli demo
 python -m pytest
 ```
 
-Testing uses the confirmed CardanoMint operator mailbox `cardanomint@gmail.com` as the email from-address and relay inbox (`EMAIL_FROM`, `EMAIL_RELAY_TO`). Damian’s live preference is SMS; test SMS is relayed to `SMS_RELAY_TO` when set. Set `EMAIL_RELAY_MODE=false` / `SMS_RELAY_MODE=false` later when mail and texts should go to real recipients. Zillow emails in that inbox are not an MLS source. The Pirates IG LLC Numbers sheets are test templates only; Damian is not loaded until testing is confirmed.
+Testing uses the confirmed CardanoMint operator mailbox `cardanomint@gmail.com` as the email from-address and relay inbox (`EMAIL_FROM`, `EMAIL_RELAY_TO`). Damian’s live preference is SMS; test SMS is relayed to `SMS_RELAY_TO` when set. Set `EMAIL_RELAY_MODE=false` / `SMS_RELAY_MODE=false` later when mail and texts should go to real recipients. Zillow emails in that inbox are not an MLS source.
+
+Watch `jrupe7@gmail.com` for Damian packet replies: `python -m app.cli inbox-poll`. That mailbox needs its own Gmail App Password (`IMAP_PASSWORD`). Without it, polling falls back to CardanoMint IMAP and still only applies Damian / Home Finder mail. The Pirates IG LLC Numbers sheets are test templates only; Damian’s live row is created when Packet 1 arrives.
 
 API (after `uvicorn app.main:app --reload --app-dir .` from this folder):
 
@@ -187,6 +189,28 @@ EMAIL_SMTP_STARTTLS=true
 
 4. Send a ping: `python -m app.cli send-test-email`
 5. Confirm the message in the CardanoMint inbox. Relay mode keeps intended investor addresses in the body and `X-Intended-Recipient` header.
+
+## Damian packet inbox (IMAP)
+
+Source: https://developers.google.com/workspace/gmail/imap/imap-smtp  
+App passwords: https://support.google.com/accounts/answer/185833
+
+Watch `jrupe7@gmail.com` for Damian Einbinder replies to [`REALTOR_DOCUMENT_CHECKLIST.md`](REALTOR_DOCUMENT_CHECKLIST.md). When a matching email arrives, `inbox-poll` writes the fields onto Damian’s realtor / investor records.
+
+1. Create a Gmail App Password on **`jrupe7@gmail.com`** (this is not the CardanoMint SMTP password).
+2. Set:
+
+```
+IMAP_USERNAME=jrupe7@gmail.com
+IMAP_PASSWORD=xxxxxxxxxxxxxxxx
+IMAP_WATCH_ADDRESS=jrupe7@gmail.com
+```
+
+3. Poll: `python -m app.cli inbox-poll --once` then `python -m app.cli inbox-poll`
+4. Raw mail is stored under gitignored `data/inbox/`. Packet status is `data/packets/STATUS.md`.
+5. Relays stay on. MLS website passwords, Twilio tokens, and e-sign passwords in the email body are redacted and not stored.
+
+If `IMAP_PASSWORD` is missing, the same command still polls `cardanomint@gmail.com` with the SMTP App Password and applies Damian mail that lands there (for example a CC or forward).
 
 ## Live Telegram (operator phone)
 

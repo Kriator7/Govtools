@@ -12,12 +12,14 @@ from app.utilities.ids import next_public_id
 TEST_REALTOR_NAME = "Test Operator"
 TEST_INVESTOR_NAME = "Pirates IG LLC"
 MOCK_SMS_NUMBER = "+15555550100"
+DAMIAN_NAME = "Damian Einbinder"
+DAMIAN_BROKERAGE = "Home Finder Realty"
 
 
 def seed_realtor(db: Session) -> Realtor:
-    """Seed the testing operator. Damian is not loaded until testing is confirmed."""
+    """Seed the testing operator. Never overwrite Damian's live packet record."""
     settings = get_settings()
-    existing = db.query(Realtor).filter(Realtor.is_active.is_(True)).order_by(Realtor.created_at.asc()).first()
+    existing = db.query(Realtor).filter(Realtor.name == TEST_REALTOR_NAME).order_by(Realtor.created_at.asc()).first()
     if existing:
         _apply_test_realtor(existing, settings)
         db.flush()
@@ -151,3 +153,59 @@ def seed_pirates_ig(db: Session, realtor: Realtor | None = None) -> Investor:
             },
         )
     return investor
+
+
+def upsert_damian_realtor(db: Session, fields: dict | None = None) -> Realtor:
+    """Create or update Damian from packet data only. Relays stay on."""
+    fields = fields or {}
+    realtor = (
+        db.query(Realtor)
+        .filter(Realtor.name.ilike("%Einbinder%"))
+        .order_by(Realtor.created_at.asc())
+        .first()
+    )
+    if realtor is None and fields.get("email"):
+        realtor = db.query(Realtor).filter(Realtor.email == fields["email"]).one_or_none()
+        if realtor is not None and realtor.name == TEST_REALTOR_NAME:
+            realtor = None
+    if realtor is None:
+        realtor = Realtor(
+            public_id=next_public_id(db, "RLT"),
+            name=fields.get("name") or DAMIAN_NAME,
+            brokerage=fields.get("brokerage") or DAMIAN_BROKERAGE,
+            license_state="NV",
+            timezone=fields.get("timezone") or "America/Los_Angeles",
+            notification_settings={"telegram": True, "email": True, "sms": True, "critical_failures": True},
+            is_active=True,
+            notes="Live realtor record filled from Damian packet replies. SMS/email relays stay on.",
+        )
+        db.add(realtor)
+        db.flush()
+    _apply_damian_fields(realtor, fields)
+    db.flush()
+    return realtor
+
+
+def _apply_damian_fields(realtor: Realtor, fields: dict) -> None:
+    mapping = {
+        "name": "name",
+        "brokerage": "brokerage",
+        "license_number": "license_number",
+        "phone": "phone",
+        "email": "email",
+        "timezone": "timezone",
+    }
+    for source, attr in mapping.items():
+        value = fields.get(source)
+        if value:
+            setattr(realtor, attr, value)
+    extra = []
+    for key in ("license_expiration", "broker_name", "broker_license", "office_address", "side"):
+        if fields.get(key):
+            extra.append(f"{key}: {fields[key]}")
+    if extra:
+        note = "Packet 1 fields: " + "; ".join(extra)
+        existing = realtor.notes or ""
+        if note not in existing:
+            realtor.notes = f"{existing}\n{note}".strip()
+    realtor.license_state = realtor.license_state or "NV"

@@ -14,6 +14,10 @@ data/storage/
 data/exports/*
 !data/exports/.gitkeep
 data/telegram_offset.json
+data/inbox/*
+!data/inbox/.gitkeep
+data/packets/*
+!data/packets/.gitkeep
 data/imports/*
 !data/imports/.gitkeep
 !data/imports/sample_investors.csv

@@ -137,6 +137,14 @@ class DeliveryStatus(StrEnum):
     RECEIVED = "received"
 
 
+class PacketStatus(StrEnum):
+    IGNORED = "ignored"
+    RECEIVED = "received"
+    APPLIED = "applied"
+    PARTIAL = "partial"
+    UNCLASSIFIED = "unclassified"
+
+
 class InvestorResponse(StrEnum):
     YES = "YES"
     NO = "NO"

@@ -59,6 +59,19 @@ class Settings(BaseSettings):
     email_smtp_password: str | None = None
     email_smtp_starttls: bool = True
 
+    # IMAP watch for Damian packet replies. Gmail IMAP:
+    # https://developers.google.com/workspace/gmail/imap/imap-smtp
+    imap_host: str = "imap.gmail.com"
+    imap_port: int = 993
+    imap_username: str | None = None
+    imap_password: str | None = None
+    jrupe7_imap_password: str | None = None
+    imap_watch_address: str = "jrupe7@gmail.com"
+    imap_mailbox: str = "INBOX"
+    imap_poll_seconds: int = 60
+    imap_lookback_days: int = 30
+    inbox_storage_path: str = "./data/inbox"
+
     # Damian's live preference is SMS. Relay keeps test texts off real investors.
     sms_relay_mode: bool = True
     sms_relay_to: str | None = None
@@ -92,6 +105,13 @@ class Settings(BaseSettings):
     @property
     def storage_path(self) -> Path:
         path = Path(self.local_storage_path)
+        if not path.is_absolute():
+            path = PROJECT_ROOT / path
+        return path
+
+    @property
+    def inbox_path(self) -> Path:
+        path = Path(self.inbox_storage_path)
         if not path.is_absolute():
             path = PROJECT_ROOT / path
         return path

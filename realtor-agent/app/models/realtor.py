@@ -29,3 +29,4 @@ class Realtor(UUIDPrimaryKeyMixin, PublicIdMixin, TimestampMixin, Base):
     listings = relationship("Listing", back_populates="realtor")
     opportunities = relationship("Opportunity", back_populates="realtor")
     transactions = relationship("Transaction", back_populates="realtor")
+    packets = relationship("RealtorPacket", back_populates="realtor")

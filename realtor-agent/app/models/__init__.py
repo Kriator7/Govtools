@@ -11,6 +11,7 @@ from app.models.investor_criteria import InvestorCriteria
 from app.models.listing import Listing
 from app.models.opportunity import Opportunity
 from app.models.realtor import Realtor
+from app.models.realtor_packet import RealtorPacket
 from app.models.transaction import Transaction
 
 __all__ = [
@@ -25,5 +26,6 @@ __all__ = [
     "Listing",
     "Opportunity",
     "Realtor",
+    "RealtorPacket",
     "Transaction",
 ]

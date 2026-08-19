@@ -32,6 +32,11 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("send-test-sms", help="Send a ping to SMS_RELAY_TO (mock outbox unless Twilio is live)")
     poll = sub.add_parser("telegram-poll", help="Long-poll Telegram getUpdates for phone approve/reject/snooze")
     poll.add_argument("--once", action="store_true", help="Fetch one batch and exit")
+    inbox = sub.add_parser(
+        "inbox-poll",
+        help="Watch Gmail for Damian packet replies and apply them to realtor packet data",
+    )
+    inbox.add_argument("--once", action="store_true", help="Poll once and exit")
     args = parser.parse_args(argv)
 
     if args.command == "send-test-email":
@@ -53,6 +58,10 @@ def main(argv: list[str] | None = None) -> int:
             db.commit()
             print(result)
             return 0
+        if args.command == "inbox-poll":
+            from app.services.inbox.watch import poll_forever
+
+            return poll_forever(db, once=args.once)
         realtor = seed_realtor(db)
         seed_pirates_ig(db, realtor)
         if args.command == "ingest":

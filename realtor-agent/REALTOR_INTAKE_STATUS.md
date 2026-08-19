@@ -1,8 +1,25 @@
-# Intake status — testing first, Damian later
+# Intake status — Damian packet watch is on
 
-The Pirates IG LLC Numbers sheets are **test templates only**. They are not live client data.
+The Pirates IG LLC Numbers sheets remain **test templates only**. They are not live client data.
 
-Do not contact Damian, Amos, or Home Finder Realty from this environment until testing is confirmed.
+The user asked us to watch `jrupe7@gmail.com` for Damian Einbinder / Home Finder Realty replies to the packet request and apply those replies to packet data.
+
+`jrupe7@gmail.com` is a **separate Gmail account** from the CardanoMint SMTP login. Inbox polling uses Gmail IMAP ([IMAP/SMTP](https://developers.google.com/workspace/gmail/imap/imap-smtp)) and a Gmail App Password ([App passwords](https://support.google.com/accounts/answer/185833)). Without a `jrupe7` App Password (`IMAP_PASSWORD` / `JRUPE7_IMAP_PASSWORD`), the watcher falls back to `cardanomint@gmail.com` and still only applies mail from Damian / Home Finder — it does not scrape Zillow or other listing mail.
+
+```
+python -m app.cli inbox-poll --once
+python -m app.cli inbox-poll
+```
+
+When a Damian packet reply arrives:
+
+1. Packet 1 updates Damian Einbinder / Home Finder Realty (does not overwrite Test Operator)
+2. Packets 3–4 import investor / buy-box spreadsheets onto Damian
+3. Packet 5 merges Telegram / alert hours / min score
+4. Packets 2 and 6–10 store metadata and files; passwords are redacted and not saved
+5. A snapshot is written to gitignored `data/packets/STATUS.md`
+
+SMS and email **relays stay on**. Do not text Damian or investors from this environment until that is explicitly enabled.
 
 ---
 
@@ -10,6 +27,9 @@ Do not contact Damian, Amos, or Home Finder Realty from this environment until t
 
 | Setting | Value | How to change |
 | --- | --- | --- |
+| Packet watch address | `jrupe7@gmail.com` | `IMAP_WATCH_ADDRESS` |
+| jrupe7 IMAP login | needs App Password | `IMAP_USERNAME` + `IMAP_PASSWORD` |
+| Fallback IMAP mailbox | `cardanomint@gmail.com` | `EMAIL_SMTP_USERNAME` / `EMAIL_SMTP_PASSWORD` |
 | Test operator email / from address | `cardanomint@gmail.com` | `EMAIL_FROM` |
 | Email relay inbox | `cardanomint@gmail.com` | `EMAIL_RELAY_TO` |
 | Relay mode | on (all mail goes to the relay inbox) | `EMAIL_RELAY_MODE=true\|false` |
@@ -19,7 +39,7 @@ Do not contact Damian, Amos, or Home Finder Realty from this environment until t
 | SMS relay | on; live Twilio blocked without `SMS_RELAY_TO` | `SMS_RELAY_TO` = your test phone |
 | Email copy of investor notices | on | `NOTIFY_EMAIL_COPY` |
 | Test investor template | Pirates IG LLC rules from the Numbers workbook | seed only |
-| Live realtor | not loaded | add Damian after testing |
+| Live realtor | created when Packet 1 arrives | inbox-poll |
 
 Template matching rules (for tests, not production traffic):
 
@@ -32,20 +52,16 @@ Template matching rules (for tests, not production traffic):
 
 ---
 
-## After testing confirms the pipeline
+## After packets are applied
 
-Then collect Damian’s live packet (identity already on file from his first reply) and switch:
+Keep relays on until you explicitly turn them off:
 
-1. Seed Damian Einbinder / Home Finder Realty as the active realtor
-2. Replace the test investor with his real roster and permissions
+1. Confirm Damian’s Packet 1 identity on the Damian realtor row
+2. Confirm investor roster from Packets 3–4
 3. Set `EMAIL_FROM` / `EMAIL_RELAY_TO` if the live from-address should change
 4. Set `EMAIL_RELAY_MODE=false` only when mail should go to real investor addresses
 5. Set `SMS_RELAY_MODE=false` only when texts should go to real investor phones with permission
 
-Until then, outbound email is from and to `cardanomint@gmail.com`.
+Zillow listing emails in either inbox are **not** an MLS source. Do not scrape Gmail or Zillow for listings. Use only an authorized MLS/API feed later.
 
-The operator mailbox is confirmed as the CardanoMint Gmail account (`cardanomint@gmail.com`). Set `EMAIL_PROVIDER=smtp` and a Gmail App Password to send real mail into that inbox. Mock email still writes `data/exports/email_outbox.json` when `EMAIL_PROVIDER=mock`.
-
-Zillow listing emails in that inbox are **not** an MLS source. Do not scrape Gmail or Zillow for listings. Use only an authorized MLS/API feed later.
-
-Damian wants investors contacted by **text**. That is wired as the test preferred channel, with SMS relay + an email copy. Do not send Twilio messages to Damian or his investors until testing is confirmed.
+Damian wants investors contacted by **text**. That is wired as the test preferred channel, with SMS relay + an email copy. Do not send Twilio messages to Damian or his investors until that is explicitly enabled.
