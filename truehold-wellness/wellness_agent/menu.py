@@ -818,7 +818,10 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
     action = parts[1] if len(parts) >= 2 else ""
     host_action = parts[2] if action == "host" and len(parts) > 2 else ""
     if hasattr(telegram, "answer_callback_query") and callback_id:
-        telegram.answer_callback_query(callback_id, text=TOASTS.get(host_action or action))
+        try:
+            telegram.answer_callback_query(callback_id, text=TOASTS.get(host_action or action))
+        except Exception:
+            pass
     if not chat_id:
         return {"ok": True, "ignored": True, "action": "callback-no-chat"}
     if len(parts) < 2 or parts[0] != "w":

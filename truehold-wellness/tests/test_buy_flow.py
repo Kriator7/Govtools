@@ -107,6 +107,17 @@ def test_qty_and_fulfill_edit_the_same_product_card():
     assert rows[0][0]["text"] == BUY_PREP
 
 
+def test_expired_callback_toast_still_opens_menu():
+    class _BoomTelegram(_FakeTelegram):
+        def answer_callback_query(self, callback_query_id, text=None):
+            raise RuntimeError("query is too old")
+
+    tg = _BoomTelegram()
+    result = handle_menu_callback(_tap("w:menu"), tg)
+    assert result["action"] == "menu"
+    assert any(item.get("reply_markup") for item in tg.sent)
+
+
 def test_ship_choice_lands_on_done_not_order_again():
     save_client_phone("88", "7025550100", source="test", user_id="88")
     tg = _FakeTelegram()

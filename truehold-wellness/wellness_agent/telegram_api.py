@@ -160,11 +160,21 @@ class WellnessTelegram:
         return {"provider_message_id": str((data.get("result") or {}).get("message_id")), "raw": data}
 
     def answer_callback_query(self, callback_query_id: str, text: str | None = None) -> dict[str, Any]:
-        """answerCallbackQuery: https://core.telegram.org/bots/api#answercallbackquery"""
+        """answerCallbackQuery: https://core.telegram.org/bots/api#answercallbackquery
+
+        Expired taps return HTTP 400. That must not stop the poller.
+        """
         payload: dict[str, Any] = {"callback_query_id": callback_query_id}
         if text:
             payload["text"] = text[:200]
-        return self._post("answerCallbackQuery", payload)
+        try:
+            return self._post("answerCallbackQuery", payload)
+        except httpx.HTTPStatusError as exc:
+            if getattr(exc.response, "status_code", None) == 400:
+                return {"ok": False, "description": "callback query expired"}
+            raise
+        except RuntimeError as exc:
+            return {"ok": False, "description": str(exc)}
 
     def delete_message(self, chat_id: str, message_id: str | int) -> dict[str, Any]:
         """deleteMessage: https://core.telegram.org/bots/api#deletemessage"""
@@ -218,7 +228,7 @@ class WellnessTelegram:
         }
         if offset is not None:
             payload["offset"] = offset
-        data = self._post("getUpdates", payload, timeout=timeout + 10)
+        data = self._post("getUpdates", payload, timeout=timeout + 30)
         return list(data.get("result") or [])
 
     def delete_webhook(self) -> dict[str, Any]:

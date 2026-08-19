@@ -271,14 +271,32 @@ def _telegram_poll(*, once: bool) -> int:
         json.dumps({"ok": True, "polling": True, "bot": f"@{REQUIRED_USERNAME}", "offset": offset})
         + "\n"
     )
+    sys.stdout.flush()
     while True:
-        updates = telegram.get_updates(offset=offset, timeout=25)
+        try:
+            updates = telegram.get_updates(offset=offset, timeout=25)
+        except Exception as exc:
+            sys.stderr.write(f"telegram poll retry: {exc}\n")
+            sys.stderr.flush()
+            if once:
+                return 1
+            time.sleep(2)
+            continue
         for update in updates:
             offset = int(update["update_id"]) + 1
             offset_path.parent.mkdir(parents=True, exist_ok=True)
             offset_path.write_text(json.dumps({"offset": offset}), encoding="utf-8")
-            result = handle_telegram_update(update, telegram)
-            sys.stdout.write(json.dumps({"update_id": update.get("update_id"), "result": result}) + "\n")
+            try:
+                result = handle_telegram_update(update, telegram)
+                sys.stdout.write(
+                    json.dumps({"update_id": update.get("update_id"), "result": result}) + "\n"
+                )
+                sys.stdout.flush()
+            except Exception as exc:
+                sys.stderr.write(
+                    json.dumps({"update_id": update.get("update_id"), "error": str(exc)}) + "\n"
+                )
+                sys.stderr.flush()
         if once:
             return 0
         if not updates:
