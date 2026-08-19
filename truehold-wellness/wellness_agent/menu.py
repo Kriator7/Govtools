@@ -1,12 +1,14 @@
 """Quick menu then one product tile for TrueHold Wellness customers.
 
-Hello sends a compact button list — not every SKU photo. Tapping a name
-sends that tile. Phone is requested because Telegram does not expose it
-unless the client shares contact (https://core.telegram.org/bots/api#keyboardbutton).
+Hello sends a brand graphic plus a compact button list — not every SKU
+photo. Tapping a name sends that tile. Phone is requested because Telegram
+does not expose it unless the client shares contact
+(https://core.telegram.org/bots/api#keyboardbutton).
 """
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from wellness_agent.catalog import (
@@ -17,38 +19,41 @@ from wellness_agent.catalog import (
     products,
 )
 from wellness_agent.clients import client_phone, phone_line_for_staff
+from wellness_agent.inventory.build_brand import hero_path, service_path
 from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
 from wellness_agent.session_store import pending_order, set_awaiting_phone, set_pending_order
+from wellness_agent.telegram_copy import CALL_AND_DOCS, INTRODUCTION, SERVICE_POLICY
 
 MENU_INTRO = (
     "Quick menu — tap one name. We will send that tile.\n"
-    "Las Vegas residents only. Educational information only. "
-    "The team calls to confirm, consult, and set up waiver signing."
+    f"{SERVICE_POLICY}\n"
+    "Educational information only. "
+    f"{CALL_AND_DOCS}."
 )
 
 CUSTOMER_CONFIRM = (
-    "Got it. The TrueHold team will call to confirm, consult, and set up waiver signing.\n"
+    f"Got it. The TrueHold team will call to confirm, consult, and complete required documentation.\n"
     "{detail}\n"
-    "Las Vegas residents only. Consult before payment. Educational only."
+    f"{SERVICE_POLICY} Consult before payment. Educational only."
 )
 
 ASK_PHONE = (
     "Telegram cannot share your number unless you send it.\n"
-    "Share your phone, or type it, so we can call for confirmation, "
-    "consultation, and waiver signing."
+    "Share your phone, or type it, so we can call to confirm, consult, "
+    "and complete required documentation."
 )
 
 PHONE_THANKS = (
     "Thanks. We have {phone} on file and will call to confirm, consult, "
-    "and set up waiver signing."
+    "and complete required documentation."
 )
 
 TYPE_PHONE = "Reply with your mobile number, including area code. Example: 702-555-0100"
 
 NEED_PHONE = (
     "We still need a phone number so the team can call to confirm, consult, "
-    "and set up waiver signing."
+    "and complete required documentation."
 )
 
 
@@ -118,17 +123,33 @@ def qty_keyboard(product_id: str) -> dict[str, Any]:
 def confirm_keyboard(product_id: str, qty: str) -> dict[str, Any]:
     return _keyboard(
         [
-            [_button("Yes, send to the team", f"w:yes:{product_id}:{qty}")],
+            [_button("Yes — Las Vegas resident", f"w:yes:{product_id}:{qty}")],
+            [_button("Not in Las Vegas", "w:team")],
             [_button("Pick something else", "w:menu")],
         ]
     )
 
 
+def send_brand_photo(
+    telegram,
+    chat_id: str,
+    path: Path,
+    caption: str,
+    reply_markup: dict[str, Any] | None = None,
+) -> None:
+    if hasattr(telegram, "send_photo"):
+        telegram.send_photo(chat_id, path, caption=caption, reply_markup=reply_markup)
+        return
+    telegram.send_message(chat_id, caption, reply_markup=reply_markup)
+
+
+def send_introduction_menu(telegram, chat_id: str) -> None:
+    send_brand_photo(telegram, chat_id, hero_path(), INTRODUCTION, quick_menu_keyboard())
+
+
 def send_quick_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> None:
-    if include_blurb:
-        telegram.send_message(chat_id, MENU_INTRO, reply_markup=quick_menu_keyboard())
-    else:
-        telegram.send_message(chat_id, "Tap one name:", reply_markup=quick_menu_keyboard())
+    caption = MENU_INTRO if include_blurb else "Tap one name:"
+    send_brand_photo(telegram, chat_id, hero_path(), caption, quick_menu_keyboard())
 
 
 def send_picture_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> int:
@@ -142,29 +163,22 @@ def send_product_tile(telegram, chat_id: str, product: dict) -> None:
     path = card_path(product)
     caption = (
         f"{product['name']}\n{product['vial']}\n"
+        f"{SERVICE_POLICY}\n"
         "Order this, see the info sheet, or go back to the menu."
     )
-    if hasattr(telegram, "send_photo"):
-        telegram.send_photo(
-            chat_id,
-            path,
-            caption=caption,
-            reply_markup=after_pick_keyboard(product["id"]),
-        )
-    else:
-        telegram.send_message(chat_id, caption, reply_markup=after_pick_keyboard(product["id"]))
+    send_brand_photo(telegram, chat_id, path, caption, after_pick_keyboard(product["id"]))
 
 
-def ask_for_phone(telegram, chat_id: str) -> None:
+def ask_for_phone(telegram, chat_id: str, *, extra: str | None = None) -> None:
     set_awaiting_phone(chat_id, True)
-    telegram.send_message(chat_id, ASK_PHONE, reply_markup=contact_keyboard())
+    caption = ASK_PHONE if not extra else f"{extra}\n\n{ASK_PHONE}"
+    send_brand_photo(telegram, chat_id, service_path(), caption, contact_keyboard())
 
 
 def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> dict[str, Any]:
     if not client_phone(chat_id):
         set_pending_order(chat_id, product["id"], qty)
-        ask_for_phone(telegram, chat_id)
-        telegram.send_message(chat_id, NEED_PHONE)
+        ask_for_phone(telegram, chat_id, extra=NEED_PHONE)
         return {
             "ok": True,
             "action": "need-phone",
@@ -181,7 +195,12 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
         require_destination=False,
     )
     set_pending_order(chat_id, None, None)
-    telegram.send_message(chat_id, CUSTOMER_CONFIRM.format(detail=detail))
+    send_brand_photo(
+        telegram,
+        chat_id,
+        service_path(),
+        CUSTOMER_CONFIRM.format(detail=detail),
+    )
     try:
         telegram.send_document(
             chat_id,
@@ -258,23 +277,31 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
         )
         telegram.send_message(
             chat_id,
-            "Want this vial, or pick a different name?",
+            "Want this dry vial, or pick a different name?",
             reply_markup=after_pick_keyboard(product["id"]),
         )
         return {"ok": True, "action": "info", "chat_id": chat_id, "product": product["id"]}
     if action == "qty":
-        telegram.send_message(
+        send_brand_photo(
+            telegram,
             chat_id,
-            f"How many {product['name']} vials? Interest order only — the team calls to confirm, consult, and set up waivers.",
-            reply_markup=qty_keyboard(product["id"]),
+            service_path(),
+            f"How many {product['name']} dry vials?\n"
+            "Interest order only. "
+            f"{SERVICE_POLICY} {CALL_AND_DOCS}.",
+            qty_keyboard(product["id"]),
         )
         return {"ok": True, "action": "qty", "chat_id": chat_id, "product": product["id"]}
     if action == "ask" and qty in {"1", "2", "3"}:
-        telegram.send_message(
+        send_brand_photo(
+            telegram,
             chat_id,
-            f"Send this interest order to the TrueHold team?\n{qty}x {product['name']} ({product['vial']})\n"
-            "We will call to confirm, consult, and set up waiver signing.",
-            reply_markup=confirm_keyboard(product["id"], qty),
+            service_path(),
+            f"Send this interest order to the TrueHold team?\n"
+            f"{qty}x {product['name']} ({product['vial']})\n"
+            f"{SERVICE_POLICY}\n"
+            f"{CALL_AND_DOCS}. Confirm only if you are a Las Vegas resident.",
+            confirm_keyboard(product["id"], qty),
         )
         return {
             "ok": True,

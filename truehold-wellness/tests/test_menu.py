@@ -56,8 +56,19 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert photos[0]["photo"].endswith("klow.jpg")
     qty = handle_menu_callback(_tap("w:qty:klow")["callback_query"], tg)
     assert qty["action"] == "qty"
+    qty_photos = [item for item in tg.sent if str(item.get("photo") or "").endswith("service.jpg")]
+    assert qty_photos
+    assert "dry vials" in (qty_photos[0].get("caption") or "").lower()
     ask = handle_menu_callback(_tap("w:ask:klow:2")["callback_query"], tg)
     assert ask == {"ok": True, "action": "ask", "chat_id": "88", "product": "klow", "qty": "2"}
+    ask_buttons = [
+        btn["text"]
+        for item in tg.sent
+        for row in (item.get("reply_markup") or {}).get("inline_keyboard") or []
+        for btn in row
+    ]
+    assert "Yes — Las Vegas resident" in ask_buttons
+    assert "Not in Las Vegas" in ask_buttons
     confirm = handle_telegram_update(_tap("w:yes:klow:2", callback_id="cb2"), tg)
     assert confirm["action"] == "order-confirm"
     assert confirm["product"] == "klow"
@@ -66,8 +77,12 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert "klow" in inbox.orders.detail.lower()
     assert "7025550100" in inbox.orders.detail.replace("-", "") or "+17025550100" in inbox.orders.detail
     assert inbox.payments.new is False
-    texts = [item.get("text") or "" for item in tg.sent]
+    texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
     assert any("Got it. The TrueHold team will call" in text for text in texts)
+    assert any("required documentation" in text for text in texts)
+    assert any("Las Vegas" in text for text in texts)
+    assert any("dry" in text.lower() for text in texts)
+    assert not any("waiver" in text.lower() for text in texts)
     assert not any("TrueHold Wellness alert — order" in text for text in texts)
     assert any(str(item.get("document", "")).endswith("klow.pdf") for item in tg.sent)
     assert "cb2" in tg.callbacks

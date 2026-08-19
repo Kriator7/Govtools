@@ -68,8 +68,8 @@ def format_catalog() -> str:
     lines = [
         "TrueHold Wellness inventory",
         "Educational information only. Research use only.",
-        "Tap /menu and This one on the photo you want. Consult before any decision.",
-        "Las Vegas residents only for Telegram interest orders.",
+        "Tap /menu, then one name. Consult before any decision.",
+        "Prep and local delivery: Las Vegas residents only. Shipping: dry vials only.",
         "",
     ]
     for item in products():
@@ -90,6 +90,7 @@ def format_product_caption(product: dict[str, Any]) -> str:
     return (
         f"TrueHold Wellness locked information sheet — {product['name']}\n"
         f"{product['vial']}\n"
-        "Educational only. Protocol details reviewed case by case.\n"
+        "Educational only. Dry (lyophilized) vial. Protocol details reviewed case by case.\n"
+        "Prep and local delivery: Las Vegas residents only.\n"
         f"{product['shop_url']}"
     )

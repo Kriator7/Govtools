@@ -1,4 +1,4 @@
-"""Client phone records for TrueHold Wellness call-back, consult, and waivers.
+"""Client phone records for TrueHold Wellness call-back, consult, and documentation.
 
 Telegram does not expose a user's phone unless they share it
 (KeyboardButton request_contact: https://core.telegram.org/bots/api#keyboardbutton).
@@ -102,9 +102,11 @@ def phone_line_for_staff(chat_id: str) -> str:
     phone = client_phone(chat_id)
     if phone:
         return (
-            f"Client phone: {phone}. Call to confirm, consult, and set up waiver signing."
+            f"Client phone: {phone}. Call to confirm, consult, and complete required documentation. "
+            "Las Vegas residents only. Dry vials only."
         )
     return (
         "Client phone: not on file. Ask the client for a number so the team can call "
-        "to confirm, consult, and set up waiver signing."
+        "to confirm, consult, and complete required documentation. "
+        "Las Vegas residents only. Dry vials only."
     )

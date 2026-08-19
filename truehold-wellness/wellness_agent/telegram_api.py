@@ -18,11 +18,11 @@ from wellness_agent.telegram_copy import CUSTOMER_COMMANDS, STAFF_COMMANDS
 TELEGRAM_ENDPOINT = "https://api.telegram.org"
 BOT_DISPLAY_NAME = "TrueHold Wellness"
 BOT_DESCRIPTION = (
-    "TrueHold Wellness. Say hi to start, then scroll the picture menu and tap the vial you want. "
-    "Las Vegas residents only. Educational information only. "
-    "Not realtor-agent."
+    "TrueHold Wellness. Say hi to start, then tap one name on the menu. "
+    "Las Vegas residents only. Prep and local delivery in Las Vegas. "
+    "Dry vials only. Educational information only. Not realtor-agent."
 )
-BOT_SHORT_DESCRIPTION = "TrueHold Wellness. Say hi to start, then tap the vial you want."
+BOT_SHORT_DESCRIPTION = "TrueHold Wellness. Las Vegas residents. Dry vials only."
 
 
 class WellnessTelegram:

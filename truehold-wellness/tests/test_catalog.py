@@ -113,3 +113,20 @@ def test_picture_menu_cards_exist_for_every_sku():
         assert path.is_file()
         assert path.suffix == ".jpg"
         assert path.stat().st_size > 1000
+
+
+def test_brand_graphics_exist():
+    from wellness_agent.inventory.build_brand import ensure_brand, hero_path, logo_path, service_path
+
+    ensure_brand()
+    for path in (logo_path(), hero_path(), service_path()):
+        assert path.is_file()
+        assert path.suffix.lower() in {".jpg", ".jpeg"}
+        assert path.stat().st_size > 1000
+
+
+def test_catalog_states_las_vegas_and_dry_vials():
+    text = format_catalog().lower()
+    assert "las vegas" in text
+    assert "dry vials" in text
+    assert "waiver" not in text

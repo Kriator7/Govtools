@@ -55,10 +55,29 @@ def test_wellness_identity_accepts_thwellness():
     assert assert_wellness_telegram_username("@THWellness_bot") == REQUIRED_USERNAME
 
 
-def test_help_names_thwellness_not_npeppers():
-    assert "@THWellness_bot" in HELP
-    assert "Npeppers" not in HELP
-    assert "/inbox" not in HELP
+def test_customer_copy_uses_documentation_not_waivers():
+    from wellness_agent import catalog, clients, menu
+    from wellness_agent.telegram_copy import CUSTOMER_HELP, INTRODUCTION, SCHEDULE
+
+    blob = "\n".join(
+        [
+            INTRODUCTION,
+            CUSTOMER_HELP,
+            SCHEDULE,
+            menu.MENU_INTRO,
+            menu.CUSTOMER_CONFIRM.format(detail="1x KLOW"),
+            menu.ASK_PHONE,
+            menu.PHONE_THANKS.format(phone="+17025550100"),
+            menu.NEED_PHONE,
+            clients.phone_line_for_staff("missing"),
+            catalog.format_catalog(),
+            catalog.format_product_caption(catalog.find_product("semax")),
+        ]
+    ).lower()
+    assert "waiver" not in blob
+    assert "required documentation" in blob
+    assert "dry" in blob
+    assert "las vegas" in blob
 
 
 def test_start_asks_to_say_hi_and_does_not_grant_staff():
@@ -79,11 +98,17 @@ def test_hello_plays_intro_once_then_does_not_repeat():
     handle_telegram_update(_msg("/start", chat_id=99), tg)
     hello = handle_telegram_update(_msg("hello", chat_id=99), tg)
     assert hello["action"] == "intro"
-    texts = [item.get("text") or "" for item in tg.sent]
+    texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
     assert any("welcome to TrueHold Wellness" in text for text in texts)
+    assert any("Las Vegas residents only" in text for text in texts)
+    assert any("dry (lyophilized) vials only" in text for text in texts)
+    assert any("required documentation" in text for text in texts)
+    assert not any("waiver" in text.lower() for text in texts)
     assert any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
     photos = [item for item in tg.sent if "photo" in item]
-    assert photos == []
+    assert len(photos) == 2
+    assert photos[0]["photo"].endswith("hero.jpg")
+    assert photos[1]["photo"].endswith("service.jpg")
     menus = [item for item in tg.sent if (item.get("reply_markup") or {}).get("inline_keyboard")]
     assert menus
     labels = [btn["text"] for row in menus[0]["reply_markup"]["inline_keyboard"] for btn in row]
@@ -100,7 +125,10 @@ def test_good_morning_is_a_salutation_on_first_visit():
     tg = _FakeTelegram()
     result = handle_telegram_update(_msg("Good morning", chat_id=44), tg)
     assert result["action"] == "intro"
-    assert not any("photo" in item for item in tg.sent)
+    photos = [item for item in tg.sent if "photo" in item]
+    assert photos
+    assert photos[0]["photo"].endswith("hero.jpg")
+    assert not any(str(item.get("photo") or "").endswith("klow.jpg") for item in tg.sent)
     assert any((item.get("reply_markup") or {}).get("inline_keyboard") for item in tg.sent)
 
 
@@ -194,8 +222,10 @@ def test_customer_order_does_not_leak_inbox_snapshot():
     tg = _FakeTelegram()
     order = handle_telegram_update(_msg("/order 2x starter kit", chat_id=99), tg)
     assert order["action"] == "order"
-    texts = [item.get("text") or "" for item in tg.sent]
+    texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
     assert any("Got it. The TrueHold team will call" in text for text in texts)
+    assert any("required documentation" in text for text in texts)
+    assert not any("waiver" in text.lower() for text in texts)
     assert not any("TrueHold Wellness alert — order" in text for text in texts)
     assert not any("Orders:" in text for text in texts)
 

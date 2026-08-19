@@ -9,11 +9,21 @@ SAY_HI = (
     "Hello, hey, or good morning all work."
 )
 
+CALL_AND_DOCS = (
+    "The team calls to confirm, consult, and complete required documentation"
+)
+
+SERVICE_POLICY = (
+    "Prep and local delivery are for Las Vegas residents only. "
+    "We ship dry (lyophilized) vials only — not reconstituted product."
+)
+
 INTRODUCTION = (
     "Hi — welcome to TrueHold Wellness.\n"
     "\n"
-    "We help Las Vegas residents with educational research-peptide information. "
-    "The team calls to confirm, consult, and set up waiver signing before any payment.\n"
+    "We help Las Vegas residents with educational research-peptide information.\n"
+    f"{SERVICE_POLICY}\n"
+    f"{CALL_AND_DOCS} before any payment.\n"
     "\n"
     "Tap one name on the quick menu. We will send that tile.\n"
     "Need a person instead? /schedule"
@@ -29,7 +39,7 @@ CUSTOMER_HELP = (
     "/menu — quick menu\n"
     "/schedule — talk to the TrueHold team\n"
     "/help — this message\n"
-    "Las Vegas residents only. Educational only. The team confirms by phone.\n"
+    f"{SERVICE_POLICY} Educational only. {CALL_AND_DOCS}.\n"
     "This bot is not realtor-agent / @PirateEye_bot."
 )
 
@@ -54,7 +64,8 @@ SCHEDULE = (
     "Email: trueholdwellness at gmail.com\n"
     "Tap Email on Gmail below to write us.\n"
     "Shop: https://trueholdwellness.com/shop\n"
-    "Las Vegas residents only for Telegram interest orders.\n"
+    f"{SERVICE_POLICY}\n"
+    "Telegram interest orders are for Las Vegas residents only.\n"
     "Protocol details are reviewed case by case. "
     "This bot does not provide dosing, reconstitution, or administration instructions in chat."
 )

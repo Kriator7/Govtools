@@ -18,6 +18,7 @@ from wellness_agent.clients import (
 from wellness_agent.compose import compose_alert, format_alert
 from wellness_agent.greetings import is_salutation
 from wellness_agent.identity import REQUIRED_USERNAME
+from wellness_agent.inventory.build_brand import service_path
 from wellness_agent.menu import (
     CUSTOMER_CONFIRM,
     PHONE_THANKS,
@@ -26,6 +27,8 @@ from wellness_agent.menu import (
     complete_pending_order_if_ready,
     handle_menu_callback,
     remove_keyboard,
+    send_brand_photo,
+    send_introduction_menu,
     send_quick_menu,
 )
 from wellness_agent.models import AlertTrigger
@@ -43,7 +46,6 @@ from wellness_agent.telegram_copy import (
     CUSTOMER_HELP,
     GREET_AGAIN,
     HELP,
-    INTRODUCTION,
     SAY_HI,
     SCHEDULE,
     STAFF_COMMANDS,
@@ -123,8 +125,7 @@ def _record_phone(telegram, chat_id: str, phone: str, *, source: str, sender: di
 
 
 def _send_introduction(telegram, chat_id: str) -> None:
-    telegram.send_message(chat_id, INTRODUCTION)
-    send_quick_menu(telegram, chat_id, include_blurb=True)
+    send_introduction_menu(telegram, chat_id)
     mark_intro_played(chat_id)
     if not client_phone(chat_id):
         ask_for_phone(telegram, chat_id)
@@ -233,7 +234,12 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             exclude_chats={chat_id},
             require_destination=False,
         )
-        telegram.send_message(chat_id, CUSTOMER_CONFIRM.format(detail=detail))
+        send_brand_photo(
+            telegram,
+            chat_id,
+            service_path(),
+            CUSTOMER_CONFIRM.format(detail=detail),
+        )
         if not client_phone(chat_id):
             ask_for_phone(telegram, chat_id)
         product = _matched_product(detail)

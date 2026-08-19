@@ -50,10 +50,11 @@ Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_
 
 1. `/start` welcomes them and asks them to **say hi**.
 2. Hello, hey, good morning, or another salutation plays the introduction once for that session, then a **quick menu** (names only).
-3. Tap one name — we send **that tile**, not every SKU photo.
-4. **Order this** → 1 / 2 / 3 vials → **Yes, send to the team**.
-5. Telegram cannot expose a phone unless the client shares it. The bot asks them to **Share my phone number** or type it so the team can call for confirmation, consult, and waiver signing.
-6. Staff are notified with the number (or a note that it is missing). The customer gets a short confirmation plus the locked info sheet.
+3. Tap one name — we send **that tile**, not every SKU photo. Intro, menu, quantity, and phone steps also send a navy/gold molecule banner (not every SKU photo).
+4. **Order this** → 1 / 2 / 3 dry vials → **Yes — Las Vegas resident**.
+5. Telegram cannot expose a phone unless the client shares it. The bot asks them to **Share my phone number** or type it so the team can call to confirm, consult, and complete required documentation.
+6. **Prep and local delivery are for Las Vegas residents only.** Shipping is **dry (lyophilized) vials only** — not reconstituted product.
+7. Staff are notified with the number (or a note that it is missing). The customer gets a short confirmation plus the locked info sheet.
 
 Public BotFather commands are only `/start` `/menu` `/schedule` `/help`. `/inbox` is not in the customer menu.
 
@@ -80,10 +81,11 @@ Wrong or missing staff identity replies `That command is for TrueHold staff only
 6. In Telegram as a customer: `/start`, say hi, tap one name, share a phone, order 1–3 vials.
 7. In Telegram as staff: `/inbox` after allowlisting.
 
-Rebuild picture cards:
+Rebuild picture cards and brand graphics:
 
 ```bash
 python -m wellness_agent.inventory.build_cards
+python -m wellness_agent.inventory.build_brand
 ```
 
 ## Inventory (locked information sheets)
