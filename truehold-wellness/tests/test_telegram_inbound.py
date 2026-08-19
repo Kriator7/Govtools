@@ -20,8 +20,16 @@ class _FakeTelegram:
         )
         return {"ok": True}
 
-    def send_document(self, chat_id, path, caption=""):
-        self.sent.append({"chat_id": chat_id, "document": str(path), "caption": caption})
+    def send_document(self, chat_id, path, caption="", reply_markup=None, filename=None):
+        self.sent.append(
+            {
+                "chat_id": chat_id,
+                "document": str(path),
+                "caption": caption,
+                "reply_markup": reply_markup,
+                "filename": filename,
+            }
+        )
         return {"ok": True}
 
     def send_photo(self, chat_id, path, caption="", reply_markup=None):
@@ -85,6 +93,8 @@ def test_customer_copy_uses_documentation_not_waivers():
     assert "required documentation" in blob
     assert "dry" in blob
     assert "las vegas" in blob
+    assert "zelle" in blob
+    assert "debit card" in blob
 
 
 def test_start_asks_to_say_hi_and_does_not_grant_staff():
@@ -169,7 +179,10 @@ def test_schedule_email_opens_client_mail_not_gmail_web():
     assert buttons[0]["text"] == "Copy email address"
     assert buttons[0]["copy_text"]["text"] == TEAM_EMAIL
     assert "url" not in buttons[0]
+    assert buttons[1]["text"] == "Pay by debit card on the site"
+    assert buttons[1]["url"] == "https://trueholdwellness.com/shop"
     texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
+    assert any("Zelle" in text for text in texts)
     assert any(TEAM_EMAIL in text for text in texts)
     assert any("mailto:" in text for text in texts)
     assert any(item.get("parse_mode") == "HTML" for item in tg.sent)

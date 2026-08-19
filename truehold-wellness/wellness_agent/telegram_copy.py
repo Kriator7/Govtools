@@ -20,6 +20,12 @@ SERVICE_POLICY = (
     "We ship dry (lyophilized) vials only — not reconstituted product."
 )
 
+SHOP_URL = "https://trueholdwellness.com/shop"
+PAYMENT_COPY = (
+    "Local Las Vegas: Zelle is best — the team shares Zelle details on the confirmation call. "
+    "Prefer debit card instead of Zelle? Pay on the website."
+)
+
 INTRODUCTION = (
     "Hi — welcome to TrueHold Wellness.\n"
     "\n"
@@ -42,6 +48,7 @@ CUSTOMER_HELP = (
     "/schedule — talk to the TrueHold team\n"
     "/help — this message\n"
     f"{SERVICE_POLICY} Educational only. {CALL_AND_DOCS}.\n"
+    f"{PAYMENT_COPY}\n"
     "This bot is not realtor-agent / @PirateEye_bot."
 )
 
@@ -77,8 +84,9 @@ SCHEDULE = (
     f'Email: <a href="{_mailto_href()}">{TEAM_EMAIL}</a>\n'
     "Tap the email to open your mail app. Our address is already filled in — "
     "type your question and send.\n"
-    "Shop: https://trueholdwellness.com/shop\n"
     f"{SERVICE_POLICY}\n"
+    f"{PAYMENT_COPY}\n"
+    f'Debit-card checkout: <a href="{SHOP_URL}">{SHOP_URL}</a>\n'
     "Telegram interest orders are for Las Vegas residents only.\n"
     "Protocol details are reviewed case by case. "
     "This bot does not provide dosing, reconstitution, or administration instructions in chat."
@@ -90,6 +98,7 @@ def schedule_keyboard() -> dict:
     return {
         "inline_keyboard": [
             [{"text": "Copy email address", "copy_text": {"text": TEAM_EMAIL}}],
+            [{"text": "Pay by debit card on the site", "url": SHOP_URL}],
         ]
     }
 

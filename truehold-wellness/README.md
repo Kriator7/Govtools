@@ -52,9 +52,11 @@ Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_
 2. Hello, hey, good morning, or another salutation plays the introduction once for that session, then a **quick menu** (names only).
 3. Tap one name — we send **that tile**, not every SKU photo. Intro, menu, quantity, and phone steps also send a navy/gold molecule banner (not every SKU photo).
 4. **Order this** → 1 / 2 / 3 dry vials → **Yes — Las Vegas resident**.
-5. Telegram cannot expose a phone unless the client shares it. The bot asks them to **Share my phone number** or type it so the team can call to confirm, consult, and complete required documentation.
-6. **Prep and local delivery are for Las Vegas residents only.** Shipping is **dry (lyophilized) vials only** — not reconstituted product.
-7. Staff are notified with the number (or a note that it is missing). The customer gets a short confirmation plus the locked info sheet.
+5. **View PDF in Telegram** sends the information sheet as a PDF in the chat (tap to view or download). It does not open the product webpage.
+6. Local Las Vegas: **Zelle is best** (details on the confirmation call). Debit card instead of Zelle: **Pay by debit card on the site**.
+7. Telegram cannot expose a phone unless the client shares it. The bot asks them to **Share my phone number** or type it so the team can call to confirm, consult, and complete required documentation.
+8. **Prep and local delivery are for Las Vegas residents only.** Shipping is **dry (lyophilized) vials only** — not reconstituted product.
+9. Staff are notified with the number (or a note that it is missing). The customer gets a short confirmation plus the PDF in Telegram.
 
 Public BotFather commands are only `/start` `/menu` `/schedule` `/help`. `/inbox` is not in the customer menu.
 

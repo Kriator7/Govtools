@@ -11,8 +11,16 @@ class _FakeTelegram:
         self.sent.append({"chat_id": chat_id, "text": text, "reply_markup": reply_markup})
         return {"ok": True}
 
-    def send_document(self, chat_id, path, caption=""):
-        self.sent.append({"chat_id": chat_id, "document": str(path), "caption": caption})
+    def send_document(self, chat_id, path, caption="", reply_markup=None, filename=None):
+        self.sent.append(
+            {
+                "chat_id": chat_id,
+                "document": str(path),
+                "caption": caption,
+                "reply_markup": reply_markup,
+                "filename": filename,
+            }
+        )
         return {"ok": True}
 
     def send_photo(self, chat_id, path, caption="", reply_markup=None):
@@ -90,6 +98,9 @@ def test_telegram_catalog_and_product_sheet():
     assert docs
     assert docs[0]["document"].endswith("klow.pdf")
     assert "Educational only" in docs[0]["caption"]
+    assert "Tap it to view" in docs[0]["caption"]
+    assert "trueholdwellness.com/ols/" not in docs[0]["caption"]
+    assert "Zelle" in docs[0]["caption"]
 
 
 def test_generated_sheets_are_educational_only():

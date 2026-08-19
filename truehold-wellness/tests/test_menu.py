@@ -12,8 +12,16 @@ class _FakeTelegram:
         self.sent.append({"chat_id": chat_id, "text": text, "reply_markup": reply_markup, "parse_mode": parse_mode})
         return {"ok": True}
 
-    def send_document(self, chat_id, path, caption=""):
-        self.sent.append({"chat_id": chat_id, "document": str(path), "caption": caption})
+    def send_document(self, chat_id, path, caption="", reply_markup=None, filename=None):
+        self.sent.append(
+            {
+                "chat_id": chat_id,
+                "document": str(path),
+                "caption": caption,
+                "reply_markup": reply_markup,
+                "filename": filename,
+            }
+        )
         return {"ok": True}
 
     def send_photo(self, chat_id, path, caption="", reply_markup=None):
@@ -88,12 +96,19 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert "cb2" in tg.callbacks
 
 
-def test_info_sheet_from_picture_keeps_two_choices():
+def test_info_sheet_sends_telegram_pdf_not_website_link():
     tg = _FakeTelegram()
     result = handle_telegram_update(_tap("w:info:semax"), tg)
     assert result["action"] == "info"
-    assert any(str(item.get("document", "")).endswith("semax.pdf") for item in tg.sent)
-    buttons = [item.get("reply_markup") for item in tg.sent if item.get("reply_markup")]
-    assert buttons
-    labels = [btn["text"] for row in buttons[-1]["inline_keyboard"] for btn in row]
-    assert labels == ["Order this", "See info sheet", "See menu"]
+    docs = [item for item in tg.sent if "document" in item]
+    assert docs
+    assert docs[0]["document"].endswith("semax.pdf")
+    caption = docs[0]["caption"]
+    assert "Tap it to view" in caption
+    assert "download" in caption.lower()
+    assert "Zelle" in caption
+    assert "debit card" in caption.lower()
+    assert "trueholdwellness.com/ols/" not in caption
+    labels = [btn["text"] for row in docs[0]["reply_markup"]["inline_keyboard"] for btn in row]
+    assert labels == ["Order this", "Pay by debit card on the site", "See menu"]
+    assert docs[0]["filename"] == "Semax info sheet.pdf"

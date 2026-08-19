@@ -10,7 +10,7 @@ class _FakeTelegram:
         self.sent.append({"chat_id": chat_id, "text": text, "reply_markup": reply_markup})
         return {"ok": True}
 
-    def send_document(self, chat_id, path, caption=""):
+    def send_document(self, chat_id, path, caption="", reply_markup=None, filename=None):
         self.sent.append({"chat_id": chat_id, "document": str(path), "caption": caption})
         return {"ok": True}
 

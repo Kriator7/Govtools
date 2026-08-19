@@ -65,11 +65,14 @@ def pdf_path(product: dict[str, Any]) -> Path:
 
 
 def format_catalog() -> str:
+    from wellness_agent.telegram_copy import PAYMENT_COPY, SHOP_URL
+
     lines = [
         "TrueHold Wellness inventory",
         "Educational information only. Research use only.",
-        "Tap /menu, then one name. Consult before any decision.",
+        "Tap /menu, then one name. View the PDF in Telegram — tap to open or download.",
         "Prep and local delivery: Las Vegas residents only. Shipping: dry vials only.",
+        PAYMENT_COPY,
         "",
     ]
     for item in products():
@@ -78,19 +81,22 @@ def format_catalog() -> str:
     lines.extend(
         [
             "",
-            "/menu — picture menu (tap This one)",
+            "/menu — tap a name, then View PDF in Telegram",
             "/schedule — book with the team",
-            "Shop: https://trueholdwellness.com/shop",
+            f"Debit-card checkout: {SHOP_URL}",
         ]
     )
     return "\n".join(lines) + "\n"
 
 
 def format_product_caption(product: dict[str, Any]) -> str:
+    from wellness_agent.telegram_copy import PAYMENT_COPY
+
     return (
-        f"TrueHold Wellness locked information sheet — {product['name']}\n"
+        f"TrueHold Wellness information sheet — {product['name']}\n"
         f"{product['vial']}\n"
+        "This PDF opens in Telegram. Tap it to view, or download it to save.\n"
         "Educational only. Dry (lyophilized) vial. Protocol details reviewed case by case.\n"
         "Prep and local delivery: Las Vegas residents only.\n"
-        f"{product['shop_url']}"
+        f"{PAYMENT_COPY}"
     )

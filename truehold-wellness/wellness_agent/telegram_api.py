@@ -82,17 +82,27 @@ class WellnessTelegram:
             raise RuntimeError(data.get("description") or "Telegram sendPhoto failed")
         return {"provider_message_id": str((data.get("result") or {}).get("message_id")), "raw": data}
 
-    def send_document(self, chat_id: str, path: str | Path, caption: str = "") -> dict[str, Any]:
+    def send_document(
+        self,
+        chat_id: str,
+        path: str | Path,
+        caption: str = "",
+        reply_markup: dict[str, Any] | None = None,
+        filename: str | None = None,
+    ) -> dict[str, Any]:
         """sendDocument: https://core.telegram.org/bots/api#senddocument"""
         file_path = Path(path)
-        payload = {"chat_id": chat_id}
+        payload: dict[str, Any] = {"chat_id": chat_id}
         if caption:
             payload["caption"] = caption[:1024]
+        if reply_markup:
+            payload["reply_markup"] = json.dumps(reply_markup)
+        name = filename or file_path.name
         with file_path.open("rb") as handle, httpx.Client(timeout=60) as client:
             response = client.post(
                 self._url("sendDocument"),
                 data=payload,
-                files={"document": (file_path.name, handle, "application/pdf")},
+                files={"document": (name, handle, "application/pdf")},
             )
             response.raise_for_status()
             data = response.json()

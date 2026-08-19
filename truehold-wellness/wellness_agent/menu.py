@@ -23,7 +23,7 @@ from wellness_agent.inventory.build_brand import hero_path, service_path
 from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
 from wellness_agent.session_store import pending_order, set_awaiting_phone, set_pending_order
-from wellness_agent.telegram_copy import CALL_AND_DOCS, INTRODUCTION, SERVICE_POLICY
+from wellness_agent.telegram_copy import CALL_AND_DOCS, INTRODUCTION, PAYMENT_COPY, SERVICE_POLICY, SHOP_URL
 
 MENU_INTRO = (
     "Quick menu — tap one name. We will send that tile.\n"
@@ -35,7 +35,8 @@ MENU_INTRO = (
 CUSTOMER_CONFIRM = (
     f"Got it. The TrueHold team will call to confirm, consult, and complete required documentation.\n"
     "{detail}\n"
-    f"{SERVICE_POLICY} Consult before payment. Educational only."
+    f"{SERVICE_POLICY} Consult before payment. Educational only.\n"
+    f"{PAYMENT_COPY}"
 )
 
 ASK_PHONE = (
@@ -100,7 +101,17 @@ def after_pick_keyboard(product_id: str) -> dict[str, Any]:
     return _keyboard(
         [
             [_button("Order this", f"w:qty:{product_id}")],
-            [_button("See info sheet", f"w:info:{product_id}")],
+            [_button("View PDF in Telegram", f"w:info:{product_id}")],
+            [_button("See menu", "w:menu")],
+        ]
+    )
+
+
+def info_sheet_keyboard(product_id: str) -> dict[str, Any]:
+    return _keyboard(
+        [
+            [_button("Order this", f"w:qty:{product_id}")],
+            [{"text": "Pay by debit card on the site", "url": SHOP_URL}],
             [_button("See menu", "w:menu")],
         ]
     )
@@ -164,9 +175,28 @@ def send_product_tile(telegram, chat_id: str, product: dict) -> None:
     caption = (
         f"{product['name']}\n{product['vial']}\n"
         f"{SERVICE_POLICY}\n"
-        "Order this, see the info sheet, or go back to the menu."
+        "Order this, view the PDF in Telegram, or go back to the menu."
     )
     send_brand_photo(telegram, chat_id, path, caption, after_pick_keyboard(product["id"]))
+
+
+def send_info_pdf(telegram, chat_id: str, product: dict) -> None:
+    caption = format_product_caption(product)
+    path = pdf_path(product)
+    filename = f"{product['name']} info sheet.pdf"
+    if hasattr(telegram, "send_document"):
+        try:
+            telegram.send_document(
+                chat_id,
+                path,
+                caption=caption,
+                reply_markup=info_sheet_keyboard(product["id"]),
+                filename=filename,
+            )
+        except TypeError:
+            telegram.send_document(chat_id, path, caption=caption)
+        return
+    telegram.send_message(chat_id, caption, reply_markup=info_sheet_keyboard(product["id"]))
 
 
 def ask_for_phone(telegram, chat_id: str, *, extra: str | None = None) -> None:
@@ -202,11 +232,7 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
         CUSTOMER_CONFIRM.format(detail=detail),
     )
     try:
-        telegram.send_document(
-            chat_id,
-            pdf_path(product),
-            caption=format_product_caption(product),
-        )
+        send_info_pdf(telegram, chat_id, product)
     except FileNotFoundError:
         pass
     return {
@@ -270,16 +296,7 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
         send_product_tile(telegram, chat_id, product)
         return {"ok": True, "action": "tile", "chat_id": chat_id, "product": product["id"]}
     if action == "info":
-        telegram.send_document(
-            chat_id,
-            pdf_path(product),
-            caption=format_product_caption(product),
-        )
-        telegram.send_message(
-            chat_id,
-            "Want this dry vial, or pick a different name?",
-            reply_markup=after_pick_keyboard(product["id"]),
-        )
+        send_info_pdf(telegram, chat_id, product)
         return {"ok": True, "action": "info", "chat_id": chat_id, "product": product["id"]}
     if action == "qty":
         send_brand_photo(
@@ -288,7 +305,8 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
             service_path(),
             f"How many {product['name']} dry vials?\n"
             "Interest order only. "
-            f"{SERVICE_POLICY} {CALL_AND_DOCS}.",
+            f"{SERVICE_POLICY} {CALL_AND_DOCS}.\n"
+            f"{PAYMENT_COPY}",
             qty_keyboard(product["id"]),
         )
         return {"ok": True, "action": "qty", "chat_id": chat_id, "product": product["id"]}
@@ -300,7 +318,8 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
             f"Send this interest order to the TrueHold team?\n"
             f"{qty}x {product['name']} ({product['vial']})\n"
             f"{SERVICE_POLICY}\n"
-            f"{CALL_AND_DOCS}. Confirm only if you are a Las Vegas resident.",
+            f"{CALL_AND_DOCS}. Confirm only if you are a Las Vegas resident.\n"
+            f"{PAYMENT_COPY}",
             confirm_keyboard(product["id"], qty),
         )
         return {

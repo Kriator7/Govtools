@@ -6,8 +6,6 @@ from wellness_agent.access import PRIVILEGED_COMMANDS, STAFF_DENIED, is_operator
 from wellness_agent.catalog import (
     UnknownProductError,
     find_product,
-    format_product_caption,
-    pdf_path,
 )
 from wellness_agent.clients import (
     client_phone,
@@ -28,6 +26,7 @@ from wellness_agent.menu import (
     handle_menu_callback,
     remove_keyboard,
     send_brand_photo,
+    send_info_pdf,
     send_introduction_menu,
     send_quick_menu,
 )
@@ -137,11 +136,14 @@ def _send_sheet(telegram, chat_id: str, query: str) -> dict:
         return {"ok": True, "action": "product-help", "chat_id": chat_id}
     try:
         product = find_product(query)
-        path = pdf_path(product)
-    except (UnknownProductError, FileNotFoundError) as exc:
+    except UnknownProductError as exc:
         telegram.send_message(chat_id, str(exc))
         return {"ok": False, "action": "product-miss", "chat_id": chat_id, "error": str(exc)}
-    telegram.send_document(chat_id, path, caption=format_product_caption(product))
+    try:
+        send_info_pdf(telegram, chat_id, product)
+    except FileNotFoundError as exc:
+        telegram.send_message(chat_id, str(exc))
+        return {"ok": False, "action": "product-miss", "chat_id": chat_id, "error": str(exc)}
     return {"ok": True, "action": "product", "chat_id": chat_id, "product": product["id"]}
 
 
@@ -244,11 +246,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             ask_for_phone(telegram, chat_id)
         product = _matched_product(detail)
         if product:
-            telegram.send_document(
-                chat_id,
-                pdf_path(product),
-                caption=format_product_caption(product),
-            )
+            send_info_pdf(telegram, chat_id, product)
         return {
             "ok": True,
             "action": "order",
