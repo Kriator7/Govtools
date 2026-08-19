@@ -265,9 +265,9 @@ def test_telegram_files_pack_has_all_locked_sheets():
         assert "http" not in caption.lower()
         assert "trueholdwellness.com" not in caption
         assert "ols/products" not in caption
-    from wellness_agent.menu import info_sheet_keyboard
+    from wellness_agent.menu import BUY_ORDER, info_sheet_keyboard
 
     markup = info_sheet_keyboard("nad")
     assert "url" not in str(markup)
     labels = [btn["text"] for row in markup["inline_keyboard"] for btn in row]
-    assert labels == ["🛒 Order", "🛠️ Prep", "📅 Team", "⬅️ Menu"]
+    assert labels == [BUY_ORDER, "🛠️ Prep", "📅 Team", "⬅️ Menu"]

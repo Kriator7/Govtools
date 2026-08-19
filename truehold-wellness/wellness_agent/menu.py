@@ -50,7 +50,6 @@ from wellness_agent.team import (
     tour_complete,
 )
 from wellness_agent.telegram_copy import (
-    CALL_AND_DOCS,
     CELEBRATE_EFFECT_ID,
     INTRODUCTION,
     PARSE_MODE,
@@ -67,7 +66,7 @@ CUSTOMER_CONFIRM = (
     "<b>You're in 🎉</b>\n"
     "{detail}\n"
     "\n"
-    "<b>Next</b>\n"
+    "This order is in. You are not back at the start.\n"
     "The team calls to confirm, consult, and complete required documentation.\n"
     "\n"
     "Las Vegas · dry vials only · educational only\n"
@@ -106,6 +105,9 @@ PRODUCT_EMOJI = {
 
 TOASTS = {
     "yes": "You're in 🎉",
+    "go": "You're in 🎉",
+    "qty": "How many?",
+    "ask": "How should we send it?",
     "prep": "Prep 🛠️",
     "crew": "The crew 📸",
     "fav": "Favorite locked",
@@ -114,6 +116,35 @@ TOASTS = {
     "set": "Favorite locked",
     "pick": "Pick a favorite",
     "fast": "Fasting notes",
+}
+
+# Buy-wizard labels stay literal (not host emoji kits) so 1 / Vegas / Order
+# cannot be confused with each other. One button per row = full-width on
+# Telegram. Primary path is always the first row (success / green).
+# Spatial constancy: https://www.nngroup.com/articles/consistency-and-standards/
+BUY_ORDER = "🛒 Order this"
+BUY_QTY_1 = "✅ 1 vial"
+BUY_QTY_2 = "2 vials"
+BUY_QTY_3 = "3 vials"
+BUY_PREP = "✅ Prep + local delivery"
+BUY_SHIP = "📦 Ship dry vials"
+BUY_PICKUP = "📍 Pickup"
+BUY_NOT_LV = "👋 Not in Las Vegas"
+BUY_BACK = "⬅️ Back"
+BUY_DONE_TEAM = "✅ Done · Team calls"
+BUY_DONE_SHEET = "📄 Sheet"
+BUY_DONE_MENU = "⬅️ Menu"
+
+FULFILLMENTS = ("prep", "ship", "pickup")
+FULFILL_CUSTOMER = {
+    "prep": "Las Vegas prep + local delivery",
+    "ship": "Ship dry vials",
+    "pickup": "Pickup",
+}
+FULFILL_STAFF = {
+    "prep": "Las Vegas local prep/delivery",
+    "ship": "Ship dry vials",
+    "pickup": "Customer pickup",
 }
 
 
@@ -225,7 +256,9 @@ def after_pick_keyboard(product_id: str, host: dict[str, Any] | None = None) -> 
 
     tone = button_style(host)
     rec = peptide_record(product_id)
-    rows: list[list[dict[str, Any]]] = []
+    rows: list[list[dict[str, Any]]] = [
+        [_button(BUY_ORDER, f"w:qty:{product_id}", style="success")],
+    ]
     if rec["weight_loss"]:
         rows.append(
             [
@@ -236,14 +269,13 @@ def after_pick_keyboard(product_id: str, host: dict[str, Any] | None = None) -> 
     rows.extend(
         [
             [
-                _button(button_label(host, "order"), f"w:qty:{product_id}", style="success"),
                 _button(button_label(host, "sheet"), f"w:info:{product_id}", style=tone),
+                _button(button_label(host, "prep"), f"w:prep:{product_id}", style=tone),
             ],
             [
-                _button(button_label(host, "prep"), f"w:prep:{product_id}", style=tone),
                 _button(button_label(host, "team"), "w:team", style=tone),
+                _button(button_label(host, "menu"), "w:menu", style=tone),
             ],
-            [_button(button_label(host, "menu"), "w:menu", style=tone)],
         ]
     )
     return _keyboard(rows)
@@ -254,44 +286,58 @@ def info_sheet_keyboard(product_id: str, host: dict[str, Any] | None = None) -> 
     tone = button_style(host)
     return _keyboard(
         [
+            [_button(BUY_ORDER, f"w:qty:{product_id}", style="success")],
             [
-                _button(button_label(host, "order"), f"w:qty:{product_id}", style="success"),
                 _button(button_label(host, "prep"), f"w:prep:{product_id}", style=tone),
-            ],
-            [
                 _button(button_label(host, "team"), "w:team", style=tone),
-                _button(button_label(host, "menu"), "w:menu", style=tone),
             ],
+            [_button(button_label(host, "menu"), "w:menu", style=tone)],
         ]
     )
 
 
 def qty_keyboard(product_id: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Buying step 1. Full-width stack; top button is the usual 1-vial path."""
     tone = button_style(host)
     return _keyboard(
         [
-            [
-                _button(button_label(host, "qty1"), f"w:ask:{product_id}:1", style=tone),
-                _button(button_label(host, "qty2"), f"w:ask:{product_id}:2", style=tone),
-                _button(button_label(host, "qty3"), f"w:ask:{product_id}:3", style=tone),
-            ],
-            [
-                _button(button_label(host, "team"), "w:team", style=tone),
-                _button(button_label(host, "menu"), "w:menu", style=tone),
-            ],
+            [_button(BUY_QTY_1, f"w:ask:{product_id}:1", style="success")],
+            [_button(BUY_QTY_2, f"w:ask:{product_id}:2", style=tone)],
+            [_button(BUY_QTY_3, f"w:ask:{product_id}:3", style=tone)],
+            [_button(button_label(host, "menu"), "w:menu", style=tone)],
+        ]
+    )
+
+
+def fulfill_keyboard(product_id: str, qty: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Buying step 2. Top button is local Las Vegas prep — same thumb spot as 1 vial."""
+    tone = button_style(host)
+    return _keyboard(
+        [
+            [_button(BUY_PREP, f"w:go:{product_id}:{qty}:prep", style="success")],
+            [_button(BUY_SHIP, f"w:go:{product_id}:{qty}:ship", style=tone)],
+            [_button(BUY_PICKUP, f"w:go:{product_id}:{qty}:pickup", style=tone)],
+            [_button(BUY_NOT_LV, "w:team", style="danger")],
+            [_button(BUY_BACK, f"w:qty:{product_id}", style=tone)],
         ]
     )
 
 
 def confirm_keyboard(product_id: str, qty: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Back-compat name for the fulfillment step."""
+    return fulfill_keyboard(product_id, qty, host)
+
+
+def done_keyboard(product_id: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    """After order: do not put Order in the top slot (that restarts the loop)."""
     tone = button_style(host)
     return _keyboard(
         [
+            [_button(BUY_DONE_TEAM, "w:team", style="success")],
             [
-                _button(button_label(host, "vegas"), f"w:yes:{product_id}:{qty}", style="success"),
-                _button(button_label(host, "not_lv"), "w:team", style="danger"),
+                _button(BUY_DONE_SHEET, f"w:info:{product_id}", style=tone),
+                _button(BUY_DONE_MENU, "w:menu", style=tone),
             ],
-            [_button(button_label(host, "menu"), "w:menu", style=tone)],
         ]
     )
 
@@ -321,6 +367,55 @@ def send_brand_photo(
             telegram.send_photo(chat_id, path, caption=caption, reply_markup=reply_markup)
             return
     telegram.send_message(chat_id, caption, reply_markup=reply_markup, parse_mode=parse_mode)
+
+
+def _callback_message_id(query: dict[str, Any] | None) -> str:
+    message = (query or {}).get("message") or {}
+    return str(message.get("message_id") or "")
+
+
+def _clear_inline_keyboard(telegram, chat_id: str, message_id: str) -> None:
+    if not message_id or not hasattr(telegram, "edit_message_reply_markup"):
+        return
+    try:
+        telegram.edit_message_reply_markup(chat_id, message_id, {"inline_keyboard": []})
+    except Exception:
+        return
+
+
+def _show_buy_step(
+    telegram,
+    chat_id: str,
+    product: dict[str, Any],
+    caption: str,
+    markup: dict[str, Any],
+    query: dict[str, Any] | None = None,
+) -> None:
+    """Keep the product picture; replace caption + buttons on the same message.
+
+    editMessageCaption: https://core.telegram.org/bots/api#editmessagecaption
+    """
+    message_id = _callback_message_id(query)
+    if message_id and hasattr(telegram, "edit_message_caption"):
+        try:
+            telegram.edit_message_caption(
+                chat_id,
+                message_id,
+                caption,
+                reply_markup=markup,
+                parse_mode=PARSE_MODE,
+            )
+            return
+        except TypeError:
+            try:
+                telegram.edit_message_caption(chat_id, message_id, caption, reply_markup=markup)
+                return
+            except Exception:
+                pass
+        except Exception:
+            pass
+    ensure_cards()
+    send_brand_photo(telegram, chat_id, card_path(product), caption, markup)
 
 
 def send_host_photo(
@@ -556,9 +651,19 @@ def ask_for_phone(telegram, chat_id: str, *, extra: str | None = None) -> None:
     send_brand_photo(telegram, chat_id, service_path(), caption, contact_keyboard())
 
 
-def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> dict[str, Any]:
+def _place_interest_order(
+    telegram,
+    chat_id: str,
+    product: dict,
+    qty: str,
+    *,
+    fulfillment: str = "prep",
+    query: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if fulfillment not in FULFILLMENTS:
+        fulfillment = "prep"
     if not client_phone(chat_id):
-        set_pending_order(chat_id, product["id"], qty)
+        set_pending_order(chat_id, product["id"], qty, fulfillment)
         ask_for_phone(telegram, chat_id, extra=NEED_PHONE)
         return {
             "ok": True,
@@ -566,8 +671,11 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
             "chat_id": str(chat_id),
             "product": product["id"],
             "qty": qty,
+            "fulfillment": fulfillment,
         }
-    detail = f"{qty}x {product['name']} ({product['vial']})"
+    how = FULFILL_CUSTOMER[fulfillment]
+    staff_how = FULFILL_STAFF[fulfillment]
+    detail = f"{qty}x {product['name']} ({product['vial']}) · {how}"
     code = discount_code(chat_id)
     discount_staff = staff_discount_line(code)
     discount_note = customer_discount_line(code)
@@ -584,10 +692,11 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
             chat_id=str(chat_id),
             phone=client_phone(chat_id),
             discount=code,
+            fulfillment=fulfillment,
         )
     except Exception as exc:
         inventory_line = f"{inventory_line} Workbook update skipped: {exc}."
-    staff_detail = f"{detail}\n{phone_line_for_staff(chat_id)}\n{inventory_line}"
+    staff_detail = f"{detail}\n{phone_line_for_staff(chat_id)}\nFulfillment: {staff_how}\n{inventory_line}"
     if discount_staff:
         staff_detail = f"{staff_detail}\n{discount_staff}"
     result = fire_reflex(
@@ -601,6 +710,7 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
     confirm = CUSTOMER_CONFIRM.format(detail=detail)
     if discount_note:
         confirm = f"{confirm}\n{discount_note}"
+    _clear_inline_keyboard(telegram, str(chat_id), _callback_message_id(query))
     send_host_photo(
         telegram,
         chat_id,
@@ -610,7 +720,7 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
             "cheer",
             confirm + f"\n\n{host['icon']} {pose_line(host, 'soon')}",
         ),
-        after_pick_keyboard(product["id"], host),
+        done_keyboard(product["id"], host),
         host=host,
         effect=True,
     )
@@ -620,6 +730,7 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
         "chat_id": str(chat_id),
         "product": product["id"],
         "qty": qty,
+        "fulfillment": fulfillment,
         "notified": result.status,
     }
 
@@ -637,7 +748,8 @@ def complete_pending_order_if_ready(telegram, chat_id: str) -> dict[str, Any] | 
     if qty not in {"1", "2", "3"}:
         set_pending_order(chat_id, None, None)
         return None
-    return _place_interest_order(telegram, chat_id, product, qty)
+    fulfillment = str(pending.get("fulfillment") or "prep")
+    return _place_interest_order(telegram, chat_id, product, qty, fulfillment=fulfillment)
 
 
 def _present_host(telegram, chat_id: str, host: dict[str, Any], *, effect: bool = True) -> None:
@@ -713,6 +825,7 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
         return {"ok": True, "ignored": True, "action": "callback-unknown"}
     sku = parts[2] if len(parts) > 2 else ""
     qty = parts[3] if len(parts) > 3 else ""
+    choice = parts[4] if len(parts) > 4 else ""
     if action == "host":
         return _handle_host_callback(telegram, chat_id, parts)
     if action == "menu":
@@ -755,43 +868,40 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
     if action == "qty":
         from html import escape
 
-        host = current_host(chat_id)
-        send_host_photo(
+        _show_buy_step(
             telegram,
             chat_id,
-            "work",
-            flavor_caption(
-                host,
-                "work",
-                f"<b>How many?</b>\n"
-                f"{escape(str(product['name']))} · dry vials\n"
+            product,
+            (
+                f"<b>Order · 1 of 2</b>\n"
+                f"How many vials of {escape(str(product['name']))}?\n"
+                "Dry vials only.\n"
                 "\n"
-                "Las Vegas · we call to complete docs",
+                "Tap the top button for 1 vial."
             ),
-            qty_keyboard(product["id"], host),
-            host=host,
+            qty_keyboard(product["id"], current_host(chat_id)),
+            query,
         )
         return {"ok": True, "action": "qty", "chat_id": chat_id, "product": product["id"]}
     if action == "ask" and qty in {"1", "2", "3"}:
         from html import escape
 
-        host = current_host(chat_id)
-        send_host_photo(
+        _show_buy_step(
             telegram,
             chat_id,
-            "present",
-            flavor_caption(
-                host,
-                "present",
-                f"<b>Confirm</b>\n"
-                f"{escape(qty)}× {escape(str(product['name']))}\n"
-                f"{escape(str(product['vial']))}\n"
+            product,
+            (
+                f"<b>Order · 2 of 2</b>\n"
+                f"{escape(qty)}× {escape(str(product['name']))} · {escape(str(product['vial']))}\n"
                 "\n"
-                "Las Vegas residents only\n"
-                f"{CALL_AND_DOCS}.",
+                "How should we get it to you?\n"
+                "Prep and pickup: Las Vegas residents.\n"
+                "Shipping: dry vials only.\n"
+                "\n"
+                "Tap the top button for local prep."
             ),
-            confirm_keyboard(product["id"], qty, host),
-            host=host,
+            fulfill_keyboard(product["id"], qty, current_host(chat_id)),
+            query,
         )
         return {
             "ok": True,
@@ -800,6 +910,22 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
             "product": product["id"],
             "qty": qty,
         }
+    if action == "go" and qty in {"1", "2", "3"} and choice in FULFILLMENTS:
+        return _place_interest_order(
+            telegram,
+            chat_id,
+            product,
+            qty,
+            fulfillment=choice,
+            query=query,
+        )
     if action == "yes" and qty in {"1", "2", "3"}:
-        return _place_interest_order(telegram, chat_id, product, qty)
+        return _place_interest_order(
+            telegram,
+            chat_id,
+            product,
+            qty,
+            fulfillment="prep",
+            query=query,
+        )
     return {"ok": True, "ignored": True, "action": "callback-unknown"}

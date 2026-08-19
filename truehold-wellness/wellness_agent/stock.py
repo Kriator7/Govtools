@@ -144,6 +144,7 @@ def record_order_row(
     chat_id: str,
     phone: str | None,
     discount: str | None = None,
+    fulfillment: str | None = None,
 ) -> None:
     """Append the interest order to the working workbook, matching the old xlsx ledger."""
     from openpyxl import load_workbook
@@ -173,7 +174,11 @@ def record_order_row(
             product["id"],
             int(qty),
             "interest",
-            "Las Vegas local prep/delivery or dry-vial ship",
+            {
+                "prep": "Las Vegas local prep/delivery",
+                "ship": "Ship dry vials",
+                "pickup": "Customer pickup",
+            }.get(str(fulfillment or "prep"), "Las Vegas local prep/delivery"),
             "pending",
             note,
         ]

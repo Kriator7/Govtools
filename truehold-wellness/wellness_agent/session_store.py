@@ -110,12 +110,21 @@ def awaiting_phone(chat_id: str) -> bool:
     return bool(_chat(_load(), str(chat_id)).get("awaiting_phone"))
 
 
-def set_pending_order(chat_id: str, product_id: str | None, qty: str | None) -> None:
+def set_pending_order(
+    chat_id: str,
+    product_id: str | None,
+    qty: str | None,
+    fulfillment: str | None = None,
+) -> None:
     chat_id = str(chat_id)
     state = _load()
     entry = _chat(state, chat_id)
     if product_id and qty:
-        entry["pending_order"] = {"product_id": product_id, "qty": qty}
+        entry["pending_order"] = {
+            "product_id": product_id,
+            "qty": qty,
+            "fulfillment": fulfillment or "prep",
+        }
     else:
         entry["pending_order"] = None
     _save(state)

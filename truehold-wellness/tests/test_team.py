@@ -249,8 +249,8 @@ def test_host_keyboards_use_telegram_button_style():
     assert styles == {"success"}
     confirm = confirm_keyboard("klow", "1")
     by_text = {btn["text"]: btn.get("style") for row in confirm["inline_keyboard"] for btn in row}
-    assert by_text["✅ Vegas"] == "success"
-    assert by_text["📍 Not LV"] == "danger"
+    assert by_text["✅ Prep + local delivery"] == "success"
+    assert by_text["👋 Not in Las Vegas"] == "danger"
     picker = pick_host_keyboard(get_member("vega"))
     names = {btn["text"]: btn.get("style") for row in picker["inline_keyboard"] for btn in row}
     assert names["🧬 Mira"] == "success"

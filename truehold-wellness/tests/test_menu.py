@@ -1,4 +1,11 @@
-from wellness_agent.menu import handle_menu_callback
+from wellness_agent.menu import (
+    BUY_NOT_LV,
+    BUY_ORDER,
+    BUY_PREP,
+    BUY_QTY_1,
+    BUY_SHIP,
+    handle_menu_callback,
+)
 from wellness_agent.snapshot import load_current_inbox
 from wellness_agent.team import button_label, current_host
 from wellness_agent.telegram_inbound import handle_telegram_update
@@ -45,18 +52,43 @@ class _FakeTelegram:
         )
         return {"ok": True}
 
+    def edit_message_caption(self, chat_id, message_id, caption, reply_markup=None, parse_mode=None):
+        self.sent.append(
+            {
+                "chat_id": chat_id,
+                "message_id": str(message_id),
+                "caption": caption,
+                "text": caption,
+                "reply_markup": reply_markup,
+                "parse_mode": parse_mode,
+                "edited": True,
+            }
+        )
+        return {"ok": True}
+
+    def edit_message_reply_markup(self, chat_id, message_id, reply_markup=None):
+        self.sent.append(
+            {
+                "chat_id": chat_id,
+                "message_id": str(message_id),
+                "reply_markup": reply_markup,
+                "cleared": not (reply_markup or {}).get("inline_keyboard"),
+            }
+        )
+        return {"ok": True}
+
     def answer_callback_query(self, callback_query_id, text=None):
         self.callbacks.append(callback_query_id)
         return {"ok": True}
 
 
-def _tap(data, chat_id=88, user_id=88, callback_id="cb1"):
+def _tap(data, chat_id=88, user_id=88, callback_id="cb1", message_id=10):
     return {
         "callback_query": {
             "id": callback_id,
             "data": data,
             "from": {"id": user_id},
-            "message": {"chat": {"id": chat_id, "type": "private"}},
+            "message": {"chat": {"id": chat_id, "type": "private"}, "message_id": message_id},
         }
     }
 
@@ -74,9 +106,13 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert photos[0]["photo"].endswith("klow.jpg")
     qty = handle_menu_callback(_tap("w:qty:klow")["callback_query"], tg)
     assert qty["action"] == "qty"
-    qty_photos = [item for item in tg.sent if str(item.get("photo") or "").endswith("theo-work.jpg")]
-    assert qty_photos
-    assert "dry vials" in (qty_photos[0].get("caption") or "").lower()
+    qty_step = [item for item in tg.sent if item.get("edited") or "How many vials" in str(item.get("caption") or "")]
+    assert qty_step
+    assert "1 of 2" in (qty_step[-1].get("caption") or "")
+    assert "dry vials" in (qty_step[-1].get("caption") or "").lower()
+    qty_rows = qty_step[-1]["reply_markup"]["inline_keyboard"]
+    assert qty_rows[0] == [{"text": BUY_QTY_1, "callback_data": "w:ask:klow:1", "style": "success"}]
+    assert all(len(row) == 1 for row in qty_rows)
     ask = handle_menu_callback(_tap("w:ask:klow:2")["callback_query"], tg)
     assert ask == {"ok": True, "action": "ask", "chat_id": "88", "product": "klow", "qty": "2"}
     ask_buttons = [
@@ -85,9 +121,10 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
         for row in (item.get("reply_markup") or {}).get("inline_keyboard") or []
         for btn in row
     ]
-    assert "✅ Vegas" in ask_buttons
-    assert "📍 Not LV" in ask_buttons
-    confirm = handle_telegram_update(_tap("w:yes:klow:2", callback_id="cb2"), tg)
+    assert BUY_PREP in ask_buttons
+    assert BUY_SHIP in ask_buttons
+    assert BUY_NOT_LV in ask_buttons
+    confirm = handle_telegram_update(_tap("w:go:klow:2:prep", callback_id="cb2"), tg)
     assert confirm["action"] == "order-confirm"
     assert confirm["product"] == "klow"
     inbox = load_current_inbox()
@@ -100,10 +137,20 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert any("You're in" in text for text in texts)
     assert any("required documentation" in text for text in texts)
     assert any("Las Vegas" in text for text in texts)
+    assert any("not back at the start" in text.lower() for text in texts)
     assert any("dry" in text.lower() for text in texts)
     assert not any("waiver" in text.lower() for text in texts)
     assert not any("TrueHold Wellness alert — order" in text for text in texts)
     assert not any("document" in item for item in tg.sent)
+    done_markups = [item.get("reply_markup") for item in tg.sent if "You're in" in str(item.get("caption") or item.get("text") or "")]
+    done_labels = [
+        btn["text"]
+        for markup in done_markups
+        for row in (markup or {}).get("inline_keyboard") or []
+        for btn in row
+    ]
+    assert BUY_ORDER not in done_labels
+    assert any("Team" in label for label in done_labels)
     assert any("Sheet" in str(item.get("reply_markup") or "") for item in tg.sent)
     assert "cb2" in tg.callbacks
 
@@ -122,7 +169,7 @@ def test_info_sheet_sends_telegram_pdf_not_website_link():
     assert "http" not in caption.lower()
     labels = [btn["text"] for row in docs[0]["reply_markup"]["inline_keyboard"] for btn in row]
     host = current_host("88")
-    assert button_label(host, "order") in labels
+    assert BUY_ORDER in labels
     assert button_label(host, "prep") in labels
     assert button_label(host, "menu") in labels
     assert button_label(host, "team") in labels
@@ -238,7 +285,7 @@ def test_prep_card_is_policy_only_not_dosing():
     labels = [btn["text"] for row in photos[-1]["reply_markup"]["inline_keyboard"] for btn in row]
     host = current_host("88")
     assert button_label(host, "sheet") in labels
-    assert button_label(host, "order") in labels
+    assert BUY_ORDER in labels
     assert "url" not in str(photos[-1]["reply_markup"])
 
 

@@ -173,6 +173,44 @@ class WellnessTelegram:
             {"chat_id": chat_id, "message_id": int(message_id)},
         )
 
+    def edit_message_caption(
+        self,
+        chat_id: str,
+        message_id: str | int,
+        caption: str,
+        reply_markup: dict[str, Any] | None = None,
+        parse_mode: str | None = None,
+    ) -> dict[str, Any]:
+        """editMessageCaption: https://core.telegram.org/bots/api#editmessagecaption
+
+        Used so buy-wizard taps replace buttons on the same photo instead of
+        stacking a new keyboard (which leaves the previous step tappable).
+        """
+        payload: dict[str, Any] = {
+            "chat_id": chat_id,
+            "message_id": int(message_id),
+            "caption": caption[:1024],
+        }
+        if parse_mode:
+            payload["parse_mode"] = parse_mode
+        if reply_markup is not None:
+            payload["reply_markup"] = reply_markup
+        return self._post("editMessageCaption", payload)
+
+    def edit_message_reply_markup(
+        self,
+        chat_id: str,
+        message_id: str | int,
+        reply_markup: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """editMessageReplyMarkup: https://core.telegram.org/bots/api#editmessagereplymarkup"""
+        payload: dict[str, Any] = {
+            "chat_id": chat_id,
+            "message_id": int(message_id),
+            "reply_markup": reply_markup or {"inline_keyboard": []},
+        }
+        return self._post("editMessageReplyMarkup", payload)
+
     def get_updates(self, offset: int | None = None, timeout: int = 0) -> list[dict[str, Any]]:
         payload: dict[str, Any] = {
             "timeout": timeout,
