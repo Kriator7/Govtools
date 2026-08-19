@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from email.message import EmailMessage
+from pathlib import Path
 
 from app.config import PROJECT_ROOT, get_settings
 from app.db import get_session_factory, init_db
@@ -37,6 +39,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Watch Gmail for Damian packet replies and apply them to realtor packet data",
     )
     inbox.add_argument("--once", action="store_true", help="Poll once and exit")
+    apply_mail = sub.add_parser(
+        "inbox-apply",
+        help="Apply a pasted packet email (file) to realtor packet data",
+    )
+    apply_mail.add_argument("--from-address", required=True)
+    apply_mail.add_argument("--to", default="jrupe7@gmail.com")
+    apply_mail.add_argument("--subject", required=True)
+    apply_mail.add_argument("--body-file", required=True)
     args = parser.parse_args(argv)
 
     if args.command == "send-test-email":
@@ -62,6 +72,8 @@ def main(argv: list[str] | None = None) -> int:
             from app.services.inbox.watch import poll_forever
 
             return poll_forever(db, once=args.once)
+        if args.command == "inbox-apply":
+            return _inbox_apply(db, args)
         realtor = seed_realtor(db)
         seed_pirates_ig(db, realtor)
         if args.command == "ingest":
@@ -160,6 +172,30 @@ def _read_offset() -> int | None:
 def _write_offset(offset: int) -> None:
     OFFSET_PATH.parent.mkdir(parents=True, exist_ok=True)
     OFFSET_PATH.write_text(json.dumps({"offset": offset}), encoding="utf-8")
+
+
+def _inbox_apply(db, args) -> int:
+    from app.services.inbox.apply import PacketIntakeService
+    from app.services.inbox.message import parse_rfc822
+    from app.services.inbox.status import write_intake_snapshot
+
+    body_path = Path(args.body_file)
+    if not body_path.is_file():
+        print({"ok": False, "error": f"body file not found: {body_path}"})
+        return 1
+    message = EmailMessage()
+    message["From"] = args.from_address
+    message["To"] = args.to
+    message["Subject"] = args.subject
+    message["Message-ID"] = f"<inbox-apply-{body_path.name}@local>"
+    message.set_content(body_path.read_text(encoding="utf-8"))
+    inbound = parse_rfc822(message.as_bytes(), account="pasted", uid="apply")
+    result = PacketIntakeService(db).apply_message(inbound)
+    db.commit()
+    snapshot = write_intake_snapshot(db)
+    result["snapshot"] = str(snapshot)
+    print(json.dumps(result, default=str))
+    return 0 if result.get("status") != "ignored" else 1
 
 
 if __name__ == "__main__":

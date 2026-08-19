@@ -17,6 +17,15 @@ DAMIAN_SENDER_NEEDLES = (
     DAMIAN_EMAIL,
 )
 
+MLS_ASSOCIATION_SENDER_NEEDLES = (
+    "catalino",
+    "las vegas realtor",
+    "lasvegasrealtor",
+    "glvar",
+    "trestle.corelogic.com",
+    "cotality.com",
+)
+
 IGNORE_SENDER_NEEDLES = (
     "zillow.com",
     "zillowgroup",
@@ -32,13 +41,21 @@ IGNORE_SENDER_NEEDLES = (
 
 PACKET_PATTERNS = {
     1: re.compile(r"\bpacket\s*1\b|who you are|license number|brokerage legal name", re.I),
-    2: re.compile(r"\bpacket\s*2\b|\bmls\b|listing access|glvar|reso web api", re.I),
+    2: re.compile(
+        r"\bpacket\s*2\b|\bmls\b|listing access|glvar|reso web api|\bidx\b|trestle|"
+        r"matrix|cotality|catalino|las vegas realtor",
+        re.I,
+    ),
     3: re.compile(r"\bpacket\s*3\b|investor list|investor clientele", re.I),
     4: re.compile(r"\bpacket\s*4\b|buy box|acquisition profile|investor criteria", re.I),
     5: re.compile(r"\bpacket\s*5\b|telegram|alert hours|minimum match score", re.I),
     6: re.compile(r"\bpacket\s*6\b|twilio|tcpa|investor text|notify investors", re.I),
     7: re.compile(r"\bpacket\s*7\b|purchase agreement|addenda|disclosure form", re.I),
-    8: re.compile(r"\bpacket\s*8\b|dotloop|skyslope|qualia|docusign|hellosign|brokermint", re.I),
+    8: re.compile(
+        r"\bpacket\s*8\b|e-sign platform|transaction platform|who must sign|"
+        r"who is allowed to press send",
+        re.I,
+    ),
     9: re.compile(r"\bpacket\s*9\b|sample closed|closed investor deal", re.I),
     10: re.compile(r"\bpacket\s*10\b|earnest money|inspection days|office rules", re.I),
 }
@@ -59,6 +76,11 @@ def is_damian_sender(message: InboundMessage) -> bool:
     return any(needle in blob for needle in DAMIAN_SENDER_NEEDLES)
 
 
+def is_mls_association_sender(message: InboundMessage) -> bool:
+    blob = f"{message.from_header} {message.subject} {message.body_text[:1500]}".lower()
+    return any(needle in blob for needle in MLS_ASSOCIATION_SENDER_NEEDLES)
+
+
 def is_packet_candidate(
     message: InboundMessage,
     watch_address: str = "",
@@ -66,7 +88,7 @@ def is_packet_candidate(
 ) -> bool:
     if is_ignored_sender(message):
         return False
-    if is_damian_sender(message):
+    if is_damian_sender(message) or is_mls_association_sender(message):
         return True
     from_header = message.from_header.lower()
     return any(email and email.lower() in from_header for email in extra_from)

@@ -19,6 +19,25 @@ When a Damian packet reply arrives:
 4. Packets 2 and 6–10 store metadata and files; passwords are redacted and not saved
 5. A snapshot is written to gitignored `data/packets/STATUS.md`
 
+## Packet 2 — Las Vegas REALTORS IDX (Catalino "Cat" Yee)
+
+Recorded from the association IDX email. MLS name: Las Vegas REALTORS MLS (Matrix). Contact: Catalino "Cat" Yee, MLS Training & IDX Specialist/CALV Coordinator.
+
+| Option | What it is | Feeds this matcher? |
+| --- | --- | --- |
+| 1. Matrix frame link | Free; name → settings → IDX Configuration. No agreement. | No (website iframe) |
+| 2. IDX vendor API key plugin | Vendor charges. LVR waives $250 setup for a listed vendor set. https://wordpress.com/plugins/browse/idx | No (website plugin) |
+| 3. Trestle WebAPI | Sign up as **technology provider** at https://trestle.corelogic.com/SubscriptionWizard. $100/month to Cotality. | Yes (authorized feed) |
+
+Cat: **do not choose option 2 and option 3 together.** Chosen option is still empty. `MLS_PROVIDER` stays `mock`. Do not scrape Matrix. Do not sign up for Trestle until Damian or the broker picks option 3 only.
+
+Paste apply:
+
+```
+python -m app.cli inbox-apply --from-address 'Catalino Yee <idx@lasvegasrealtors.example>' --subject 'IDX options' --body-file data/imports/packet2_las_vegas_realtors_idx.txt
+```
+
+
 SMS and email **relays stay on**. Do not text Damian or investors from this environment until that is explicitly enabled.
 
 ---

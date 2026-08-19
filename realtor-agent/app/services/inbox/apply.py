@@ -155,8 +155,10 @@ class PacketIntakeService:
 
     def _apply_mls_notes(self, realtor: Realtor, fields: dict[str, str]) -> dict:
         safe = {key: value for key, value in fields.items() if "password" not in key.lower()}
-        if safe.get("mls_name") and not realtor.mls_config_ref:
-            realtor.mls_config_ref = "secret:mls-live-config"
+        if safe.get("chosen_idx_option") == "3" and not realtor.mls_config_ref:
+            realtor.mls_config_ref = "secret:mls-trestle-pending"
+        elif safe.get("mls_name") and not realtor.mls_config_ref:
+            realtor.mls_config_ref = "pending:las-vegas-realtors-idx-choice"
         note = "Packet 2 MLS metadata (no passwords stored): " + json.dumps(safe, sort_keys=True)
         self._append_notes(realtor, 2, safe, None, extra=note)
         return safe
@@ -282,6 +284,9 @@ def _missing_for_packet(number: int, fields: dict, apply_result: dict) -> list[s
         if imported.get("created_investors") or imported.get("created_profiles"):
             return []
         return ["investor spreadsheet"]
+    if number == 2:
+        required = ["mls_name", "chosen_idx_option", "mls_agent_id"]
+        return [key for key in required if not fields.get(key)]
     if number == 5:
         required = ["telegram_username", "alert_hours", "min_score"]
         return [key for key in required if not fields.get(key)]

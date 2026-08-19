@@ -41,7 +41,15 @@ Please send:
 9. Whether we may store listing photos and the MLS listing URL
 10. How often you want new listings checked (example: every 15 minutes during business hours)
 
-If the broker must request the API, send the broker’s contact and say so. We can wait. Do not invent access.
+If the broker must request the API, send the broker’s contact and say so. We will wait. We will not invent access. We will not scrape Matrix.
+
+Official Las Vegas REALTORS IDX options (Catalino "Cat" Yee, MLS Training & IDX Specialist/CALV Coordinator). Source: the association IDX email. Trestle signup: https://trestle.corelogic.com/SubscriptionWizard
+
+1. **Matrix frame link** (free, no agreement): in Matrix, click your name → settings → IDX Configuration. Website iframe only. This does **not** feed the acquisition matcher.
+2. **API key plugin** from an IDX vendor (iHomefinder, Placester, Proagent, Constellation Web Solutions, ListReports, Inside Real Estate, Broker IDX/Elm Street Technologies, and others). Vendors charge. WordPress IDX list: https://wordpress.com/plugins/browse/idx. Las Vegas REALTORS waives the $250 setup fee for a listed set of vendors. Website plugins. This does **not** feed the acquisition matcher.
+3. **Trestle WebAPI data feed**: sign up as a **technology provider** at https://trestle.corelogic.com/SubscriptionWizard ($100/month to Cotality). This is the authorized RESO/Web API path that can feed this agent. Trestle’s wizard: technology providers connect to data providers; broker feeds are for internal broker systems. If the broker wants a feed for a technology provider, the technology provider must subscribe.
+
+**Do not choose option 2 and option 3 together.** Choose only one. Do not sign up until Damian or the broker picks. Keep `MLS_PROVIDER=mock` until option 3 is chosen and credentials exist. Do not scrape the MLS website.
 
 ---
 

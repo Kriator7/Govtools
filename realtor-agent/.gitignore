@@ -22,6 +22,7 @@ data/imports/*
 !data/imports/.gitkeep
 !data/imports/sample_investors.csv
 !data/imports/sample_listings.json
+!data/imports/packet2_las_vegas_realtors_idx.txt
 templates/documents/**/template.pdf
 *.log
 .coverage

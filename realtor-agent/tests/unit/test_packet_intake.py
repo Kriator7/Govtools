@@ -192,3 +192,32 @@ def test_binder_thehomefinderlv_sender_is_applied(db, tmp_path, monkeypatch):
     damian = db.query(Realtor).filter(Realtor.email == DAMIAN_EMAIL).one()
     assert damian.name == DAMIAN_NAME
     assert damian.license_number == "S.00654321"
+
+
+def test_cat_yee_idx_email_is_packet_2_partial_and_not_live_mls(db, tmp_path, monkeypatch):
+    monkeypatch.setenv("INBOX_STORAGE_PATH", str(tmp_path / "inbox"))
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    body = (PROJECT_ROOT / "data" / "imports" / "packet2_las_vegas_realtors_idx.txt").read_text(encoding="utf-8")
+    raw = _rfc822(
+        sender='Catalino "Cat" Yee <idx@lasvegasrealtors.example>',
+        to="jrupe7@gmail.com",
+        subject="IDX options for your website",
+        body=body,
+    )
+    inbound = parse_rfc822(raw, account="pasted", uid="7")
+    result = PacketIntakeService(db).apply_message(inbound)
+    db.commit()
+    assert result["status"] == "partial"
+    packets = {item["packet"] for item in result["packets"]}
+    assert packets == {2}
+    row = db.query(RealtorPacket).filter(RealtorPacket.packet_number == 2).one()
+    assert row.payload["mls_name"] == "Las Vegas REALTORS MLS (Matrix)"
+    assert row.payload["idx_option_3"] == "Trestle WebAPI data feed"
+    assert row.payload["idx_rule"].startswith("Do NOT choose")
+    assert not row.payload.get("chosen_idx_option")
+    assert "chosen_idx_option" in row.missing_fields
+    assert "mls_agent_id" in row.missing_fields
+    damian = db.query(Realtor).filter(Realtor.name == DAMIAN_NAME).one()
+    assert damian.mls_config_ref == "pending:las-vegas-realtors-idx-choice"

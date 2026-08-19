@@ -7,6 +7,7 @@ from io import BytesIO
 
 from pypdf import PdfReader
 
+from app.services.inbox.las_vegas_idx import PACKET_2_FROM_CAT, looks_like_las_vegas_realtors_idx
 from app.services.inbox.message import Attachment, InboundMessage
 from app.services.inbox.redact import redact_text
 from app.utilities.parsing import as_bool, as_int
@@ -101,7 +102,12 @@ def extract_packet_fields(message: InboundMessage, packet_number: int) -> dict:
             fields["timezone"] = _normalize_timezone(fields["timezone"])
         return fields
     if packet_number == 2:
-        return labeled_fields(text, PACKET_2_LABELS)
+        fields = labeled_fields(text, PACKET_2_LABELS)
+        if looks_like_las_vegas_realtors_idx(text):
+            merged = dict(PACKET_2_FROM_CAT)
+            merged.update({key: value for key, value in fields.items() if value})
+            return merged
+        return fields
     if packet_number == 5:
         fields = labeled_fields(text, PACKET_5_LABELS)
         username = fields.get("telegram_username") or _telegram_username(text)

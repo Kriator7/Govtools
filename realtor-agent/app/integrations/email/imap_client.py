@@ -18,6 +18,7 @@ from app.services.seed import DAMIAN_EMAIL
 GMAIL_PACKET_QUERY = (
     f"(einbinder OR damian OR from:{DAMIAN_EMAIL} OR from:thehomefinderlv.com "
     'OR "home finder" OR homefinder OR thehomefinderlv '
+    'OR catalino OR trestle OR cotality OR "las vegas realtor" OR idx '
     'OR "packet 1" OR "packet 2" OR "packet 3" OR "packet 4" OR "packet 5" '
     'OR "packet 6" OR "packet 7" OR "packet 8" OR "packet 9" OR "packet 10" '
     'OR "buy box" OR "investor list")'
