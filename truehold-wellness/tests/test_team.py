@@ -102,6 +102,7 @@ def test_floor_team_has_twenty_one_distinct_hosts():
         assert "Prep" in kit["prep"]
         assert "Team" in kit["team"]
         assert "Crew" in kit["crew"]
+        assert "Next teammate" in kit["next"]
         blob = " ".join(
             str(row[key])
             for key in ("hello", "present", "think", "work", "cheer", "soon", "joke", "creed")
@@ -169,7 +170,7 @@ def test_greet_again_rotates_hosts_and_can_lock_a_favorite():
         for btn in row
     ]
     assert any("Favorite Theo" in label for label in labels)
-    assert any("Next" in label for label in labels)
+    assert any("Next teammate" in label for label in labels)
     nxt = handle_menu_callback(_tap("w:host:next"), tg)
     assert nxt["action"] == "host-next"
     assert nxt["host"] == "lumen"
