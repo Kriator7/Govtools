@@ -247,10 +247,14 @@ def _telegram_poll(*, once: bool) -> int:
         )
         return 1
     from wellness_agent.catalog import sync_telegram_files
+    from wellness_agent.inventory.build_agent import ensure_agent
+    from wellness_agent.knowledge import seed_approved_knowledge
 
     telegram = WellnessTelegram(token)
     telegram.assert_identity()
     sync_telegram_files()
+    ensure_agent()
+    seed_approved_knowledge()
     try:
         telegram.configure_public_profile()
     except Exception as exc:

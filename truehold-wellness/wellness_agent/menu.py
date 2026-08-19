@@ -21,7 +21,8 @@ from wellness_agent.catalog import (
     products,
 )
 from wellness_agent.clients import client_phone, phone_line_for_staff
-from wellness_agent.inventory.build_brand import hero_path, logo_path, service_path
+from wellness_agent.inventory.build_agent import agent_path, ensure_agent
+from wellness_agent.inventory.build_brand import logo_path, service_path
 from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
 from wellness_agent.session_store import pending_order, set_awaiting_phone, set_pending_order
@@ -214,9 +215,27 @@ def send_introduction_menu(telegram, chat_id: str) -> None:
     send_brand_photo(telegram, chat_id, logo_path(), INTRODUCTION, quick_menu_keyboard())
 
 
+def send_greet_again(telegram, chat_id: str, text: str = "hi") -> None:
+    from wellness_agent.knowledge.talk import reply
+
+    ensure_agent()
+    spoken = reply(text, chat_id=str(chat_id), greet=True)
+    send_brand_photo(telegram, chat_id, agent_path(spoken.pose), spoken.text, quick_menu_keyboard())
+
+
+def send_theo_talk(telegram, chat_id: str, text: str) -> str:
+    from wellness_agent.knowledge.talk import reply
+
+    ensure_agent()
+    spoken = reply(text, chat_id=str(chat_id), greet=False)
+    send_brand_photo(telegram, chat_id, agent_path(spoken.pose), spoken.text, quick_menu_keyboard())
+    return spoken.source
+
+
 def send_quick_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> None:
+    ensure_agent()
     caption = MENU_INTRO if include_blurb else "<b>Menu</b>\nTap a name:"
-    send_brand_photo(telegram, chat_id, hero_path(), caption, quick_menu_keyboard())
+    send_brand_photo(telegram, chat_id, agent_path("present"), caption, quick_menu_keyboard())
 
 
 def send_picture_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> int:
@@ -262,7 +281,7 @@ def send_prep_card(telegram, chat_id: str, product: dict | None = None) -> None:
         "\n"
         f"{extra}"
     )
-    send_brand_photo(telegram, chat_id, service_path(), caption, markup)
+    send_brand_photo(telegram, chat_id, agent_path("think"), caption, markup)
 
 
 def send_info_pdf(telegram, chat_id: str, product: dict) -> None:
@@ -341,7 +360,7 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
     send_brand_photo(
         telegram,
         chat_id,
-        service_path(),
+        agent_path("cheer"),
         CUSTOMER_CONFIRM.format(detail=detail),
         after_pick_keyboard(product["id"]),
         message_effect_id=CELEBRATE_EFFECT_ID,
@@ -425,7 +444,7 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
         send_brand_photo(
             telegram,
             chat_id,
-            service_path(),
+            agent_path("think"),
             f"<b>How many?</b>\n"
             f"{escape(str(product['name']))} · dry vials\n"
             "\n"
@@ -439,7 +458,7 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
         send_brand_photo(
             telegram,
             chat_id,
-            service_path(),
+            agent_path("present"),
             f"<b>Confirm</b>\n"
             f"{escape(qty)}× {escape(str(product['name']))}\n"
             f"{escape(str(product['vial']))}\n"

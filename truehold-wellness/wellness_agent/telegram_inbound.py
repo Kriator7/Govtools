@@ -16,6 +16,7 @@ from wellness_agent.clients import (
 from wellness_agent.compose import compose_alert, format_alert
 from wellness_agent.greetings import is_salutation
 from wellness_agent.identity import REQUIRED_USERNAME
+from wellness_agent.inventory.build_agent import agent_path
 from wellness_agent.inventory.build_brand import service_path
 from wellness_agent.menu import (
     CUSTOMER_CONFIRM,
@@ -28,9 +29,11 @@ from wellness_agent.menu import (
     parse_interest_qty,
     remove_keyboard,
     send_brand_photo,
+    send_greet_again,
     send_info_pdf,
     send_introduction_menu,
     send_quick_menu,
+    send_theo_talk,
 )
 from wellness_agent.models import AlertTrigger
 from wellness_agent.reflex import fire_reflex
@@ -46,7 +49,6 @@ from wellness_agent.telegram_copy import (
     CELEBRATE_EFFECT_ID,
     CUSTOMER_COMMANDS,
     CUSTOMER_HELP,
-    GREET_AGAIN,
     HELP,
     SCHEDULE,
     STAFF_COMMANDS,
@@ -130,6 +132,54 @@ def _send_introduction(telegram, chat_id: str) -> None:
     mark_intro_played(chat_id)
 
 
+def _handle_promo(telegram, chat_id: str, staff_id: str, rest: str) -> dict:
+    """Staff-only. Sales never run until a person approves the row."""
+    from wellness_agent.knowledge import decide_promo, draft_promo, list_promos, seed_approved_knowledge
+
+    seed_approved_knowledge()
+    parts = rest.split(None, 1)
+    action = (parts[0] if parts else "").lower()
+    detail = parts[1].strip() if len(parts) > 1 else ""
+    if action in {"", "list"}:
+        rows = list_promos()
+        if not rows:
+            telegram.send_message(chat_id, "No promotions on file. /promo draft Headline | body")
+            return {"ok": True, "action": "promo-list", "chat_id": chat_id, "count": 0}
+        lines = ["Promotions (customer sees approved only):"]
+        for row in rows[:20]:
+            lines.append(f"#{row['id']} [{row['status']}] {row['headline']}")
+        telegram.send_message(chat_id, "\n".join(lines))
+        return {"ok": True, "action": "promo-list", "chat_id": chat_id, "count": len(rows)}
+    if action == "draft":
+        if "|" in detail:
+            headline, body = [part.strip() for part in detail.split("|", 1)]
+        else:
+            headline, body = detail, detail
+        if not headline:
+            telegram.send_message(chat_id, "Usage: /promo draft Headline | body")
+            return {"ok": False, "action": "promo-draft", "chat_id": chat_id}
+        promo = draft_promo(headline, body, staff_id=staff_id)
+        telegram.send_message(
+            chat_id,
+            f"Draft #{promo['id']} pending approval. Customers cannot see it yet.\n"
+            f"/promo approve {promo['id']}",
+        )
+        return {"ok": True, "action": "promo-draft", "chat_id": chat_id, "id": promo["id"]}
+    if action in {"approve", "reject", "expire"} and detail.isdigit():
+        status = {"approve": "approved", "reject": "rejected", "expire": "expired"}[action]
+        promo = decide_promo(int(detail), status=status, staff_id=staff_id)
+        if promo is None:
+            telegram.send_message(chat_id, f"No promotion #{detail}.")
+            return {"ok": False, "action": "promo-miss", "chat_id": chat_id}
+        telegram.send_message(chat_id, f"Promotion #{promo['id']} is now {promo['status']}.")
+        return {"ok": True, "action": f"promo-{status}", "chat_id": chat_id, "id": promo["id"]}
+    telegram.send_message(
+        chat_id,
+        "Usage:\n/promo list\n/promo draft Headline | body\n/promo approve <id>\n/promo reject <id>",
+    )
+    return {"ok": False, "action": "promo-help", "chat_id": chat_id}
+
+
 def _send_sheet(telegram, chat_id: str, query: str) -> dict:
     if not query:
         telegram.send_message(chat_id, "Tap a name on /menu.")
@@ -201,6 +251,8 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
 
             telegram.send_message(chat_id, format_stock())
             return {"ok": True, "action": "stock", "chat_id": chat_id, "staff": True}
+        if command == "promo" and staff:
+            return _handle_promo(telegram, chat_id, user_id, _rest(text))
         telegram.send_message(chat_id, STAFF_DENIED)
         return {"ok": False, "action": "staff-denied", "chat_id": chat_id}
 
@@ -251,7 +303,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         send_brand_photo(
             telegram,
             chat_id,
-            service_path(),
+            agent_path("cheer"),
             CUSTOMER_CONFIRM.format(detail=detail),
             message_effect_id=CELEBRATE_EFFECT_ID,
         )
@@ -270,17 +322,14 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         if intro_pending(chat_id):
             _send_introduction(telegram, chat_id)
             return {"ok": True, "action": "intro", "chat_id": chat_id}
-        telegram.send_message(chat_id, GREET_AGAIN)
+        send_greet_again(telegram, chat_id, text)
         return {"ok": True, "action": "greet-again", "chat_id": chat_id}
 
     if text:
         if intro_pending(chat_id):
             _send_introduction(telegram, chat_id)
             return {"ok": True, "action": "intro", "chat_id": chat_id}
-        telegram.send_message(
-            chat_id,
-            "Tap one name on the quick menu. Send /menu to see it again.",
-        )
-        return {"ok": True, "action": "nudge-menu", "chat_id": chat_id}
+        source = send_theo_talk(telegram, chat_id, text)
+        return {"ok": True, "action": "talk", "chat_id": chat_id, "source": source}
 
     return {"ok": True, "ignored": True, "bot": REQUIRED_USERNAME}

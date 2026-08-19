@@ -68,7 +68,7 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert photos[0]["photo"].endswith("klow.jpg")
     qty = handle_menu_callback(_tap("w:qty:klow")["callback_query"], tg)
     assert qty["action"] == "qty"
-    qty_photos = [item for item in tg.sent if str(item.get("photo") or "").endswith("service.jpg")]
+    qty_photos = [item for item in tg.sent if str(item.get("photo") or "").endswith("theo-think.jpg")]
     assert qty_photos
     assert "dry vials" in (qty_photos[0].get("caption") or "").lower()
     ask = handle_menu_callback(_tap("w:ask:klow:2")["callback_query"], tg)

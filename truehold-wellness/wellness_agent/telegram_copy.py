@@ -46,12 +46,15 @@ INTRODUCTION = (
     "Need a person? tap Team"
 )
 
-GREET_AGAIN = "Hi again. Tap a name on the menu, or send /menu."
+GREET_AGAIN = (
+    "<b>Hey — it's Theo.</b>\n"
+    "Good to see you. I brought the colorful menu."
+)
 
 CUSTOMER_HELP = (
     f"TrueHold Wellness (@{REQUIRED_USERNAME})\n"
-    "Send /start for a welcome, then tap one name — we send that tile, not the whole list.\n"
-    "View PDF sends the locked information sheet as a Telegram file (Files). "
+    "Theo (our concierge) waves when you say hi, then shows the tap-menu.\n"
+    "View PDF / Sheet sends the locked information sheet as a Telegram file (Files). "
     "Shop pages in Links are not the sheets.\n"
     "/menu — quick menu\n"
     "/schedule — talk to the TrueHold team\n"
@@ -65,6 +68,9 @@ STAFF_HELP = (
     f"Staff mode on @{REQUIRED_USERNAME}. Customers do not see these commands.\n"
     "/inbox — full business inbox snapshot\n"
     "/stock — on-hand inventory\n"
+    "/promo — list promotion drafts (sales never auto-run)\n"
+    "/promo draft Headline | body — submit for approval\n"
+    "/promo approve <id> or /promo reject <id>\n"
     "/menu — same picture menu customers use\n"
     "Order and email-reflex alerts arrive in this chat.\n"
     "This bot is not realtor-agent / @PirateEye_bot."
@@ -140,6 +146,7 @@ CUSTOMER_COMMANDS = (
 STAFF_COMMANDS = CUSTOMER_COMMANDS + (
     {"command": "inbox", "description": "Staff: full business inbox snapshot"},
     {"command": "stock", "description": "Staff: on-hand inventory"},
+    {"command": "promo", "description": "Staff: draft/approve sales (never auto)"},
 )
 
 # Public BotFather menu is customer-only so clients are not shown staff commands.

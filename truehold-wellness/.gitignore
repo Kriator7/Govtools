@@ -8,6 +8,7 @@ venv/
 .DS_Store
 data/*.db
 data/*.db-journal
+wellness_agent/inventory/assets/agent_cards/
 data/exports/*
 !data/exports/.gitkeep
 data/telegram_offset.json

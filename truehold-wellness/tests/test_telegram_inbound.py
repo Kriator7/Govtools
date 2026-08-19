@@ -129,8 +129,12 @@ def test_hello_after_start_does_not_repeat_intro():
     tg.sent.clear()
     hello = handle_telegram_update(_msg("hello", chat_id=99), tg)
     assert hello["action"] == "greet-again"
-    assert not any("photo" in item for item in tg.sent)
-    assert any("Hi again" in (item.get("text") or "") for item in tg.sent)
+    photos = [item for item in tg.sent if "photo" in item]
+    assert photos
+    assert "wave" in photos[0]["photo"]
+    blob = "\n".join((item.get("text") or item.get("caption") or "") for item in tg.sent).lower()
+    assert "theo" in blob or "good to see you" in blob or "hi again" in blob
+    assert "send /menu" not in blob
 
 
 def test_hello_plays_intro_once_then_does_not_repeat():
@@ -157,8 +161,8 @@ def test_hello_plays_intro_once_then_does_not_repeat():
     tg.sent.clear()
     again = handle_telegram_update(_msg("Hey there!", chat_id=99), tg)
     assert again["action"] == "greet-again"
-    assert not any("photo" in item for item in tg.sent)
-    assert any("Hi again" in (item.get("text") or "") for item in tg.sent)
+    assert any("photo" in item for item in tg.sent)
+    assert any("wave" in str(item.get("photo") or "") for item in tg.sent)
 
 
 def test_menu_does_not_ask_for_phone():
@@ -167,7 +171,7 @@ def test_menu_does_not_ask_for_phone():
     assert result["action"] == "menu"
     photos = [item for item in tg.sent if "photo" in item]
     assert photos
-    assert photos[0]["photo"].endswith("hero.jpg")
+    assert photos[0]["photo"].endswith("theo-present.jpg")
     assert not any("Share my phone number" in str(item.get("reply_markup") or "") for item in tg.sent)
 
 
@@ -271,7 +275,7 @@ def test_staff_claim_from_telegram_never_grants(monkeypatch):
 
 def test_admin_and_operator_commands_never_grant():
     tg = _FakeTelegram()
-    for command in ("/admin", "/operator", "/grant", "/staff", "/stock"):
+    for command in ("/admin", "/operator", "/grant", "/staff", "/stock", "/promo"):
         result = handle_telegram_update(_msg(command, chat_id=88, user_id=88), tg)
         assert result["action"] == "staff-denied"
 

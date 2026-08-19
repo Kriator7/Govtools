@@ -31,7 +31,16 @@ truehold-wellness-agent = "wellness_agent.cli:main"
 include = ["wellness_agent*", "thw*"]
 
 [tool.setuptools.package-data]
-"wellness_agent" = ["data/*.json", "inventory/*.json", "inventory/pdfs/*.pdf", "inventory/assets/*", "inventory/cards/*.jpg", "inventory/workbooks/*.xlsx"]
+"wellness_agent" = [
+    "data/*.json",
+    "inventory/*.json",
+    "inventory/pdfs/*.pdf",
+    "inventory/assets/*",
+    "inventory/assets/agent/*",
+    "inventory/cards/*.jpg",
+    "inventory/workbooks/*.xlsx",
+    "knowledge/*.json",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

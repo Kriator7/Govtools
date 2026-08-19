@@ -15,7 +15,9 @@ from __future__ import annotations
 import os
 
 STAFF_DENIED = "That command is for TrueHold staff only."
-PRIVILEGED_COMMANDS = frozenset({"inbox", "stock", "staff", "operator", "admin", "grant"})
+PRIVILEGED_COMMANDS = frozenset(
+    {"inbox", "stock", "staff", "operator", "admin", "grant", "promo"}
+)
 
 
 def _positive_telegram_id(value: str | None) -> str | None:
