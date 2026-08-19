@@ -151,15 +151,31 @@ def main(argv: Sequence[str] | None = None) -> int:
         sys.stdout.write(format_stock())
         return 0
     if args.command == "product":
-        from wellness_agent.catalog import UnknownProductError, find_product, pdf_path
+        from wellness_agent.catalog import (
+            UnknownProductError,
+            find_product,
+            pdf_path,
+            telegram_file_path,
+        )
 
         try:
             item = find_product(args.query)
             path = pdf_path(item)
+            telegram_path = telegram_file_path(item)
         except (UnknownProductError, FileNotFoundError) as exc:
             sys.stderr.write(f"error: {exc}\n")
             return 1
-        sys.stdout.write(json.dumps({"ok": True, "id": item["id"], "pdf": str(path)}) + "\n")
+        sys.stdout.write(
+            json.dumps(
+                {
+                    "ok": True,
+                    "id": item["id"],
+                    "pdf": str(path),
+                    "telegram_file": str(telegram_path),
+                }
+            )
+            + "\n"
+        )
         return 0
     if args.command == "ingest-email":
         from pathlib import Path
@@ -230,8 +246,11 @@ def _telegram_poll(*, once: bool) -> int:
             f"error: set TELEGRAM_MODE=live and TELEGRAM_BOT_TOKEN for @{REQUIRED_USERNAME}\n"
         )
         return 1
+    from wellness_agent.catalog import sync_telegram_files
+
     telegram = WellnessTelegram(token)
     telegram.assert_identity()
+    sync_telegram_files()
     try:
         telegram.configure_public_profile()
     except Exception as exc:

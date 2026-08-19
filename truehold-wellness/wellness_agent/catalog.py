@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,7 @@ from typing import Any
 INVENTORY_DIR = Path(__file__).resolve().parent / "inventory"
 CATALOG_PATH = INVENTORY_DIR / "catalog.json"
 PDF_DIR = INVENTORY_DIR / "pdfs"
+TELEGRAM_FILES_DIR = INVENTORY_DIR / "telegram_files"
 
 
 class UnknownProductError(KeyError):
@@ -64,13 +66,39 @@ def pdf_path(product: dict[str, Any]) -> Path:
     return path
 
 
+def locked_sheet_filename(product: dict[str, Any]) -> str:
+    """Name shown in Telegram Files. Must not look like a shop URL."""
+    return f"TrueHold Wellness locked information sheet — {product['name']}.pdf"
+
+
+def telegram_file_path(product: dict[str, Any]) -> Path:
+    """Agent file pack: all locked sheets in one Telegram-files directory."""
+    dest = TELEGRAM_FILES_DIR / locked_sheet_filename(product)
+    if dest.is_file():
+        return dest
+    source = pdf_path(product)
+    TELEGRAM_FILES_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, dest)
+    return dest
+
+
+def sync_telegram_files() -> list[Path]:
+    TELEGRAM_FILES_DIR.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+    for item in products():
+        dest = TELEGRAM_FILES_DIR / locked_sheet_filename(item)
+        shutil.copy2(pdf_path(item), dest)
+        written.append(dest)
+    return written
+
+
 def format_catalog() -> str:
-    from wellness_agent.telegram_copy import PAYMENT_COPY, SHOP_URL
+    from wellness_agent.telegram_copy import PAYMENT_COPY
 
     lines = [
         "TrueHold Wellness inventory",
         "Educational information only. Research use only.",
-        "Tap /menu, then one name. View the PDF in Telegram — tap to open or download.",
+        "Tap /menu, then one name. View PDF in Telegram sends the locked sheet as a file in this chat — not a shop page.",
         "Prep and local delivery: Las Vegas residents only. Shipping: dry vials only.",
         PAYMENT_COPY,
         "",
@@ -81,22 +109,21 @@ def format_catalog() -> str:
     lines.extend(
         [
             "",
-            "/menu — tap a name, then View PDF in Telegram",
-            "/schedule — book with the team",
-            f"Debit-card checkout: {SHOP_URL}",
+            "/menu — tap a name, then View PDF in Telegram (Files, not Links)",
+            "/schedule — book with the team or pay by debit card",
         ]
     )
     return "\n".join(lines) + "\n"
 
 
 def format_product_caption(product: dict[str, Any]) -> str:
-    from wellness_agent.telegram_copy import PAYMENT_COPY
-
+    """Caption for sendDocument. No http(s) URLs — Telegram Links would open the shop."""
     return (
-        f"TrueHold Wellness information sheet — {product['name']}\n"
+        f"TrueHold Wellness locked information sheet — {product['name']}\n"
         f"{product['vial']}\n"
-        "This PDF opens in Telegram. Tap it to view, or download it to save.\n"
+        "This is the locked information sheet as a Telegram file. "
+        "Open it in this chat (Files). It is not a shop page and not a website.\n"
         "Educational only. Dry (lyophilized) vial. Protocol details reviewed case by case.\n"
         "Prep and local delivery: Las Vegas residents only.\n"
-        f"{PAYMENT_COPY}"
+        "Local Las Vegas: Zelle is best — the team shares Zelle details on the confirmation call."
     )

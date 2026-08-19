@@ -49,6 +49,8 @@ GREET_AGAIN = (
 CUSTOMER_HELP = (
     f"TrueHold Wellness (@{REQUIRED_USERNAME})\n"
     "Send /start for a welcome, then tap one name — we send that tile, not the whole list.\n"
+    "View PDF sends the locked information sheet as a Telegram file (Files). "
+    "Shop pages in Links are not the sheets.\n"
     "/menu — quick menu\n"
     "/schedule — talk to the TrueHold team\n"
     "/help — this message\n"

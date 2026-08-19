@@ -10,6 +10,7 @@ https://www.reportlab.com/docs/reportlab-userguide.pdf
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from reportlab.graphics.shapes import Circle, Drawing, Line, Rect, String
@@ -470,6 +471,13 @@ def build_sheet(sku: str, dest: Path | None = None) -> Path:
         styles["body"],
     ))
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+    from wellness_agent.catalog import locked_sheet_filename, products, TELEGRAM_FILES_DIR
+
+    TELEGRAM_FILES_DIR.mkdir(parents=True, exist_ok=True)
+    for item in products():
+        if item["id"] == sku:
+            shutil.copy2(dest, TELEGRAM_FILES_DIR / locked_sheet_filename(item))
+            break
     return dest
 
 

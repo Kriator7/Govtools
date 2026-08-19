@@ -16,7 +16,8 @@ from wellness_agent.catalog import (
     UnknownProductError,
     find_product,
     format_product_caption,
-    pdf_path,
+    locked_sheet_filename,
+    telegram_file_path,
     products,
 )
 from wellness_agent.clients import client_phone, phone_line_for_staff
@@ -25,7 +26,7 @@ from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
 from wellness_agent.session_store import pending_order, set_awaiting_phone, set_pending_order
 from wellness_agent.stock import record_order_row, staff_inventory_line
-from wellness_agent.telegram_copy import CALL_AND_DOCS, INTRODUCTION, PAYMENT_COPY, SERVICE_POLICY, SHOP_URL
+from wellness_agent.telegram_copy import CALL_AND_DOCS, INTRODUCTION, PAYMENT_COPY, SERVICE_POLICY
 
 MENU_INTRO = (
     "Quick menu — tap one name. We will send that tile.\n"
@@ -110,10 +111,10 @@ def after_pick_keyboard(product_id: str) -> dict[str, Any]:
 
 
 def info_sheet_keyboard(product_id: str) -> dict[str, Any]:
+    """No URL buttons — a shop URL here lands in Telegram Links instead of Files."""
     return _keyboard(
         [
             [_button("Order this", f"w:qty:{product_id}")],
-            [{"text": "Pay by debit card on the site", "url": SHOP_URL}],
             [_button("See menu", "w:menu")],
         ]
     )
@@ -195,8 +196,8 @@ def send_product_tile(telegram, chat_id: str, product: dict) -> None:
 
 def send_info_pdf(telegram, chat_id: str, product: dict) -> None:
     caption = format_product_caption(product)
-    path = pdf_path(product)
-    filename = f"{product['name']} info sheet.pdf"
+    path = telegram_file_path(product)
+    filename = locked_sheet_filename(product)
     if hasattr(telegram, "send_document"):
         try:
             telegram.send_document(

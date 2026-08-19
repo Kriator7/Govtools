@@ -1,4 +1,15 @@
-from wellness_agent.catalog import UnknownProductError, find_product, format_catalog, pdf_path, products
+from wellness_agent.catalog import (
+    TELEGRAM_FILES_DIR,
+    UnknownProductError,
+    find_product,
+    format_catalog,
+    format_product_caption,
+    locked_sheet_filename,
+    pdf_path,
+    products,
+    sync_telegram_files,
+    telegram_file_path,
+)
 from wellness_agent.cli import main
 from wellness_agent.telegram_inbound import handle_telegram_update
 
@@ -79,7 +90,9 @@ def test_catalog_cli(capsys):
 
 def test_product_cli(capsys):
     assert main(["product", "klow"]) == 0
-    assert "klow.pdf" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "klow.pdf" in out
+    assert "locked information sheet" in out
 
 
 def test_telegram_catalog_and_product_sheet():
@@ -96,11 +109,14 @@ def test_telegram_catalog_and_product_sheet():
     assert product == {"ok": True, "action": "product", "chat_id": "7", "product": "klow"}
     docs = [item for item in tg.sent if "document" in item]
     assert docs
-    assert docs[0]["document"].endswith("klow.pdf")
+    assert docs[0]["document"].endswith("TrueHold Wellness locked information sheet — KLOW.pdf")
     assert "Educational only" in docs[0]["caption"]
-    assert "Tap it to view" in docs[0]["caption"]
-    assert "trueholdwellness.com/ols/" not in docs[0]["caption"]
+    assert "Telegram file" in docs[0]["caption"]
+    assert "trueholdwellness.com" not in docs[0]["caption"]
+    assert "http" not in docs[0]["caption"].lower()
     assert "Zelle" in docs[0]["caption"]
+    assert "locked information sheet" in docs[0]["filename"]
+    assert "KLOW" in docs[0]["filename"]
 
 
 def test_all_sheets_are_vial_specific_and_segmented():
@@ -226,3 +242,32 @@ def test_catalog_states_las_vegas_and_dry_vials():
     assert "las vegas" in text
     assert "dry vials" in text
     assert "waiver" not in text
+    assert "http" not in text
+    assert "trueholdwellness.com" not in text
+
+
+def test_telegram_files_pack_has_all_locked_sheets():
+    written = sync_telegram_files()
+    assert len(written) == 8
+    names = {path.name for path in written}
+    for item in products():
+        filename = locked_sheet_filename(item)
+        path = telegram_file_path(item)
+        assert path.is_file()
+        assert path.parent == TELEGRAM_FILES_DIR
+        assert path.name == filename
+        assert filename in names
+        assert "http" not in filename.lower()
+        caption = format_product_caption(item)
+        assert "locked information sheet" in caption.lower()
+        assert item["name"] in caption
+        assert item["vial"] in caption
+        assert "http" not in caption.lower()
+        assert "trueholdwellness.com" not in caption
+        assert "ols/products" not in caption
+    from wellness_agent.menu import info_sheet_keyboard
+
+    markup = info_sheet_keyboard("nad")
+    assert "url" not in str(markup)
+    labels = [btn["text"] for row in markup["inline_keyboard"] for btn in row]
+    assert labels == ["Order this", "See menu"]

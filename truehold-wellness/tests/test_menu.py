@@ -93,7 +93,7 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert any("dry" in text.lower() for text in texts)
     assert not any("waiver" in text.lower() for text in texts)
     assert not any("TrueHold Wellness alert — order" in text for text in texts)
-    assert any(str(item.get("document", "")).endswith("klow.pdf") for item in tg.sent)
+    assert any("KLOW" in str(item.get("filename") or item.get("document") or "") for item in tg.sent)
     assert "cb2" in tg.callbacks
 
 
@@ -103,16 +103,31 @@ def test_info_sheet_sends_telegram_pdf_not_website_link():
     assert result["action"] == "info"
     docs = [item for item in tg.sent if "document" in item]
     assert docs
-    assert docs[0]["document"].endswith("semax.pdf")
     caption = docs[0]["caption"]
-    assert "Tap it to view" in caption
-    assert "download" in caption.lower()
+    assert "locked information sheet" in caption.lower()
+    assert "Telegram file" in caption
     assert "Zelle" in caption
-    assert "debit card" in caption.lower()
-    assert "trueholdwellness.com/ols/" not in caption
+    assert "trueholdwellness.com" not in caption
+    assert "http" not in caption.lower()
     labels = [btn["text"] for row in docs[0]["reply_markup"]["inline_keyboard"] for btn in row]
-    assert labels == ["Order this", "Pay by debit card on the site", "See menu"]
-    assert docs[0]["filename"] == "Semax info sheet.pdf"
+    assert labels == ["Order this", "See menu"]
+    assert "url" not in str(docs[0]["reply_markup"])
+    assert docs[0]["filename"] == "TrueHold Wellness locked information sheet — Semax.pdf"
+    assert docs[0]["document"].endswith(docs[0]["filename"])
+
+
+def test_nad_info_sheet_is_telegram_file_not_shop_page():
+    tg = _FakeTelegram()
+    result = handle_telegram_update(_tap("w:info:nad"), tg)
+    assert result["action"] == "info"
+    docs = [item for item in tg.sent if "document" in item]
+    assert docs
+    assert docs[0]["filename"] == "TrueHold Wellness locked information sheet — NAD+.pdf"
+    assert docs[0]["document"].endswith(docs[0]["filename"])
+    assert "1000 mg" in docs[0]["caption"]
+    assert "trueholdwellness.com" not in docs[0]["caption"]
+    assert "http" not in docs[0]["caption"].lower()
+    assert "url" not in str(docs[0]["reply_markup"])
 
 
 def test_interest_order_decrements_on_hand_when_set():
