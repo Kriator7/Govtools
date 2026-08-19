@@ -127,6 +127,9 @@ def seed_rows() -> list[tuple[str, str, str, str]]:
         herbs_home = str(row.get("herbs") or "")
         text = f"{short} {bio} Home herbal study: {herbs_home} {house_experience()}"
         rows.append((f"bio-{member_id}", "bio", f"{member_id} bio", text.strip()))
+    from wellness_agent.knowledge.quotes import seed_quote_rows
+
+    rows.extend(seed_quote_rows())
     return rows
 
 

@@ -35,36 +35,36 @@
       "id": "creed-why",
       "title": "Why we are here",
       "kind": "creed",
-      "text": "We care that people get healthy, and we walk with them. Use the tools nature and God already gave us. High-quality food and rest make a high-quality human. Peptides can help you aim at your best health. Educational only. If this house helped, you're welcome to tell others."
+      "text": "We care that people get healthy, and we walk with them. “The first wealth is health.” — Ralph Waldo Emerson, The Conduct of Life, “Power” (1860). High-quality food and rest make a high-quality human. Peptides can help you aim at your best health. Educational only. If this house helped, you're welcome to tell others."
     },
     {
       "id": "creed-nature",
       "title": "Nature, science, and memory",
       "kind": "creed",
-      "text": "These signals showed up in bone broths, herbs, and fermentation long before lab glass. A lot of that kitchen knowledge was lost. Science opened the door again — like seeing it for the first time. Most peptides already exist in the human body. They are naturally occurring. You're welcome to know. Mix math stays on the locked sheet, not in chat."
+      "text": "These signals showed up in bone broths, herbs, and fermentation long before lab glass. “Every realm of nature is marvellous.” — Aristotle, Parts of Animals I.5, trans. William Ogle (1882). The popular “let food be thy medicine” line is a later Hippocratic misquotation; the corpus itself says food can be excellent or poor medication depending on the case (On Nutriment 19, trans. W. H. S. Jones). Mix math stays on the locked sheet, not in chat."
     },
     {
       "id": "creed-respect",
       "title": "Respect, with care",
       "kind": "creed",
-      "text": "Too much of anything — even oxygen — can seriously hurt you. TrueHold Wellness agrees: these are tools to respect, not toys. We will not dose in chat. We'll keep the facts open and kind. Learn with us — the door stays open."
+      "text": "Too much of anything — even oxygen — can seriously hurt you. “All things are poison, and nothing is without poison; the dose alone makes it so a thing is not a poison.” — Paracelsus, Septem Defensiones, Third Defense (1538). We will not dose in chat. Learn with us — the door stays open."
     },
     {
       "id": "creed-oranges",
       "title": "Vitamin C and oranges",
       "kind": "creed",
-      "text": "Vitamin C in oranges was never meant to feel like someone else's permission slip. We learn how to use naturally occurring tools with care, and we keep the kitchen door open. Honest information belongs with the people who need it. If this house helped, you're welcome to tell someone else."
+      "text": "James Lind, a naval surgeon, compared scurvy treatments at sea and wrote: “The result of all my experiments was that oranges and lemons were the most effectual remedies for this distemper at sea.” — James Lind, A Treatise of the Scurvy (1753). Science later named the citrus factor vitamin C (Albert Szent-Györgyi, Nobel Prize in Physiology or Medicine, 1937). Kitchen tools belong in open, kind hands."
     },
     {
       "id": "creed-body",
       "title": "What you put in",
       "kind": "creed",
-      "text": "Empowerment can mean feeling at home in your own body. What you put in produces the human you are. High-quality food and rest equal a high-quality human. We have a right to pursue our best health. Peptides are one of the tools that can help. Educational information. Las Vegas, dry vials, team consult for orders."
+      "text": "“Tell me what you eat, and I will tell you what you are.” — Jean Anthelme Brillat-Savarin, Physiologie du goût, Aphorism IV (1825). High-quality food and rest equal a high-quality human. Peptides are one of the tools that can help. Educational information. Las Vegas, dry vials, team consult for orders."
     }
   ],
   "hellos": [
-    "<b>Welcome back.</b>\nWe care that you get healthy, and we'll walk with you.\nTap a name, or just tell me what you are curious about.",
-    "<b>Hi again — still grinning.</b>\nLas Vegas · dry vials · tools to respect, offered with care.\nWhat are we looking at?",
+    "<b>Welcome back.</b>\n“The first wealth is health.” — Ralph Waldo Emerson, The Conduct of Life (1860).\nTap a name, or just tell me what you are curious about.",
+    "<b>Hi again — still grinning.</b>\nLas Vegas · dry vials · “nature alone cures.” — Florence Nightingale, Notes on Nursing (1860).\nWhat are we looking at?",
     "<b>You said hi. A host showed up waving.</b>\nOfficial TrueHold Wellness floor team. Nature packed the kit. Science opened the door.\nPick a name or ask a light question.",
     "<b>Welcome back.</b>\nSeat's warm. We'll go at your pace.\nSheet, Order, Prep, or Team — your call."
   ],

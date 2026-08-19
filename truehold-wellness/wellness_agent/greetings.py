@@ -77,6 +77,7 @@ _CREED_RE = re.compile(
     r"vitamin\s*c|oranges?|hostage|oxygen|"
     r"already (?:in|exist)|naturally occurring|"
     r"people deserve|profiteer|the truth|tell others|"
+    r"quote|who said|emerson|paracelsus|lind|nightingale|muir|"
     r"why peptides|why this (?:house|bot|shop)"
     r")\b",
     re.IGNORECASE,

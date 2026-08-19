@@ -178,6 +178,19 @@ def retrieve(query: str, *, limit: int = 6) -> list[dict[str, Any]]:
                     "herbs",
                     "ownership",
                     "hostage",
+                    "quote",
+                    "emerson",
+                    "paracelsus",
+                    "lind",
+                    "scurvy",
+                    "nightingale",
+                    "muir",
+                    "thoreau",
+                    "hippocrates",
+                    "avicenna",
+                    "maimonides",
+                    "bacon",
+                    "aristotle",
                 )
             ):
                 score += 2

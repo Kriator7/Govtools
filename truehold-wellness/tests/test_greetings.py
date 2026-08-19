@@ -42,6 +42,8 @@ def test_creed_request_matches_house_mission_phrases():
         "your mission",
         "vitamin C hostage",
         "oranges",
+        "who said that quote",
+        "Ralph Waldo Emerson",
         "naturally occurring",
         "the people deserve the truth",
         "empowerment",

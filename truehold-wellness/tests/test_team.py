@@ -108,6 +108,7 @@ def test_floor_team_has_twenty_one_distinct_hosts():
         ).lower()
         assert "care" in str(row["hello"]).lower() or "health" in str(row["hello"]).lower() or "well" in str(row["hello"]).lower()
         assert len(str(row["creed"])) > 40
+        assert "—" in str(row["creed"])
         assert "units =" not in blob
         assert "inject" not in blob
         assert "bac water" not in blob
@@ -160,7 +161,7 @@ def test_greet_again_rotates_hosts_and_can_lock_a_favorite():
     photo = [item for item in tg.sent if "photo" in item][-1]
     assert "theo-wave.jpg" in photo["photo"]
     assert "Theo" in photo["caption"]
-    assert "already live in you" in photo["caption"].lower() or "tools to respect" in photo["caption"].lower()
+    assert "emerson" in photo["caption"].lower() or "first wealth is health" in photo["caption"].lower()
     assert photo["message_effect_id"]
     labels = [
         btn["text"]
@@ -203,8 +204,8 @@ def test_talk_answers_house_creed_in_the_current_host_voice():
     lower = spoken.text.lower()
     assert spoken.source == "seed-creed"
     assert "wynn" in spoken.text.lower()
-    assert "orange" in lower or "vitamin" in lower
-    assert "care" in lower or "learn" in lower or "people" in lower or "kitchen" in lower
+    assert "orange" in lower or "vitamin" in lower or "lind" in lower
+    assert "lind" in lower or "scurvy" in lower or "orange" in lower
     assert "reconstitut" not in lower
     assert "units =" not in lower
     assert "http" not in lower

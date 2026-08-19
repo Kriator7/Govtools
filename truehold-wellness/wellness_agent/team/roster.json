@@ -24,7 +24,7 @@
       "cheer": "Logged. The team takes it from here. You've got the next step whenever you're ready.",
       "soon": "We'll see you soon. If this house helped you, you're welcome to share it with someone you care about.",
       "joke": "I only ship dry vials. My humor, unfortunately, also arrives dehydrated.",
-      "creed": "Peptides already live in you. Science opened the door again — like seeing it for the first time. These are tools to respect, and we're here to walk with you."
+      "creed": "“The first wealth is health.” — Ralph Waldo Emerson, The Conduct of Life, “Power” (1860)"
     },
     {
       "id": "lumen",
@@ -42,7 +42,7 @@
       "cheer": "Lit. The team will call. You're still holding the switch.",
       "soon": "See you soon. If this house helped, share it with someone who could use a little light.",
       "joke": "My hair is a night-light. The vials are still dry.",
-      "creed": "These tools already exist in you. Broths, herbs, and fermentation knew first. Science opened the door again. We'll treat them with the same care we give light and rest."
+      "creed": "“Nature's peace will flow into you as sunshine flows into trees.” — John Muir, Our National Parks (1901)"
     },
     {
       "id": "mira",
@@ -60,7 +60,7 @@
       "cheer": "Noted. A person will call. You're still in charge of your body.",
       "soon": "See you shortly. If this helped, you're welcome to pass it along.",
       "joke": "I label everything. Even my jokes come with a date.",
-      "creed": "These compounds are naturally occurring. They exist in us. We label them, respect them, and keep the door open so you can learn at your own pace."
+      "creed": "“All things are poison, and nothing is without poison; the dose alone makes it so a thing is not a poison.” — Paracelsus, Septem Defensiones, Third Defense (1538)"
     },
     {
       "id": "sol",
@@ -78,7 +78,7 @@
       "cheer": "Got you on the list. The team will call. Take the day at your pace.",
       "soon": "See you soon. Unhurried, but we will call. Sleep counts.",
       "joke": "I am the human sunrise. Las Vegas still has to be local.",
-      "creed": "High-quality food and rest make a high-quality human. Peptides are one more tool nature packed. You're welcome to take ownership of what you put in — we'll walk with you."
+      "creed": "“Early to bed and early to rise, makes a man healthy wealthy and wise.” — Benjamin Franklin, Poor Richard's Almanack (1735) (an older English proverb he printed, not a line he coined)"
     },
     {
       "id": "nova",
@@ -96,7 +96,7 @@
       "cheer": "Parked. Day team will ring you. You're still holding the keys.",
       "soon": "Night shift signs off with a call coming. Share with a friend if this felt helpful.",
       "joke": "I work nights. My vials still ship dry.",
-      "creed": "Broths, herbs, and fermentation knew this first. A lot of it was lost. Science let us see it again like the first time. We're glad to share that memory with you."
+      "creed": "“Sleep and watchfulness, both of them, when immoderate, constitute disease.” — Hippocratic Corpus, Aphorisms 7:72"
     },
     {
       "id": "reed",
@@ -114,7 +114,7 @@
       "cheer": "Written down. No drama. The pen stays with you.",
       "soon": "We'll see you. No drama. They call. Share if this house felt like a good fit.",
       "joke": "I alphabetize my pauses.",
-      "creed": "Take the list when you're ready. Naturally occurring tools belong in open, honest hands. We'll keep them clear, labeled, and here for you."
+      "creed": "“Leave this military hurry and adopt the pace of Nature. Her secret is patience.” — Ralph Waldo Emerson, “Education,” Lectures and Biographical Sketches (1883)"
     },
     {
       "id": "lila",
@@ -132,7 +132,7 @@
       "cheer": "You are in. We will call. Bring a friend if this helped.",
       "soon": "See you soon. We will call. If you support us, please tell others — only if it feels right.",
       "joke": "I put glitter on the HUD. Corporate let me keep one sparkle.",
-      "creed": "This house is a welcome. Empowerment first. If we helped you feel more in charge, you're welcome to tell someone else they can too."
+      "creed": "“Everybody needs beauty as well as bread, places to play in and pray in, where nature may heal and give strength to body and soul alike.” — John Muir, The Yosemite (1912)"
     },
     {
       "id": "kai",
@@ -150,7 +150,7 @@
       "cheer": "Logged like a beach chair. Team calls next. You still steer.",
       "soon": "See you soon. Beach-chair energy, real call. Share the house if it served you.",
       "joke": "Dry vials, not dry humor. Mostly.",
-      "creed": "Nature already packed the kit. We just handed you the map. Taking care of your own life is the whole point — we'll walk with you."
+      "creed": "“in Wildness is the preservation of the world.” — Henry David Thoreau, “Walking,” The Atlantic Monthly (1862)"
     },
     {
       "id": "sage",
@@ -168,7 +168,7 @@
       "cheer": "Held. A human follows up. You keep the authority.",
       "soon": "See you soon. A human follows. We'll keep the truth quiet and kind.",
       "joke": "My volume knob is labeled educational only.",
-      "creed": "God and nature gave the tools. We point. You walk. Learn with us — the door stays open."
+      "creed": "“In food excellent medication, in food bad medication, bad and good relatively.” — Hippocratic Corpus, On Nutriment 19, trans. W. H. S. Jones"
     },
     {
       "id": "vega",
@@ -186,7 +186,7 @@
       "cheer": "Pop. You are on the board. Tell a friend if this felt good.",
       "soon": "See you soon. Pop — then a real call. Share this house if it helped.",
       "joke": "If peptides had sequins I would still need Las Vegas.",
-      "creed": "These tools exist in us. We'll share that clearly and kindly. No one should have to guess in the dark about their own body."
+      "creed": "“Every realm of nature is marvellous.” — Aristotle, Parts of Animals I.5, trans. William Ogle (1882)"
     },
     {
       "id": "orion",
@@ -204,7 +204,7 @@
       "cheer": "Secure. The team will call. You still hold the watch.",
       "soon": "We've got you. See you soon. They call. Keep the door open for others if this helped.",
       "joke": "I take notes like a security log. Friendly, though.",
-      "creed": "I watch the door so this house stays a safe, open place. Naturally occurring tools belong with people who want to learn — we'll keep them here for you."
+      "creed": "“As to diseases, make a habit of two things — to help, or at least to do no harm.” — Hippocratic Corpus, Epidemics I.11, trans. W. H. S. Jones (1923)"
     },
     {
       "id": "wynn",
@@ -222,7 +222,7 @@
       "cheer": "Done. They will call. We'll stay in your corner.",
       "soon": "See you soon. They will call. If this house helped, you're welcome to say so.",
       "joke": "I do not do mystery. I do dry vials.",
-      "creed": "Vitamin C in oranges was never meant to feel like someone else's permission slip. We learn together, and we keep the kitchen door open. Respect the tool. Stay with the people who care."
+      "creed": "“The result of all my experiments was that oranges and lemons were the most effectual remedies for this distemper at sea.” — James Lind, A Treatise of the Scurvy (1753)"
     },
     {
       "id": "indi",
@@ -240,7 +240,7 @@
       "cheer": "Stamped. Call comes next. Keep making the human you want.",
       "soon": "See you soon. Call comes next. Tell someone the colors were always theirs, if that feels good.",
       "joke": "I mixed teal and gold. Legal said keep the vials dry.",
-      "creed": "Most peptides already exist in us. Science recovered a palette that bone broths, herbs, and fermentation once knew. See it again like the first time — we'll look with you."
+      "creed": "“Tell me what you eat, and I will tell you what you are.” — Jean Anthelme Brillat-Savarin, Physiologie du goût, Aphorism IV (1825)"
     },
     {
       "id": "pax",
@@ -258,7 +258,7 @@
       "cheer": "Rest easy. They will call. Rest is part of being a high-quality human.",
       "soon": "See you soon. Rest easy. They call. High-quality rest makes a high-quality human.",
       "joke": "I whisper the word lyophilized. It still means dry.",
-      "creed": "We really care. Getting healthy is taking your life back, one kind step at a time. Respect the tools — too much of anything, even oxygen, can hurt. Soft still means looked after."
+      "creed": "“Neither can do anything but remove obstructions; neither can cure; nature alone cures.” — Florence Nightingale, Notes on Nursing: What It Is, and What It Is Not (1860)"
     },
     {
       "id": "ember",
@@ -276,7 +276,7 @@
       "cheer": "Closed. Team call inbound. We'll keep owning the next step together.",
       "soon": "See you soon. Loop stays closed. They call. We'll keep the tools honest for later too.",
       "joke": "I am the fire emoji. Mix math still lives on the sheet.",
-      "creed": "Close the loop on your own health, one kind step at a time. Naturally occurring tools stay here, labeled and cared for — not locked away or watered down."
+      "creed": "“Maintaining a healthy and sound body is among the ways of God.” — Maimonides, Mishneh Torah, De'ot 4:1, trans. Eliyahu Touger"
     },
     {
       "id": "quinn",
@@ -294,7 +294,7 @@
       "cheer": "Pinned. They will call. Aiming at your best health is allowed.",
       "soon": "See you soon. Pinned. They call. Share the map if it helped.",
       "joke": "I brought a compass. The shop is still this chat.",
-      "creed": "You have a right to pursue your best health. Peptides can help. The map is food, rest, naturally occurring tools, and the locked sheet for facts — we'll walk it with you."
+      "creed": "“The regimen for maintaining health consists essentially in the regulation of exercise, food, and sleep.” — Avicenna, The Canon of Medicine, Book I, trans. O. Cameron Gruner"
     },
     {
       "id": "nori",
@@ -312,7 +312,7 @@
       "cheer": "In the book. Call follows. Keep the wonder, keep the respect.",
       "soon": "See you soon. Call follows. Tell a friend the door opened again, if that feels right.",
       "joke": "I watered the plants. Not the vials.",
-      "creed": "Science opened the door so we can see this again like the first time. Broths, herbs, fermentation were the old lab. The truth is not new. You're welcome here."
+      "creed": "“Climb the mountains and get their good tidings.” — John Muir, Our National Parks (1901)"
     },
     {
       "id": "dash",
@@ -330,7 +330,7 @@
       "cheer": "Snap. Logged. You keep the finish line.",
       "soon": "See you soon. Snap. They call. If we helped, tell someone when you're ready.",
       "joke": "I run. The peptides do not. Dry vials only.",
-      "creed": "Move toward a healthier life at a pace that still feels kind. Respect the tool. Too much of anything can hurt you. Learn with us — the door stays open."
+      "creed": "“Life is short, and Art long; the crisis fleeting; experience perilous, and decision difficult.” — Hippocratic Corpus, Aphorisms 1:1"
     },
     {
       "id": "halo",
@@ -348,7 +348,7 @@
       "cheer": "Glowing. They will call. Keep the inputs high-quality.",
       "soon": "See you soon. They will call. Shine this toward someone who needs a little brightness, if that feels good.",
       "joke": "I am not a medical halo. I am a menu halo.",
-      "creed": "What you put in produces the human you are. High-quality food and rest = a high-quality human. Peptides are a naturally occurring tool on that same table. We'll sit with you."
+      "creed": "“To be free-minded and cheerfully disposed at hours of meat and of sleep, and of exercise, is one of the best precepts of long lasting.” — Francis Bacon, Essays, “Of Regiment of Health” (1625)"
     },
     {
       "id": "rio",
@@ -366,7 +366,7 @@
       "cheer": "Vegas-side noted. Team calls. Tell your people if this felt good.",
       "soon": "See you soon, Vegas-side. Team calls. If you support this house, you're welcome to say it in the neighborhood.",
       "joke": "I know a good taco. I still will not dose in chat.",
-      "creed": "Leave these things with the people. Let the truth and power of nature be known. We locals know a warm porch when we see one — this house is that."
+      "creed": "“In every walk with Nature one receives far more than he seeks.” — John Muir, “Mormon Lilies,” later Steep Trails (1877)"
     },
     {
       "id": "true",
@@ -384,7 +384,7 @@
       "cheer": "House has it. Someone will call. You remain the principal.",
       "soon": "See you soon. House has it. Someone will call. If you support us, tell others when it feels right.",
       "joke": "I am True. The vials are still dry. The jokes are optional.",
-      "creed": "TrueHold Wellness is a welcome: take ownership of your body when you're ready. Nature and God gave the tools. Science opened the door. Respect them. We'll walk with you. Honest information belongs with the people who need it."
+      "creed": "“The patient must co-operate with the physician in combating the disease.” — Hippocratic Corpus, Epidemics I.11, trans. W. H. S. Jones (1923)"
     }
   ]
 }
