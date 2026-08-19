@@ -7,6 +7,7 @@ class _FakeTelegram:
     def __init__(self) -> None:
         self.sent = []
         self.callbacks = []
+        self.deleted = []
 
     def send_message(self, chat_id, text, reply_markup=None, parse_mode=None):
         self.sent.append({"chat_id": chat_id, "text": text, "reply_markup": reply_markup, "parse_mode": parse_mode})
@@ -24,6 +25,10 @@ class _FakeTelegram:
                 "message_effect_id": message_effect_id,
             }
         )
+        return {"ok": True, "provider_message_id": str(len(self.sent))}
+
+    def delete_message(self, chat_id, message_id):
+        self.deleted.append((str(chat_id), str(message_id)))
         return {"ok": True}
 
     def send_photo(self, chat_id, path, caption="", reply_markup=None, parse_mode=None, message_effect_id=None):
@@ -97,7 +102,10 @@ def test_picture_menu_order_flow_notifies_without_staff_leak():
     assert any("dry" in text.lower() for text in texts)
     assert not any("waiver" in text.lower() for text in texts)
     assert not any("TrueHold Wellness alert — order" in text for text in texts)
-    assert any("KLOW" in str(item.get("filename") or item.get("document") or "") for item in tg.sent)
+    assert not any("document" in item for item in tg.sent)
+    assert "📄 Sheet" in ask_buttons or any(
+        "📄 Sheet" in str(item.get("reply_markup") or "") for item in tg.sent
+    )
     assert "cb2" in tg.callbacks
 
 
@@ -137,6 +145,18 @@ def test_nad_info_sheet_is_telegram_file_not_shop_page():
     assert "trueholdwellness.com" not in docs[0]["caption"]
     assert "http" not in docs[0]["caption"].lower()
     assert "url" not in str(docs[0]["reply_markup"])
+
+
+def test_second_sheet_send_replaces_prior_copy():
+    tg = _FakeTelegram()
+    handle_telegram_update(_tap("w:info:semax", callback_id="s1"), tg)
+    handle_telegram_update(_tap("w:info:semax", callback_id="s2"), tg)
+    docs = [item for item in tg.sent if "document" in item]
+    assert len(docs) == 2
+    assert all(
+        item["filename"] == "TrueHold Wellness locked information sheet — Semax.pdf" for item in docs
+    )
+    assert tg.deleted == [("88", "1")]
 
 
 def test_interest_order_decrements_on_hand_when_set():

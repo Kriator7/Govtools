@@ -285,13 +285,17 @@ def send_prep_card(telegram, chat_id: str, product: dict | None = None) -> None:
 
 
 def send_info_pdf(telegram, chat_id: str, product: dict) -> None:
+    from wellness_agent.sheet_store import remember_sheet_message, replace_prior_sheet
+
     caption = format_product_caption(product)
     path = telegram_file_path(product)
     filename = locked_sheet_filename(product)
     markup = info_sheet_keyboard(product["id"])
+    replace_prior_sheet(telegram, str(chat_id), product["id"])
+    result = None
     if hasattr(telegram, "send_document"):
         try:
-            telegram.send_document(
+            result = telegram.send_document(
                 chat_id,
                 path,
                 caption=caption,
@@ -299,21 +303,24 @@ def send_info_pdf(telegram, chat_id: str, product: dict) -> None:
                 filename=filename,
                 parse_mode=PARSE_MODE,
             )
-            return
         except TypeError:
             try:
-                telegram.send_document(
+                result = telegram.send_document(
                     chat_id,
                     path,
                     caption=caption,
                     reply_markup=markup,
                     filename=filename,
                 )
-                return
             except TypeError:
-                telegram.send_document(chat_id, path, caption=caption)
-                return
-    telegram.send_message(chat_id, caption, reply_markup=markup, parse_mode=PARSE_MODE)
+                result = telegram.send_document(chat_id, path, caption=caption)
+    else:
+        telegram.send_message(chat_id, caption, reply_markup=markup, parse_mode=PARSE_MODE)
+        return
+    message_id = ""
+    if isinstance(result, dict):
+        message_id = str(result.get("provider_message_id") or "")
+    remember_sheet_message(str(chat_id), product["id"], message_id)
 
 
 def ask_for_phone(telegram, chat_id: str, *, extra: str | None = None) -> None:
@@ -365,10 +372,6 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
         after_pick_keyboard(product["id"]),
         message_effect_id=CELEBRATE_EFFECT_ID,
     )
-    try:
-        send_info_pdf(telegram, chat_id, product)
-    except FileNotFoundError:
-        pass
     return {
         "ok": True,
         "action": "order-confirm",

@@ -64,7 +64,7 @@ def test_order_marks_orders_new_and_keeps_other_categories():
         for item in tg.sent
     )
     assert not any("TrueHold Wellness alert — order" in item.get("text", "") for item in tg.sent)
-    assert any("KLOW" in str(item.get("filename") or item.get("document") or "") for item in tg.sent)
+    assert not any("document" in item for item in tg.sent)
 
 
 def test_classify_all_original_email_reflexes():

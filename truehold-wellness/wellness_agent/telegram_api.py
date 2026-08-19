@@ -166,6 +166,13 @@ class WellnessTelegram:
             payload["text"] = text[:200]
         return self._post("answerCallbackQuery", payload)
 
+    def delete_message(self, chat_id: str, message_id: str | int) -> dict[str, Any]:
+        """deleteMessage: https://core.telegram.org/bots/api#deletemessage"""
+        return self._post(
+            "deleteMessage",
+            {"chat_id": chat_id, "message_id": int(message_id)},
+        )
+
     def get_updates(self, offset: int | None = None, timeout: int = 0) -> list[dict[str, Any]]:
         payload: dict[str, Any] = {
             "timeout": timeout,
