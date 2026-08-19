@@ -72,6 +72,20 @@ SHEETS = {
         "vial": "80 mg lyophilized vial",
         "shop": "https://trueholdwellness.com/ols/products/klow-premium-research-formula-80-mg",
         "category": "Regenerative research compounds",
+        "also_called": "KLOW regenerative research formula",
+        "class_name": "Regenerative research blend (lyophilized)",
+        "form": "Dry (lyophilized) vial — not reconstituted product",
+        "fulfillment": [
+            "Prep and local delivery: Las Vegas residents only",
+            "Shipping: dry (lyophilized) vials only",
+            "Interest orders are confirmed by phone before payment",
+        ],
+        "team_steps": [
+            "Share a phone number so the team can call",
+            "Confirm Las Vegas residency for prep and local delivery",
+            "Complete required documentation with the team",
+            "Review protocol details case by case — not in chat",
+        ],
     },
     "mots-c": {
         "title": "MOTS-c",
@@ -109,6 +123,20 @@ SHEETS = {
         "vial": "20 mg lyophilized vial",
         "shop": "https://trueholdwellness.com/ols/products/mots-c-premium-research-formula-20-mg",
         "category": "Metabolic signaling peptides",
+        "also_called": "Mitochondrial open reading frame of the 12S rRNA type-c",
+        "class_name": "Mitochondrial-encoded signaling peptide",
+        "form": "Dry (lyophilized) vial — not reconstituted product",
+        "fulfillment": [
+            "Prep and local delivery: Las Vegas residents only",
+            "Shipping: dry (lyophilized) vials only",
+            "Interest orders are confirmed by phone before payment",
+        ],
+        "team_steps": [
+            "Share a phone number so the team can call",
+            "Confirm Las Vegas residency for prep and local delivery",
+            "Complete required documentation with the team",
+            "Review protocol details case by case — not in chat",
+        ],
     },
     "ss-31": {
         "title": "SS-31",
@@ -147,6 +175,20 @@ SHEETS = {
         "vial": "10 mg lyophilized vial",
         "shop": "https://trueholdwellness.com/ols/products/ss-31-premium-research-formula-10-mg",
         "category": "Mitochondrial research compounds",
+        "also_called": "Elamipretide; SS-31",
+        "class_name": "Mitochondria-targeted research peptide",
+        "form": "Dry (lyophilized) vial — not reconstituted product",
+        "fulfillment": [
+            "Prep and local delivery: Las Vegas residents only",
+            "Shipping: dry (lyophilized) vials only",
+            "Interest orders are confirmed by phone before payment",
+        ],
+        "team_steps": [
+            "Share a phone number so the team can call",
+            "Confirm Las Vegas residency for prep and local delivery",
+            "Complete required documentation with the team",
+            "Review protocol details case by case — not in chat",
+        ],
     },
     "ghk-cu": {
         "title": "GHK-Cu",
@@ -184,6 +226,20 @@ SHEETS = {
         "vial": "100 mg lyophilized vial",
         "shop": "https://trueholdwellness.com/ols/products/ghk-cu-premium-research-formula-100-mg",
         "category": "Regenerative research compounds",
+        "also_called": "Copper peptide; glycyl-L-histidyl-L-lysine copper",
+        "class_name": "Copper-binding tripeptide",
+        "form": "Dry (lyophilized) vial — not reconstituted product",
+        "fulfillment": [
+            "Prep and local delivery: Las Vegas residents only",
+            "Shipping: dry (lyophilized) vials only",
+            "Interest orders are confirmed by phone before payment",
+        ],
+        "team_steps": [
+            "Share a phone number so the team can call",
+            "Confirm Las Vegas residency for prep and local delivery",
+            "Complete required documentation with the team",
+            "Review protocol details case by case — not in chat",
+        ],
     },
 }
 
@@ -333,15 +389,18 @@ def build_sheet(key: str, dest: Path | None = None) -> Path:
             bulletFontSize=9.5,
         )
     )
-    story.append(Paragraph("Shop Listing", styles["h"]))
-    rows = [
+    story.append(Paragraph("Basic Information", styles["h"]))
+    info_rows = [
         ["Product", spec["title"]],
+        ["Also discussed as", spec.get("also_called") or spec["title"]],
+        ["Class", spec.get("class_name") or spec["category"]],
         ["Category", spec["category"]],
         ["Vial", spec["vial"]],
+        ["Form", spec.get("form") or "Dry (lyophilized) vial"],
         ["Shop", spec["shop"]],
     ]
-    table = Table(rows, colWidths=[1.3 * inch, 5.2 * inch])
-    table.setStyle(
+    info = Table(info_rows, colWidths=[1.6 * inch, 4.9 * inch])
+    info.setStyle(
         TableStyle(
             [
                 ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
@@ -356,7 +415,43 @@ def build_sheet(key: str, dest: Path | None = None) -> Path:
             ]
         )
     )
-    story.append(table)
+    story.append(info)
+    story.append(Paragraph("Fulfillment", styles["h"]))
+    story.append(
+        ListFlowable(
+            [
+                ListItem(Paragraph(item, styles["bullet"]), leftIndent=12)
+                for item in spec.get("fulfillment")
+                or [
+                    "Prep and local delivery: Las Vegas residents only",
+                    "Shipping: dry (lyophilized) vials only",
+                ]
+            ],
+            bulletType="bullet",
+            start="•",
+            leftIndent=18,
+            bulletFontName="Helvetica",
+            bulletFontSize=9.5,
+        )
+    )
+    story.append(Paragraph("Working With The Team", styles["h"]))
+    story.append(
+        ListFlowable(
+            [
+                ListItem(Paragraph(item, styles["bullet"]), leftIndent=12)
+                for item in spec.get("team_steps")
+                or [
+                    "Share a phone number so the team can call",
+                    "Complete required documentation with the team",
+                ]
+            ],
+            bulletType="bullet",
+            start="•",
+            leftIndent=18,
+            bulletFontName="Helvetica",
+            bulletFontSize=9.5,
+        )
+    )
     story.append(Paragraph("Protocol Note", styles["h"]))
     story.append(
         Paragraph(

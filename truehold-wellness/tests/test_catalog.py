@@ -102,6 +102,53 @@ def test_generated_sheets_are_educational_only():
         assert "does not provide dosing" in text
         assert "25 units" not in text
         assert "draw 2 ml" not in text
+        assert "las vegas" in text
+        assert "dry (lyophilized)" in text
+        assert "required documentation" in text
+
+
+def test_orders_workbook_covers_all_skus_and_inbox_columns():
+    from openpyxl import load_workbook
+
+    from wellness_agent.inventory.build_workbook import WORKBOOK_PATH, build_workbook
+
+    path = build_workbook()
+    assert path == WORKBOOK_PATH
+    assert path.is_file()
+    wb = load_workbook(path)
+    assert "Inventory" in wb.sheetnames
+    assert "Orders" in wb.sheetnames
+    assert "Payments" in wb.sheetnames
+    assert "Fulfillment" in wb.sheetnames
+    assert "Shipping" in wb.sheetnames
+    assert "Cancellations" in wb.sheetnames
+    assert "Peptides" in wb.sheetnames
+    ids = [row[0] for row in wb["Inventory"].iter_rows(min_row=2, values_only=True) if row[0]]
+    assert ids == [item["id"] for item in products()]
+
+
+def test_ingest_files_copies_legacy_pdfs_and_workbook(tmp_path):
+    from openpyxl import Workbook
+
+    from wellness_agent.cli import main
+    from wellness_agent.ingest_files import ingest_legacy
+
+    pdf = tmp_path / "klow.pdf"
+    pdf.write_bytes((pdf_path(find_product("klow"))).read_bytes())
+    extra = tmp_path / "notes.txt"
+    extra.write_text("ignore", encoding="utf-8")
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Orders"
+    ws.append(["order_id", "sku_id", "qty"])
+    ws.append(["THW-TEST-1", "semax", 2])
+    xlsx = tmp_path / "trueholdwellness-orders.xlsx"
+    wb.save(xlsx)
+    result = ingest_legacy(tmp_path)
+    assert "klow.pdf" in result["copied_pdfs"]
+    assert "notes.txt" in result["skipped"]
+    assert result["workbook"] == "trueholdwellness-orders.xlsx"
+    assert main(["ingest-files", "--path", str(tmp_path)]) == 0
 
 
 def test_picture_menu_cards_exist_for_every_sku():

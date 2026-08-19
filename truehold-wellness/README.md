@@ -90,21 +90,35 @@ python -m wellness_agent.inventory.build_brand
 
 ## Inventory (locked information sheets)
 
-Live shop SKUs from https://trueholdwellness.com/sitemap.ols.xml. Existing Tirzepatide, NAD+, Semax, and Retatrutide PDFs are stored as-is. KLOW, MOTS-c, SS-31, and GHK-Cu use the same locked-sheet layout.
+Live shop SKUs from https://trueholdwellness.com/sitemap.ols.xml.
+
+| Already in the new agent (old locked sheets, kept as-is) | Added to complete the shop |
+| --- | --- |
+| Tirzepatide, NAD+, Semax, Retatrutide PDFs | KLOW, MOTS-c, SS-31, GHK-Cu educational sheets |
+| Logo at `inventory/assets/logo.jpeg` | Orders workbook at `inventory/workbooks/trueholdwellness-orders.xlsx` |
+
+The Deleted Account Telegram chat still holds Finder copies of the old files. They are **not** pulled automatically. To import them:
+
+1. In Telegram, open the Deleted Account chat → **Files**.
+2. **Show in Finder** and copy `trueholdwellness-orders.xlsx` plus the PDFs.
+3. Paste into `truehold-wellness/data/imports/legacy/`.
+4. Run:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m wellness_agent ingest-files
+```
+
+Matching PDFs overwrite `inventory/pdfs/`. The xlsx is stored as the live ledger (`data/imports/trueholdwellness-orders.xlsx`). Extra SKUs the old chat never had (KLOW, MOTS-c, SS-31, GHK-Cu) stay in place unless you drop those PDFs too.
 
 ```bash
 python -m wellness_agent catalog
 python -m wellness_agent product klow
-```
-
-Telegram: `/menu` sends photos. `/product <name>` still sends the PDF. New sheets are educational only — they do not invent reconstitution or dosing. Protocol details stay case-by-case (`/schedule`).
-
-Rebuild missing generated sheets:
-
-```bash
-python -m pip install -e ".[dev]"
 python -m wellness_agent.inventory.build_pdfs
+python -m wellness_agent.inventory.build_workbook
 ```
+
+Telegram: `/menu` then **See info sheet** sends the PDF. Generated sheets for the four extra SKUs are educational only — they do not invent reconstitution or dosing. Protocol details stay case-by-case (`/schedule`).
 
 ## Isolation
 

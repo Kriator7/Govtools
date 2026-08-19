@@ -67,6 +67,15 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="JSON inbox. Defaults to EMAIL_INBOX_PATH or data/imports/sample_reflex_emails.json",
     )
+    files = sub.add_parser(
+        "ingest-files",
+        help="Import old-agent PDFs and trueholdwellness-orders.xlsx from data/imports/legacy/",
+    )
+    files.add_argument(
+        "--path",
+        default=None,
+        help="Folder of Finder exports. Defaults to data/imports/legacy/",
+    )
     return parser
 
 
@@ -161,6 +170,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             inbox = PACKAGE_ROOT / inbox
         fired = ingest_reflex_emails(inbox)
         sys.stdout.write(json.dumps({"ok": True, "fired": fired}, indent=2) + "\n")
+        return 0
+    if args.command == "ingest-files":
+        from pathlib import Path
+
+        from wellness_agent.envfile import PACKAGE_ROOT
+        from wellness_agent.ingest_files import ingest_legacy
+
+        folder = Path(args.path) if args.path else (PACKAGE_ROOT / "data" / "imports" / "legacy")
+        if not folder.is_absolute():
+            folder = PACKAGE_ROOT / folder
+        result = ingest_legacy(folder)
+        sys.stdout.write(json.dumps(result, indent=2) + "\n")
         return 0
     alert = compose_alert(_trigger_from_args(args))
     if args.command == "compose":
