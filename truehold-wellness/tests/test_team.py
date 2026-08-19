@@ -119,6 +119,10 @@ def test_floor_team_has_twenty_one_distinct_hosts():
         assert "profiteer" not in blob
         assert "lose the plot" not in blob
         assert "corrupting" not in blob
+        assert "gatekeeper" not in blob
+    quinn = get_member("quinn")
+    assert "food" in quinn["hello"].lower() and "sleep" in quinn["hello"].lower()
+    assert "avicenna" in quinn["creed"].lower()
     assert len({KITS[row["id"]]["prep"] for row in rows}) == 21
 
 
