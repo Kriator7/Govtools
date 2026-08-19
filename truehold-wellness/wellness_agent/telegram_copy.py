@@ -47,13 +47,15 @@ INTRODUCTION = (
 )
 
 GREET_AGAIN = (
-    "<b>Hey — it's Theo.</b>\n"
-    "Good to see you. I brought the colorful menu."
+    "<b>Hey — the floor team is here.</b>\n"
+    "A new host waves each time you say hi until you have met all 20."
 )
 
 CUSTOMER_HELP = (
     f"TrueHold Wellness (@{REQUIRED_USERNAME})\n"
-    "Theo (our concierge) waves when you say hi, then shows the tap-menu.\n"
+    "A floor host waves when you say hi, then shows the tap-menu. "
+    "Each return visit introduces a new teammate until you have met all 20. "
+    "Then you can rotate again or lock a favorite who always serves you.\n"
     "View PDF / Sheet sends the locked information sheet as a Telegram file (Files). "
     "Shop pages in Links are not the sheets.\n"
     "/menu — quick menu\n"

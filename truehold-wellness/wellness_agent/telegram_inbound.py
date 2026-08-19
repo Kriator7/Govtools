@@ -16,7 +16,6 @@ from wellness_agent.clients import (
 from wellness_agent.compose import compose_alert, format_alert
 from wellness_agent.greetings import is_salutation
 from wellness_agent.identity import REQUIRED_USERNAME
-from wellness_agent.inventory.build_agent import agent_path
 from wellness_agent.inventory.build_brand import service_path
 from wellness_agent.menu import (
     CUSTOMER_CONFIRM,
@@ -28,13 +27,14 @@ from wellness_agent.menu import (
     handle_menu_callback,
     parse_interest_qty,
     remove_keyboard,
-    send_brand_photo,
     send_greet_again,
+    send_host_photo,
     send_info_pdf,
     send_introduction_menu,
     send_quick_menu,
     send_theo_talk,
 )
+from wellness_agent.team import current_host, flavor_caption
 from wellness_agent.models import AlertTrigger
 from wellness_agent.reflex import fire_reflex
 from wellness_agent.session_store import (
@@ -46,7 +46,6 @@ from wellness_agent.session_store import (
 )
 from wellness_agent.telegram_copy import (
     BOT_COMMANDS,
-    CELEBRATE_EFFECT_ID,
     CUSTOMER_COMMANDS,
     CUSTOMER_HELP,
     HELP,
@@ -300,12 +299,14 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             exclude_chats={chat_id},
             require_destination=False,
         )
-        send_brand_photo(
+        host = current_host(chat_id)
+        send_host_photo(
             telegram,
             chat_id,
-            agent_path("cheer"),
-            CUSTOMER_CONFIRM.format(detail=detail),
-            message_effect_id=CELEBRATE_EFFECT_ID,
+            "cheer",
+            flavor_caption(host, "cheer", CUSTOMER_CONFIRM.format(detail=detail)),
+            host=host,
+            effect=True,
         )
         if not client_phone(chat_id):
             ask_for_phone(telegram, chat_id)

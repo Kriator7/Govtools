@@ -1,4 +1,4 @@
-"""Approved-only knowledge for Theo (TrueHold Wellness concierge).
+"""Approved-only knowledge for the TrueHold Wellness floor team.
 
 Runtime SQLite is gitignored. Seed JSON plus live catalog/PDF paths are the
 source of truth. Customer replies may only use approved rows. Promotions are

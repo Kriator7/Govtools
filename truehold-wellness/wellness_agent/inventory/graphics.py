@@ -125,15 +125,40 @@ def molecule_overlay(
     return layer.filter(ImageFilter.GaussianBlur(radius=0.4))
 
 
-def tech_hud_overlay(size: tuple[int, int], *, seed: int = 4) -> Image.Image:
+def hex_rgb(value: str) -> tuple[int, int, int]:
+    raw = (value or "").strip().lstrip("#")
+    if len(raw) != 6:
+        return GOLD
+    try:
+        return int(raw[0:2], 16), int(raw[2:4], 16), int(raw[4:6], 16)
+    except ValueError:
+        return GOLD
+
+
+def theme_rgb(value: str) -> tuple[int, int, int]:
+    """Bar/HUD accent. Very light roster colors fall back to gold so they stay visible."""
+    red, green, blue = hex_rgb(value)
+    luma = 0.299 * red + 0.587 * green + 0.114 * blue
+    if luma > 200:
+        return GOLD
+    return (red, green, blue)
+
+
+def tech_hud_overlay(
+    size: tuple[int, int],
+    *,
+    seed: int = 4,
+    accent: tuple[int, int, int] | None = None,
+) -> Image.Image:
     """Circuit traces, hex HUD, scanlines, and corner brackets over a dark field."""
     width, height = size
     layer = Image.new("RGBA", size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
     rng = random.Random(seed)
+    tint = accent or TEAL
     # Scanlines
     for y in range(0, height, 4):
-        draw.line((0, y, width, y), fill=(92, 174, 196, 18), width=1)
+        draw.line((0, y, width, y), fill=(*tint, 18), width=1)
     # Hex grid
     radius = min(width, height) * 0.07
     for col in range(-1, int(width / (radius * 1.5)) + 2):
@@ -141,14 +166,14 @@ def tech_hud_overlay(size: tuple[int, int], *, seed: int = 4) -> Image.Image:
             cx = col * radius * 1.55
             cy = row * radius * math.sqrt(3) + (radius * 0.78 if col % 2 else 0)
             verts = _hex_vertices(cx, cy, radius * 0.9)
-            draw.line(verts + [verts[0]], fill=(*TEAL, 28), width=1)
+            draw.line(verts + [verts[0]], fill=(*tint, 28), width=1)
     # Circuit traces
     for _ in range(28):
         x = rng.randint(0, width)
         y = rng.randint(0, height)
         length = rng.randint(40, 180)
         horizontal = rng.random() > 0.45
-        color = (*GOLD, 70) if rng.random() > 0.5 else (*TEAL, 80)
+        color = (*GOLD, 70) if rng.random() > 0.5 else (*tint, 80)
         if horizontal:
             draw.line((x, y, x + length, y), fill=color, width=2)
             draw.line((x + length, y, x + length, y + rng.choice([-1, 1]) * rng.randint(16, 70)), fill=color, width=2)
@@ -193,10 +218,15 @@ def brand_mark(draw: ImageDraw.ImageDraw, cx: float, cy: float, radius: float) -
         draw.ellipse((vx - node, vy - node, vx + node, vy + node), fill=GOLD)
 
 
-def gold_bars(draw: ImageDraw.ImageDraw, size: tuple[int, int], thickness: int = 16) -> None:
+def gold_bars(
+    draw: ImageDraw.ImageDraw,
+    size: tuple[int, int],
+    thickness: int = 16,
+    fill: tuple[int, int, int] = GOLD,
+) -> None:
     width, height = size
-    draw.rectangle((0, 0, width, thickness), fill=GOLD)
-    draw.rectangle((0, height - thickness, width, height), fill=GOLD)
+    draw.rectangle((0, 0, width, thickness), fill=fill)
+    draw.rectangle((0, height - thickness, width, height), fill=fill)
 
 
 LOGO_JPEG = ASSETS / "logo.jpeg"

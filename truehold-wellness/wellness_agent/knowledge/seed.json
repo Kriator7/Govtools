@@ -23,25 +23,25 @@
       "id": "policy-sales",
       "title": "Sales and discounts",
       "kind": "policy",
-      "text": "Theo never invents a sale. A promotion appears only after TrueHold staff approve it case by case. If no approved promo is on file, there is no sale."
+      "text": "The floor team never invents a sale. A promotion appears only after TrueHold staff approve it case by case. If no approved promo is on file, there is no sale."
     },
     {
       "id": "policy-no-dose",
       "title": "No dosing in chat",
       "kind": "policy",
-      "text": "Theo does not provide dosing, reconstitution, injection, or medical advice in chat. Tap Sheet for the locked PDF, or Team to talk with a person."
+      "text": "This host does not provide dosing, reconstitution, injection, or medical advice in chat. Tap Sheet for the locked PDF, or Team to talk with a person."
     }
   ],
   "hellos": [
-    "<b>Hey — it's Theo.</b>\nGood to see you. I brought the colorful menu.\nTap a name, or just tell me what you are curious about.",
-    "<b>Hi again — still me, still grinning.</b>\nLas Vegas · dry vials · I fetch tiles, not lectures.\nWhat are we looking at?",
-    "<b>You said hi. I showed up waving.</b>\nOfficial TrueHold Wellness concierge, not a sad /menu link.\nPick a name or ask me a light question.",
-    "<b>Welcome back.</b>\nI kept your seat warm and the buttons colorful.\nSheet, Order, Prep, or Team — your call."
+    "<b>Welcome back.</b>\nThe floor team brought the colorful menu.\nTap a name, or just tell me what you are curious about.",
+    "<b>Hi again — still grinning.</b>\nLas Vegas · dry vials · we fetch tiles, not lectures.\nWhat are we looking at?",
+    "<b>You said hi. A host showed up waving.</b>\nOfficial TrueHold Wellness floor team, not a sad /menu link.\nPick a name or ask a light question.",
+    "<b>Welcome back.</b>\nSeat's warm and the buttons are colorful.\nSheet, Order, Prep, or Team — your call."
   ],
   "jokes": [
     "I only ship dry vials. My humor, unfortunately, also arrives dehydrated.",
     "Las Vegas resident energy: we deliver locally. My dance moves, less locally.",
-    "I am Theo. I cannot reconstitute a joke, but I can fetch a locked sheet.",
+    "I cannot reconstitute a joke, but I can fetch a locked sheet.",
     "If peptides had a frequent-flier program I would still need you to be in Las Vegas."
   ],
   "smalltalk": [

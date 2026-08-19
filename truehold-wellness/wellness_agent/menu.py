@@ -21,15 +21,26 @@ from wellness_agent.catalog import (
     products,
 )
 from wellness_agent.clients import client_phone, phone_line_for_staff
-from wellness_agent.inventory.build_agent import agent_path, ensure_agent
+from wellness_agent.inventory.build_agent import agent_path, ensure_host
 from wellness_agent.inventory.build_brand import logo_path, service_path
 from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
 from wellness_agent.session_store import pending_order, set_awaiting_phone, set_pending_order
 from wellness_agent.stock import record_order_row, staff_inventory_line
+from wellness_agent.team import (
+    advance_on_greet,
+    current_host,
+    effect_id,
+    favorite_id,
+    flavor_caption,
+    members,
+    rotate_again,
+    set_favorite,
+    skip_to_next,
+    tour_complete,
+)
 from wellness_agent.telegram_copy import (
     CALL_AND_DOCS,
-    CELEBRATE_EFFECT_ID,
     INTRODUCTION,
     PARSE_MODE,
 )
@@ -84,6 +95,11 @@ PRODUCT_EMOJI = {
 TOASTS = {
     "yes": "You're in 🎉",
     "prep": "Prep 🛠️",
+    "fav": "Favorite locked",
+    "next": "Next teammate",
+    "rotate": "Tour reset",
+    "set": "Favorite locked",
+    "pick": "Pick a favorite",
 }
 
 
@@ -116,7 +132,42 @@ def remove_keyboard() -> dict[str, Any]:
     return {"remove_keyboard": True}
 
 
-def quick_menu_keyboard() -> dict[str, Any]:
+def host_action_rows(chat_id: str, host: dict[str, Any] | None = None) -> list[list[dict[str, str]]]:
+    host = host or current_host(chat_id)
+    fav = favorite_id(chat_id)
+    rows: list[list[dict[str, str]]] = []
+    if fav == host["id"]:
+        rows.append([_button(f"✅ {host['icon']} {host['name']} is yours", "w:host:pick")])
+    else:
+        pair = [_button(f"⭐ Favorite {host['name']}", "w:host:fav")]
+        if not fav:
+            pair.append(_button("🔁 Next teammate", "w:host:next"))
+        rows.append(pair)
+    if tour_complete(chat_id) and not fav:
+        rows.append(
+            [
+                _button("🔁 Rotate again", "w:host:rotate"),
+                _button("👥 Pick a favorite", "w:host:pick"),
+            ]
+        )
+    return rows
+
+
+def pick_host_keyboard() -> dict[str, Any]:
+    rows: list[list[dict[str, str]]] = []
+    row: list[dict[str, str]] = []
+    for item in members():
+        row.append(_button(f"{item['icon']} {item['name']}", f"w:host:set:{item['id']}"))
+        if len(row) == 2:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
+    rows.append([_button("⬅️ Menu", "w:menu")])
+    return _keyboard(rows)
+
+
+def quick_menu_keyboard(chat_id: str | None = None, host: dict[str, Any] | None = None) -> dict[str, Any]:
     items = products()
     rows: list[list[dict[str, str]]] = []
     row: list[dict[str, str]] = []
@@ -127,6 +178,8 @@ def quick_menu_keyboard() -> dict[str, Any]:
             row = []
     if row:
         rows.append(row)
+    if chat_id:
+        rows.extend(host_action_rows(str(chat_id), host))
     rows.append([_button("🛠️ Prep", "w:prep"), _button("📅 Team", "w:team")])
     return _keyboard(rows)
 
@@ -200,6 +253,29 @@ def send_brand_photo(
     telegram.send_message(chat_id, caption, reply_markup=reply_markup, parse_mode=parse_mode)
 
 
+def send_host_photo(
+    telegram,
+    chat_id: str,
+    pose: str,
+    caption: str,
+    reply_markup: dict[str, Any] | None = None,
+    *,
+    host: dict[str, Any] | None = None,
+    effect: bool = False,
+) -> dict[str, Any]:
+    host = host or current_host(chat_id)
+    ensure_host(host["id"])
+    send_brand_photo(
+        telegram,
+        chat_id,
+        agent_path(pose, host["id"]),
+        caption,
+        reply_markup,
+        message_effect_id=effect_id(host) if effect else None,
+    )
+    return host
+
+
 def parse_interest_qty(detail: str) -> str:
     text = str(detail or "").strip()
     match = re.search(r"\b([1-3])\s*x\b", text, flags=re.I)
@@ -218,24 +294,53 @@ def send_introduction_menu(telegram, chat_id: str) -> None:
 def send_greet_again(telegram, chat_id: str, text: str = "hi") -> None:
     from wellness_agent.knowledge.talk import reply
 
-    ensure_agent()
-    spoken = reply(text, chat_id=str(chat_id), greet=True)
-    send_brand_photo(telegram, chat_id, agent_path(spoken.pose), spoken.text, quick_menu_keyboard())
+    host = advance_on_greet(chat_id)
+    spoken = reply(text, chat_id=str(chat_id), greet=True, host=host)
+    caption = spoken.text
+    if tour_complete(chat_id) and not favorite_id(chat_id):
+        caption = (
+            f"{caption}\n\n"
+            "<b>You have met the whole floor team.</b>\n"
+            "Rotate again, or pick a favorite who always serves you."
+        )
+    send_host_photo(
+        telegram,
+        chat_id,
+        spoken.pose,
+        caption,
+        quick_menu_keyboard(str(chat_id), host),
+        host=host,
+        effect=True,
+    )
 
 
 def send_theo_talk(telegram, chat_id: str, text: str) -> str:
     from wellness_agent.knowledge.talk import reply
 
-    ensure_agent()
-    spoken = reply(text, chat_id=str(chat_id), greet=False)
-    send_brand_photo(telegram, chat_id, agent_path(spoken.pose), spoken.text, quick_menu_keyboard())
+    host = current_host(chat_id)
+    spoken = reply(text, chat_id=str(chat_id), greet=False, host=host)
+    send_host_photo(
+        telegram,
+        chat_id,
+        spoken.pose,
+        spoken.text,
+        quick_menu_keyboard(str(chat_id), host),
+        host=host,
+    )
     return spoken.source
 
 
 def send_quick_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> None:
-    ensure_agent()
-    caption = MENU_INTRO if include_blurb else "<b>Menu</b>\nTap a name:"
-    send_brand_photo(telegram, chat_id, agent_path("present"), caption, quick_menu_keyboard())
+    host = current_host(chat_id)
+    extra = MENU_INTRO if include_blurb else "<b>Menu</b>\nTap a name:"
+    send_host_photo(
+        telegram,
+        chat_id,
+        "present",
+        flavor_caption(host, "present", extra),
+        quick_menu_keyboard(str(chat_id), host),
+        host=host,
+    )
 
 
 def send_picture_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> int:
@@ -271,7 +376,7 @@ def send_prep_card(telegram, chat_id: str, product: dict | None = None) -> None:
     else:
         heading = "<b>🛠️ Prep</b>"
         extra = "Tap a name, then Sheet, for that vial’s locked information sheet."
-        markup = quick_menu_keyboard()
+        markup = quick_menu_keyboard(str(chat_id))
     caption = (
         f"{heading}\n"
         "\n"
@@ -281,7 +386,15 @@ def send_prep_card(telegram, chat_id: str, product: dict | None = None) -> None:
         "\n"
         f"{extra}"
     )
-    send_brand_photo(telegram, chat_id, agent_path("think"), caption, markup)
+    host = current_host(chat_id)
+    send_host_photo(
+        telegram,
+        chat_id,
+        "think",
+        flavor_caption(host, "think", caption),
+        markup,
+        host=host,
+    )
 
 
 def send_info_pdf(telegram, chat_id: str, product: dict) -> None:
@@ -364,13 +477,15 @@ def _place_interest_order(telegram, chat_id: str, product: dict, qty: str) -> di
         require_destination=False,
     )
     set_pending_order(chat_id, None, None)
-    send_brand_photo(
+    host = current_host(chat_id)
+    send_host_photo(
         telegram,
         chat_id,
-        agent_path("cheer"),
-        CUSTOMER_CONFIRM.format(detail=detail),
+        "cheer",
+        flavor_caption(host, "cheer", CUSTOMER_CONFIRM.format(detail=detail)),
         after_pick_keyboard(product["id"]),
-        message_effect_id=CELEBRATE_EFFECT_ID,
+        host=host,
+        effect=True,
     )
     return {
         "ok": True,
@@ -398,6 +513,62 @@ def complete_pending_order_if_ready(telegram, chat_id: str) -> dict[str, Any] | 
     return _place_interest_order(telegram, chat_id, product, qty)
 
 
+def _present_host(telegram, chat_id: str, host: dict[str, Any], *, effect: bool = True) -> None:
+    caption = flavor_caption(host, "wave")
+    if tour_complete(chat_id) and not favorite_id(chat_id):
+        caption = (
+            f"{caption}\n\n"
+            "<b>You have met the whole floor team.</b>\n"
+            "Rotate again, or pick a favorite who always serves you."
+        )
+    send_host_photo(
+        telegram,
+        chat_id,
+        "wave",
+        caption,
+        quick_menu_keyboard(str(chat_id), host),
+        host=host,
+        effect=effect,
+    )
+
+
+def _handle_host_callback(telegram, chat_id: str, parts: list[str]) -> dict[str, Any]:
+    sub = parts[2] if len(parts) > 2 else ""
+    target = parts[3] if len(parts) > 3 else ""
+    if sub == "pick":
+        host = current_host(chat_id)
+        send_host_photo(
+            telegram,
+            chat_id,
+            "present",
+            flavor_caption(
+                host,
+                "present",
+                "<b>Pick a favorite.</b>\nThey will greet you every time you come back.",
+            ),
+            pick_host_keyboard(),
+            host=host,
+        )
+        return {"ok": True, "action": "host-pick", "chat_id": chat_id}
+    if sub == "next":
+        host = skip_to_next(chat_id)
+        _present_host(telegram, chat_id, host)
+        return {"ok": True, "action": "host-next", "chat_id": chat_id, "host": host["id"]}
+    if sub == "fav":
+        host = set_favorite(chat_id, current_host(chat_id)["id"])
+        _present_host(telegram, chat_id, host)
+        return {"ok": True, "action": "host-fav", "chat_id": chat_id, "host": host["id"]}
+    if sub == "set" and target:
+        host = set_favorite(chat_id, target)
+        _present_host(telegram, chat_id, host)
+        return {"ok": True, "action": "host-set", "chat_id": chat_id, "host": host["id"]}
+    if sub == "rotate":
+        host = rotate_again(chat_id)
+        _present_host(telegram, chat_id, host)
+        return {"ok": True, "action": "host-rotate", "chat_id": chat_id, "host": host["id"]}
+    return {"ok": True, "ignored": True, "action": "callback-unknown"}
+
+
 def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
     callback_id = str(query.get("id") or "")
     data = str(query.get("data") or "")
@@ -406,14 +577,17 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
     chat_id = str(chat.get("id") or "")
     parts = data.split(":")
     action = parts[1] if len(parts) >= 2 else ""
+    host_action = parts[2] if action == "host" and len(parts) > 2 else ""
     if hasattr(telegram, "answer_callback_query") and callback_id:
-        telegram.answer_callback_query(callback_id, text=TOASTS.get(action))
+        telegram.answer_callback_query(callback_id, text=TOASTS.get(host_action or action))
     if not chat_id:
         return {"ok": True, "ignored": True, "action": "callback-no-chat"}
     if len(parts) < 2 or parts[0] != "w":
         return {"ok": True, "ignored": True, "action": "callback-unknown"}
     sku = parts[2] if len(parts) > 2 else ""
     qty = parts[3] if len(parts) > 3 else ""
+    if action == "host":
+        return _handle_host_callback(telegram, chat_id, parts)
     if action == "menu":
         send_quick_menu(telegram, chat_id)
         return {"ok": True, "action": "menu", "chat_id": chat_id}
@@ -444,31 +618,43 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
     if action == "qty":
         from html import escape
 
-        send_brand_photo(
+        host = current_host(chat_id)
+        send_host_photo(
             telegram,
             chat_id,
-            agent_path("think"),
-            f"<b>How many?</b>\n"
-            f"{escape(str(product['name']))} · dry vials\n"
-            "\n"
-            "Las Vegas · we call to complete docs",
+            "think",
+            flavor_caption(
+                host,
+                "think",
+                f"<b>How many?</b>\n"
+                f"{escape(str(product['name']))} · dry vials\n"
+                "\n"
+                "Las Vegas · we call to complete docs",
+            ),
             qty_keyboard(product["id"]),
+            host=host,
         )
         return {"ok": True, "action": "qty", "chat_id": chat_id, "product": product["id"]}
     if action == "ask" and qty in {"1", "2", "3"}:
         from html import escape
 
-        send_brand_photo(
+        host = current_host(chat_id)
+        send_host_photo(
             telegram,
             chat_id,
-            agent_path("present"),
-            f"<b>Confirm</b>\n"
-            f"{escape(qty)}× {escape(str(product['name']))}\n"
-            f"{escape(str(product['vial']))}\n"
-            "\n"
-            "Las Vegas residents only\n"
-            f"{CALL_AND_DOCS}.",
+            "present",
+            flavor_caption(
+                host,
+                "present",
+                f"<b>Confirm</b>\n"
+                f"{escape(qty)}× {escape(str(product['name']))}\n"
+                f"{escape(str(product['vial']))}\n"
+                "\n"
+                "Las Vegas residents only\n"
+                f"{CALL_AND_DOCS}.",
+            ),
             confirm_keyboard(product["id"], qty),
+            host=host,
         )
         return {
             "ok": True,

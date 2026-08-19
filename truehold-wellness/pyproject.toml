@@ -40,6 +40,7 @@ include = ["wellness_agent*", "thw*"]
     "inventory/cards/*.jpg",
     "inventory/workbooks/*.xlsx",
     "knowledge/*.json",
+    "team/*.json",
 ]
 
 [tool.pytest.ini_options]
