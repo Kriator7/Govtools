@@ -1,6 +1,6 @@
 from wellness_agent.inventory.build_agent import POSES, agent_path, crew_source, portrait_path
 from wellness_agent.knowledge.talk import reply
-from wellness_agent.menu import confirm_keyboard, handle_menu_callback, quick_menu_keyboard
+from wellness_agent.menu import confirm_keyboard, handle_menu_callback, pick_host_keyboard, quick_menu_keyboard
 from wellness_agent.session_store import mark_intro_played
 from wellness_agent.team import (
     advance_on_greet,
@@ -8,6 +8,7 @@ from wellness_agent.team import (
     current_host,
     effect_id,
     favorite_id,
+    get_member,
     member_ids,
     members,
     rotate_again,
@@ -203,6 +204,11 @@ def test_host_keyboards_use_telegram_button_style():
     by_text = {btn["text"]: btn.get("style") for row in confirm["inline_keyboard"] for btn in row}
     assert by_text["✅ Vegas"] == "success"
     assert by_text["📍 Not LV"] == "danger"
+    picker = pick_host_keyboard(get_member("vega"))
+    names = {btn["text"]: btn.get("style") for row in picker["inline_keyboard"] for btn in row}
+    assert names["🧬 Mira"] == "success"
+    assert names["🌸 Lila"] == "danger"
+    assert names["⬅️ Menu"] == "danger"
 
 
 def test_crew_class_photo_exists():

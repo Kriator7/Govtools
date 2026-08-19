@@ -165,7 +165,7 @@ def host_action_rows(chat_id: str, host: dict[str, Any] | None = None) -> list[l
     return rows
 
 
-def pick_host_keyboard() -> dict[str, Any]:
+def pick_host_keyboard(host: dict[str, Any] | None = None) -> dict[str, Any]:
     rows: list[list[dict[str, Any]]] = []
     row: list[dict[str, Any]] = []
     for item in members():
@@ -181,7 +181,7 @@ def pick_host_keyboard() -> dict[str, Any]:
             row = []
     if row:
         rows.append(row)
-    rows.append([_button("⬅️ Menu", "w:menu")])
+    rows.append([_button("⬅️ Menu", "w:menu", style=button_style(host))])
     return _keyboard(rows)
 
 
@@ -630,7 +630,7 @@ def _handle_host_callback(telegram, chat_id: str, parts: list[str]) -> dict[str,
                 "present",
                 "<b>Pick a favorite.</b>\nThey will greet you every time you come back.",
             ),
-            pick_host_keyboard(),
+            pick_host_keyboard(host),
             host=host,
         )
         return {"ok": True, "action": "host-pick", "chat_id": chat_id}
