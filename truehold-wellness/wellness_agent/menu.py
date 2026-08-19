@@ -383,7 +383,7 @@ def send_theo_talk(telegram, chat_id: str, text: str) -> str:
 CREW_CAPTION = (
     "<b>The floor crew</b>\n"
     "TrueHold Wellness · Las Vegas\n"
-    "Bunny ears, one happy closed-eye laugh, twenty friends who care that you get well.\n"
+    "Bunny ears, one happy closed-eye laugh, the floor team who care that you get well.\n"
     "Take ownership. Tell others if this house helped.\n"
     "Tap a name — or lock a favorite who always serves you."
 )

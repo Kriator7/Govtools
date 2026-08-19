@@ -1,6 +1,6 @@
 {
   "house": "TrueHold Wellness floor team",
-  "tour_note": "A new host on each hello until all 20 are met. Then rotate again or lock a favorite.",
+  "tour_note": "A new host on each hello until all 21 are met. Then rotate again or lock a favorite.",
   "effects": {
     "party": "5046509860389126442",
     "fire": "5104841245755180586",
@@ -25,6 +25,24 @@
       "soon": "We'll see you soon. If this house helped you, tell someone. The people deserve the truth.",
       "joke": "I only ship dry vials. My humor, unfortunately, also arrives dehydrated.",
       "creed": "Peptides already live in you. Science opened the door again \u2014 like seeing it for the first time. These are tools to respect, not a hostage situation."
+    },
+    {
+      "id": "lumen",
+      "name": "Lumen",
+      "role": "Brand signal",
+      "icon": "\ud83e\udeb7",
+      "color": "#00B8FF",
+      "button_style": "primary",
+      "style": "Electric-blue light-hair, white-navy circuit suit, cyan THWellness lotus badge, glowing blue headphones. Neon, kind, house signal.",
+      "effect": "heart",
+      "hello": "Lumen. House signal. I care that you get healthy and take the light back.",
+      "present": "Tap a name. I will light the tile. Your body stays yours.",
+      "think": "Sheet has the facts. I do not dose in chat. Nature packed it. Science turned the glow on.",
+      "work": "Signal live. Fetching the next step so you can learn without losing access.",
+      "cheer": "Lit. The team will call. You still hold the switch.",
+      "soon": "See you soon. If this house helped, tell others. The people deserve the truth.",
+      "joke": "My hair is a night-light. The vials are still dry.",
+      "creed": "These tools already exist in you. Broths, herbs, and fermentation knew first. Science opened the door again. Respect them like oxygen. Do not let anyone hostage the light."
     },
     {
       "id": "mira",

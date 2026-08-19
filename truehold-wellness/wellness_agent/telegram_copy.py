@@ -50,13 +50,13 @@ INTRODUCTION = (
 
 GREET_AGAIN = (
     "<b>Hey — the floor team is here.</b>\n"
-    "A new host waves each time you say hi until you have met all 20."
+    "A new host waves each time you say hi until you have met all 21."
 )
 
 CUSTOMER_HELP = (
     f"TrueHold Wellness (@{REQUIRED_USERNAME})\n"
     "A floor host waves when you say hi, then shows the tap-menu. "
-    "Each return visit introduces a new teammate until you have met all 20. "
+    "Each return visit introduces a new teammate until you have met all 21. "
     "Then you can rotate again or lock a favorite who always serves you.\n"
     "We care that you get healthy, take ownership of your body, and use the tools nature and God already gave us. "
     "Most peptides already exist in you — respect them, like oxygen. Learn, but do not lose access. "

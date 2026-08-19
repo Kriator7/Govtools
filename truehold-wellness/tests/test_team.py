@@ -66,14 +66,15 @@ def _hi(chat_id=21):
     }
 
 
-def test_floor_team_has_twenty_distinct_hosts():
+def test_floor_team_has_twenty_one_distinct_hosts():
     rows = members()
-    assert len(rows) == 20
+    assert len(rows) == 21
     ids = member_ids()
     assert ids[0] == "theo"
-    assert len(set(ids)) == 20
-    assert len({row["name"] for row in rows}) == 20
-    assert len({row["icon"] for row in rows}) == 20
+    assert ids[1] == "lumen"
+    assert len(set(ids)) == 21
+    assert len({row["name"] for row in rows}) == 21
+    assert len({row["icon"] for row in rows}) == 21
     for row in rows:
         for key in (
             "role",
@@ -111,7 +112,7 @@ def test_floor_team_has_twenty_distinct_hosts():
         assert "inject" not in blob
         assert "bac water" not in blob
         assert "http" not in blob
-    assert len({KITS[row["id"]]["prep"] for row in rows}) == 20
+    assert len({KITS[row["id"]]["prep"] for row in rows}) == 21
 
 
 def test_portraits_exist_for_every_host_and_pose():
@@ -131,7 +132,7 @@ def test_host_cards_are_named_for_the_member():
 
 def test_rotation_meets_each_host_then_stops():
     chat = "tour-1"
-    seen = [advance_on_greet(chat)["id"] for _ in range(20)]
+    seen = [advance_on_greet(chat)["id"] for _ in range(21)]
     assert seen == member_ids()
     assert tour_complete(chat)
     assert advance_on_greet(chat)["id"] == member_ids()[-1]
@@ -148,7 +149,7 @@ def test_favorite_locks_and_rotate_resets_the_tour():
     host = rotate_again(chat)
     assert host["id"] == "theo"
     assert favorite_id(chat) is None
-    assert advance_on_greet(chat)["id"] == "mira"
+    assert advance_on_greet(chat)["id"] == "lumen"
 
 
 def test_greet_again_rotates_hosts_and_can_lock_a_favorite():
@@ -170,9 +171,9 @@ def test_greet_again_rotates_hosts_and_can_lock_a_favorite():
     assert any("Next" in label for label in labels)
     nxt = handle_menu_callback(_tap("w:host:next"), tg)
     assert nxt["action"] == "host-next"
-    assert nxt["host"] == "mira"
-    mira = [item for item in tg.sent if str(item.get("photo") or "").endswith("mira-wave.jpg")]
-    assert mira
+    assert nxt["host"] == "lumen"
+    lumen = [item for item in tg.sent if str(item.get("photo") or "").endswith("lumen-wave.jpg")]
+    assert lumen
     fav = handle_menu_callback(_tap("w:host:set:dash"), tg)
     assert fav == {"ok": True, "action": "host-set", "chat_id": "21", "host": "dash"}
     assert current_host("21")["id"] == "dash"
@@ -212,6 +213,14 @@ def test_talk_answers_house_creed_in_the_current_host_voice():
 def test_all_poses_exist_for_theo():
     for pose in POSES:
         assert portrait_path(pose, "theo").is_file()
+
+
+def test_all_poses_exist_for_lumen():
+    for pose in POSES:
+        path = portrait_path(pose, "lumen")
+        assert path.is_file()
+        assert path.stat().st_size > 1000
+    assert portrait_path("wave", "lumen").name == "lumen-wave.jpg"
 
 
 def test_host_keyboards_use_telegram_button_style():

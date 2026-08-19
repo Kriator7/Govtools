@@ -1,4 +1,4 @@
-"""TrueHold Wellness floor team: 20 hosts, rotation, and per-account favorite.
+"""TrueHold Wellness floor team: 21 hosts, rotation, and per-account favorite.
 
 Tour state lives in gitignored data/team_hosts.json so /start sessions do not
 wipe who the customer has already met. Same core replies; each host adds icon,
