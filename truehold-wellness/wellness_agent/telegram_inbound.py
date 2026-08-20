@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import unicodedata
+
 from wellness_agent.access import PRIVILEGED_COMMANDS, STAFF_DENIED, is_operator
 from wellness_agent.catalog import (
     UnknownProductError,
@@ -209,6 +211,32 @@ def _send_sheet(telegram, chat_id: str, query: str) -> dict:
     return {"ok": True, "action": "product", "chat_id": chat_id, "product": product["id"]}
 
 
+def _is_menu_tap(text: str) -> bool:
+    """Reply-keyboard and typed Menu, including host emoji kits and arrow variants."""
+    compact = (
+        unicodedata.normalize("NFKC", str(text or ""))
+        .replace("\ufe0f", "")
+        .replace("\u200d", "")
+        .strip()
+        .lower()
+    )
+    if compact in {"menu", "/menu", "⬅ menu"}:
+        return True
+    parts = compact.split()
+    return len(parts) == 2 and parts[1] == "menu" and not parts[0].isalpha()
+
+
+def _open_menu(telegram, chat_id: str) -> dict:
+    set_awaiting_phone(chat_id, False)
+    mark_intro_played(chat_id)
+    try:
+        telegram.send_message(chat_id, "Menu", reply_markup=remove_keyboard())
+    except Exception:
+        pass
+    send_quick_menu(telegram, chat_id)
+    return {"ok": True, "action": "menu", "chat_id": chat_id}
+
+
 def handle_telegram_update(payload: dict, telegram) -> dict:
     callback = payload.get("callback_query")
     if callback:
@@ -241,15 +269,12 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         telegram.send_message(chat_id, TYPE_PHONE)
         return {"ok": True, "action": "type-phone", "chat_id": chat_id}
 
-    if text.lower().strip() in {"⬅️ menu", "menu"}:
-        set_awaiting_phone(chat_id, False)
-        mark_intro_played(chat_id)
-        telegram.send_message(chat_id, "Menu", reply_markup=remove_keyboard())
-        send_quick_menu(telegram, chat_id)
-        return {"ok": True, "action": "menu", "chat_id": chat_id}
+    if _is_menu_tap(text):
+        return _open_menu(telegram, chat_id)
 
     command = _command(text)
     staff = is_operator(user_id, chat_id, chat_type)
+    start_payload = _rest(text).strip().lower() if command == "start" else ""
 
     looks_like_phone = bool(parse_phone(text)) and len(text) <= 22 and sum(ch.isdigit() for ch in text) >= 10
     if looks_like_phone and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule", "order", "crew"}:
@@ -259,6 +284,7 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         awaiting_phone(chat_id)
         and text
         and command not in PRIVILEGED_COMMANDS | {"start", "help", "menu", "schedule", "crew"}
+        and start_payload not in {"menu", "back"}
         and not extract_code(text)
     ):
         if not (is_salutation(text) or is_salutation(command) or is_crew_request(text)):
@@ -291,19 +317,33 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
                 telegram.send_message(chat_id, COLLEGE_THANKS)
             return {"ok": True, "action": "discount-code", "chat_id": chat_id, "code": extract_code(text)}
 
-    if command in {"start", "help", "menu"}:
-        if command == "help":
-            telegram.send_message(chat_id, STAFF_HELP if staff else CUSTOMER_HELP)
-            return {"ok": True, "action": "help", "chat_id": chat_id, "staff": staff}
-        if command == "start":
-            begin_session(chat_id)
-            if staff:
-                telegram.send_message(chat_id, STAFF_HELP)
-            _send_introduction(telegram, chat_id)
-            return {"ok": True, "action": "intro", "chat_id": chat_id, "staff": staff}
-        mark_intro_played(chat_id)
-        send_quick_menu(telegram, chat_id)
-        return {"ok": True, "action": "menu", "chat_id": chat_id, "staff": staff}
+    if command == "help":
+        telegram.send_message(chat_id, STAFF_HELP if staff else CUSTOMER_HELP)
+        return {"ok": True, "action": "help", "chat_id": chat_id, "staff": staff}
+
+    if command == "start":
+        if start_payload == "menu":
+            result = _open_menu(telegram, chat_id)
+            result["staff"] = staff
+            return result
+        if start_payload == "back":
+            from wellness_agent.menu import _go_back
+
+            set_awaiting_phone(chat_id, False)
+            mark_intro_played(chat_id)
+            result = _go_back(telegram, chat_id)
+            result["staff"] = staff
+            return result
+        begin_session(chat_id)
+        if staff:
+            telegram.send_message(chat_id, STAFF_HELP)
+        _send_introduction(telegram, chat_id)
+        return {"ok": True, "action": "intro", "chat_id": chat_id, "staff": staff}
+
+    if command == "menu":
+        result = _open_menu(telegram, chat_id)
+        result["staff"] = staff
+        return result
 
     if command == "schedule":
         set_nav_return(chat_id, screen="menu")

@@ -334,21 +334,35 @@ def test_team_card_has_back_and_menu_distinct_from_copy_email():
     assert team["action"] == "schedule"
     photos = [item for item in tg.sent if "photo" in item]
     labels = _labels(photos[-1])
-    data = [
-        btn.get("callback_data")
-        for row in photos[-1]["reply_markup"]["inline_keyboard"]
-        for btn in row
-    ]
     assert "📧 Copy email" in labels
     assert "💳 Debit" in labels
     assert BUY_BACK in labels
     assert BUY_MENU in labels
     assert "🕊️ Menu" not in labels
     assert "🕊️ Email" not in labels
-    assert "w:back" in data
-    assert "w:menu" in data
-    back = handle_menu_callback(_tap("w:back", callback_id="back1")["callback_query"], tg)
-    assert back == {"ok": True, "action": "tile", "chat_id": "88", "product": "nad"}
+    by_text = {
+        btn["text"]: btn
+        for row in photos[-1]["reply_markup"]["inline_keyboard"]
+        for btn in row
+    }
+    from wellness_agent.telegram_copy import BACK_DEEP_LINK, MENU_DEEP_LINK
+
+    assert by_text[BUY_MENU]["url"] == MENU_DEEP_LINK
+    assert by_text[BUY_BACK]["url"] == BACK_DEEP_LINK
+    assert "callback_data" not in by_text[BUY_MENU]
+    assert "callback_data" not in by_text[BUY_BACK]
+    back = handle_telegram_update(
+        {
+            "message": {
+                "text": "/start back",
+                "chat": {"id": 88, "type": "private"},
+                "from": {"id": 88},
+            }
+        },
+        tg,
+    )
+    assert back["action"] == "tile"
+    assert back["product"] == "nad"
     after = [item for item in tg.sent if "photo" in item][-1]
     assert "nad" in str(after.get("photo") or "").lower()
     assert BUY_ORDER in _labels(after)
@@ -358,7 +372,16 @@ def test_team_from_menu_back_returns_to_menu():
     tg = _FakeTelegram()
     handle_menu_callback(_tap("w:menu")["callback_query"], tg)
     handle_menu_callback(_tap("w:team")["callback_query"], tg)
-    back = handle_menu_callback(_tap("w:back", callback_id="back2")["callback_query"], tg)
+    back = handle_telegram_update(
+        {
+            "message": {
+                "text": "/start back",
+                "chat": {"id": 88, "type": "private"},
+                "from": {"id": 88},
+            }
+        },
+        tg,
+    )
     assert back["action"] == "menu"
     labels = _labels(tg.sent[-1])
     assert "🧠 Semax" in labels
@@ -369,8 +392,19 @@ def test_team_from_not_lv_back_returns_to_fulfillment():
     handle_menu_callback(_tap("w:qty:nad")["callback_query"], tg)
     handle_menu_callback(_tap("w:ask:nad:1")["callback_query"], tg)
     handle_menu_callback(_tap("w:team:nad:1")["callback_query"], tg)
-    back = handle_menu_callback(_tap("w:back", callback_id="back3")["callback_query"], tg)
-    assert back == {"ok": True, "action": "ask", "chat_id": "88", "product": "nad", "qty": "1"}
+    back = handle_telegram_update(
+        {
+            "message": {
+                "text": "/start back",
+                "chat": {"id": 88, "type": "private"},
+                "from": {"id": 88},
+            }
+        },
+        tg,
+    )
+    assert back["action"] == "ask"
+    assert back["product"] == "nad"
+    assert back["qty"] == "1"
     cards = [item for item in tg.sent if "2 of 2" in str(item.get("caption") or "")]
     assert cards
     labels = _labels(cards[-1])

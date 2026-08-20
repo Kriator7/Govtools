@@ -207,7 +207,7 @@ def test_unrelated_first_message_plays_welcome():
 
 
 def test_schedule_email_opens_client_mail_not_gmail_web():
-    from wellness_agent.telegram_copy import MAILTO_URL, SCHEDULE, TEAM_EMAIL
+    from wellness_agent.telegram_copy import BACK_DEEP_LINK, MAILTO_URL, MENU_DEEP_LINK, SCHEDULE, TEAM_EMAIL
 
     assert TEAM_EMAIL in SCHEDULE
     assert MAILTO_URL.startswith("mailto:trueholdwellness@gmail.com?")
@@ -235,6 +235,10 @@ def test_schedule_email_opens_client_mail_not_gmail_web():
     assert "⬅️ Menu" in labels
     assert "🕊️ Menu" not in labels
     assert "🕊️ Email" not in labels
+    by_text = {btn["text"]: btn for btn in buttons}
+    assert by_text["⬅️ Menu"]["url"] == MENU_DEEP_LINK
+    assert by_text["⬅️ Back"]["url"] == BACK_DEEP_LINK
+    assert "callback_data" not in by_text["⬅️ Menu"]
     texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
     assert any("Zelle" in text for text in texts)
     assert any(TEAM_EMAIL in text for text in texts)
@@ -352,3 +356,20 @@ def test_phone_prompt_menu_button_leaves_the_wait():
     ]
     assert "🧠 Semax" in labels
     assert any((item.get("reply_markup") or {}).get("remove_keyboard") for item in tg.sent)
+
+
+def test_start_menu_deep_link_opens_menu_not_intro():
+    tg = _FakeTelegram()
+    handle_telegram_update(_msg("/start", chat_id=88), tg)
+    tg.sent.clear()
+    result = handle_telegram_update(_msg("/start menu", chat_id=88), tg)
+    assert result["action"] == "menu"
+    labels = [
+        btn["text"]
+        for item in tg.sent
+        for row in (item.get("reply_markup") or {}).get("inline_keyboard") or []
+        for btn in row
+    ]
+    assert "🧠 Semax" in labels
+    captions = [item.get("caption") or item.get("text") or "" for item in tg.sent]
+    assert not any("Welcome to TrueHold Wellness" in text and "How it works" in text for text in captions)

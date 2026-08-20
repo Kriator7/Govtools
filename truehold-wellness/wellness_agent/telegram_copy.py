@@ -21,6 +21,8 @@ SERVICE_POLICY = (
 )
 
 SHOP_URL = "https://trueholdwellness.com/shop"
+MENU_DEEP_LINK = f"https://t.me/{REQUIRED_USERNAME}?start=menu"
+BACK_DEEP_LINK = f"https://t.me/{REQUIRED_USERNAME}?start=back"
 # HTML captions: https://core.telegram.org/bots/api#formatting-options
 PARSE_MODE = "HTML"
 # Free 🎉 party-popper effect (confetti + light sound) in private chats.
@@ -127,15 +129,18 @@ SCHEDULE = (
 
 
 def schedule_keyboard(style: str | None = None, host: dict | None = None, *, back_callback: str = "w:back") -> dict:
-    """copy_text: https://core.telegram.org/bots/api#copytextbutton
+    """Team card keyboard.
 
-    Back and Menu stay literal so they cannot be mistaken for Copy email.
-    style: https://core.telegram.org/bots/api#inlinekeyboardbutton
+    Copy-email (copy_text) plus Debit (url) stay on this card. Back and Menu are
+    https://t.me deep links, not callback_data: mixed copy_text + callback
+    keyboards can leave the callback buttons inert on Telegram clients, which
+    is the Team-screen lock. start payloads: https://core.telegram.org/api/links
     """
+    del back_callback, host
     email = {"text": "📧 Copy email", "copy_text": {"text": TEAM_EMAIL}}
     debit = {"text": "💳 Debit", "url": SHOP_URL}
-    back = {"text": "⬅️ Back", "callback_data": back_callback}
-    menu = {"text": "⬅️ Menu", "callback_data": "w:menu"}
+    back = {"text": "⬅️ Back", "url": BACK_DEEP_LINK}
+    menu = {"text": "⬅️ Menu", "url": MENU_DEEP_LINK}
     if style in {"primary", "success", "danger"}:
         email["style"] = style
         debit["style"] = style

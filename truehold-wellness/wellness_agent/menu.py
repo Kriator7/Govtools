@@ -118,6 +118,7 @@ TOASTS = {
     "set": "Favorite locked",
     "pick": "Pick a favorite",
     "fast": "Fasting notes",
+    "menu": "Menu",
 }
 
 # Buy-wizard labels stay literal (not host emoji kits) so 1 / Vegas / Order
@@ -524,14 +525,22 @@ def send_crew_photo(telegram, chat_id: str) -> None:
 def send_quick_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> None:
     host = current_host(chat_id)
     extra = MENU_INTRO if include_blurb else "<b>Menu</b>\nTap a name:"
-    send_host_photo(
-        telegram,
-        chat_id,
-        "present",
-        flavor_caption(host, "present", extra),
-        quick_menu_keyboard(str(chat_id), host),
-        host=host,
-    )
+    caption = flavor_caption(host, "present", extra)
+    markup = quick_menu_keyboard(str(chat_id), host)
+    try:
+        send_host_photo(telegram, chat_id, "present", caption, markup, host=host)
+        return
+    except Exception:
+        pass
+    try:
+        send_brand_photo(telegram, chat_id, logo_path(), caption, markup)
+        return
+    except Exception:
+        pass
+    try:
+        telegram.send_message(chat_id, caption, reply_markup=markup, parse_mode=PARSE_MODE)
+    except TypeError:
+        telegram.send_message(chat_id, caption, reply_markup=markup)
 
 
 def send_picture_menu(telegram, chat_id: str, *, include_blurb: bool = True) -> int:
