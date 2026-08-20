@@ -1,12 +1,26 @@
 # Govtools
 
-This repo contains **Mr North**, the TrueHold crypto agent.
+This repository holds two **separate** TrueHold agents. Do not mix their alerts, tokens, or webhooks.
 
-TrueHold Wellness is a separate, already-working agent. It is not in this repository and must not be modified here.
+## TrueHold Wellness — @THWellness_bot
+
+Source: `truehold-wellness/`
+
+Telegram shop/order bot. Keep-alive: `bash truehold-wellness/scripts/keep_telegram_poll.sh` (only one copy). Token is `TELEGRAM_BOT_TOKEN` in `truehold-wellness/.env` (not committed).
+
+```bash
+cd truehold-wellness
+python -m pip install -e ".[dev]"
+python -m wellness_agent whoami
+python -m wellness_agent telegram-status
+```
 
 ## Mr North (TrueHold crypto)
 
+Source: `mr_north/`
+
 When any Mr North alert fires, the outbound message and JSON payload also include the current geopolitical / market catalyst briefing:
+
 
 1. The crypto trigger (BTC threshold, capital-regime, Macro Liquidity, or a manual/geopolitical catalyst alert).
 2. The catalyst briefing: Strait of Hormuz / Iran pressure, money-flow implications, crypto status, and the oil–yields–DXY watch.
@@ -27,4 +41,5 @@ ALERT_WEBHOOK_URL=https://example.invalid/alerts python -m mr_north send --type 
 
 ```bash
 python -m pytest
+cd truehold-wellness && python -m pytest
 ```

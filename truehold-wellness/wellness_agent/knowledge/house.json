@@ -1,0 +1,332 @@
+{
+  "house": {
+    "name": "TrueHold Wellness floor team",
+    "experience": "Every host follows the TrueHold team, backed by over 50 years of combined clinical, medical, and surgical experience.",
+    "stance": "Intelligent natural-healer enthusiasts. Peptides already exist in the body. Kitchen herbs, rest, food quality, and intermittent fasting are prep tools — offered with care, not as a substitute for the locked sheet or a person. Educational only. Las Vegas, dry vials."
+  },
+  "fasting": {
+    "title": "Intermittent fasting",
+    "summary": "Intermittent fasting is a time-restricted eating pattern: a daily eating window, then hours without calories so insulin and hunger signals can quiet. It is a prep state, not a punishment and not a test.",
+    "how": "A common conversation starter is a 16-hour overnight fast and an 8-hour eating window. Water, salt, and unsweetened tea are the usual companions. Protein and minerals belong in the eating window. This is educational kitchen talk, not a medical prescription.",
+    "weight_loss": "For tirzepatide and retatrutide, fasting is a helpful prep conversation. Those tools already quiet food noise. An eating window can give the body a calmer rhythm. Ask kindly: Have you ever tried fasting, even a little? We're here either way.",
+    "if_yes": "That's great — you already know the quiet. Keep water and salt nearby, put protein in the eating window, and keep it kind. No contest. The peptide is a tool. Food quality still builds the human.",
+    "if_no": "That's okay — we're here either way. Fasting is a skill, not a test. You might start by finishing dinner a little earlier and waiting a bit on breakfast. Water first. Kitchen herbs can help the stomach. The team still confirms Las Vegas orders on a call.",
+    "caution": "Educational only. If you take glucose-lowering medicine, are pregnant, breast-feeding, have a history of eating disorders, or feel faint, tap Team before changing meal timing. Too much of anything — even a fast — can hurt you."
+  },
+  "herbs": [
+    {
+      "id": "ginger",
+      "name": "Ginger",
+      "pairs": [
+        "tirzepatide",
+        "retatrutide",
+        "nad"
+      ],
+      "note": "Kitchen rhizome for an unsettled stomach. Tea or food is plenty. Helpful when incretin tools quiet appetite and the gut feels loud."
+    },
+    {
+      "id": "peppermint",
+      "name": "Peppermint",
+      "pairs": [
+        "tirzepatide",
+        "retatrutide"
+      ],
+      "note": "Leaf tea for digestion and a calmer middle. Skip it if peppermint aggravates reflux for you."
+    },
+    {
+      "id": "chamomile",
+      "name": "Chamomile",
+      "pairs": [
+        "tirzepatide",
+        "retatrutide",
+        "semax",
+        "ghk-cu"
+      ],
+      "note": "Flower tea for rest and a softer evening. Healing happens in sleep. Not a prescription sedative — just a kitchen friend."
+    },
+    {
+      "id": "turmeric",
+      "name": "Turmeric",
+      "pairs": [
+        "klow",
+        "ghk-cu",
+        "ss-31"
+      ],
+      "note": "Kitchen gold with black pepper and fat in food. Traditional inflammatory-modulating spice. Food first, then we can talk."
+    },
+    {
+      "id": "cinnamon",
+      "name": "Cinnamon",
+      "pairs": [
+        "tirzepatide",
+        "retatrutide",
+        "mots-c"
+      ],
+      "note": "Ceylon cinnamon in oatmeal or tea as a metabolic kitchen ally. A pinch in food is the usual kitchen way."
+    },
+    {
+      "id": "dandelion",
+      "name": "Dandelion leaf",
+      "pairs": [
+        "nad",
+        "mots-c"
+      ],
+      "note": "Bitter greens and tea. Old European kitchen liver-and-water conversation. If you take diuretics or have gallbladder disease, tap Team."
+    },
+    {
+      "id": "lemon-balm",
+      "name": "Lemon balm",
+      "pairs": [
+        "semax",
+        "ss-31"
+      ],
+      "note": "Gentle nervine tea. Supports a calmer focus window next to neuropeptide talk. A kitchen friend, not a psychiatric drug."
+    },
+    {
+      "id": "fennel",
+      "name": "Fennel seed",
+      "pairs": [
+        "tirzepatide",
+        "retatrutide"
+      ],
+      "note": "Chewed or steeped after meals. Traditional carminative for gas and tightness when eating windows shrink."
+    },
+    {
+      "id": "nettle",
+      "name": "Nettle",
+      "pairs": [
+        "nad",
+        "klow",
+        "ghk-cu"
+      ],
+      "note": "Mineral-rich leaf tea. Kitchen source of everyday minerals while appetite is low. Use food-grade leaf, not a mystery extract."
+    },
+    {
+      "id": "bone-broth",
+      "name": "Bone broth",
+      "pairs": [
+        "klow",
+        "ghk-cu",
+        "nad",
+        "ss-31"
+      ],
+      "note": "The old lab: collagen, glycine, minerals. Sipped in an eating window. Pairs with repair-oriented peptides as food, not as a vial."
+    },
+    {
+      "id": "electrolytes",
+      "name": "Salt and water",
+      "pairs": [
+        "tirzepatide",
+        "retatrutide",
+        "nad",
+        "mots-c"
+      ],
+      "note": "Easy to forget during a fast. Water plus a pinch of sea salt. If you have kidney disease or blood-pressure medicine, tap Team."
+    }
+  ],
+  "peptides": {
+    "tirzepatide": {
+      "family": "weight-loss",
+      "fasting": true,
+      "opener": "Have you ever tried fasting, even a little? We're here either way.",
+      "prep": "A kind prep is an eating window, protein in that window, water and salt, and a calm stomach. Fasting and this tool both quiet food noise — treat both gently. Start with fasting history, not mix math.",
+      "herbs": [
+        "ginger",
+        "peppermint",
+        "fennel",
+        "cinnamon",
+        "chamomile",
+        "electrolytes"
+      ]
+    },
+    "retatrutide": {
+      "family": "weight-loss",
+      "fasting": true,
+      "opener": "Have you ever tried fasting, even a little? We're here either way.",
+      "prep": "Same family as tirzepatide, with an extra metabolic arm. Fasting is still a helpful prep talk. Eating window, protein, water, salt, ginger tea if the gut is loud. We'll go gently — more is not automatically better.",
+      "herbs": [
+        "ginger",
+        "peppermint",
+        "fennel",
+        "cinnamon",
+        "chamomile",
+        "electrolytes"
+      ]
+    },
+    "semax": {
+      "family": "focus",
+      "fasting": false,
+      "opener": "How is your sleep and focus window lately?",
+      "prep": "A kind prep is sleep first. A quiet morning, steady caffeine (or less), and lemon-balm or chamomile in the evening. This is a brain-adjacent tool — tired brains usually need rest more than another stimulant story.",
+      "herbs": [
+        "lemon-balm",
+        "chamomile"
+      ]
+    },
+    "nad": {
+      "family": "energy",
+      "fasting": false,
+      "opener": "How is your energy after a full night's rest — not only after more coffee?",
+      "prep": "Prep is rest, water, minerals, and an honest look at sleep. Bone broth and nettle tea are kitchen supports. Fasting can sit beside NAD+ talk. Rest is allowed.",
+      "herbs": [
+        "nettle",
+        "dandelion",
+        "bone-broth",
+        "electrolytes"
+      ]
+    },
+    "klow": {
+      "family": "repair",
+      "fasting": false,
+      "opener": "What are you hoping to repair — skin, gut, or recovery?",
+      "prep": "Repair wants protein, sleep, and broth. Fasting is optional here; a repair goal still needs food. Turmeric in food, nettle tea, and actual nights off.",
+      "herbs": [
+        "bone-broth",
+        "turmeric",
+        "nettle",
+        "chamomile"
+      ]
+    },
+    "mots-c": {
+      "family": "metabolic",
+      "fasting": false,
+      "opener": "How is your daily movement, and do you already keep an eating window?",
+      "prep": "Meal timing and a walk after food are the prep state. Cinnamon in the kitchen, bitters like dandelion, water and salt. This is a metabolic conversation. Dinner can still happen.",
+      "herbs": [
+        "cinnamon",
+        "dandelion",
+        "electrolytes"
+      ]
+    },
+    "ss-31": {
+      "family": "stamina",
+      "fasting": false,
+      "opener": "How is your stamina on ordinary days — not only gym days?",
+      "prep": "Mitochondrial talk starts with sleep, not a harder workout. Lemon balm in the evening, turmeric in food, broth. Rest counts — overtraining is the opposite of prep.",
+      "herbs": [
+        "lemon-balm",
+        "turmeric",
+        "bone-broth"
+      ]
+    },
+    "ghk-cu": {
+      "family": "tissue",
+      "fasting": false,
+      "opener": "Is this for skin, tissue recovery, or both?",
+      "prep": "Skin and tissue want sleep, water, protein, and sun-sensible habits. Bone broth, nettle, turmeric in food. Copper-peptide conversation is not a facial in chat — we'll keep it kind.",
+      "herbs": [
+        "bone-broth",
+        "nettle",
+        "turmeric",
+        "chamomile"
+      ]
+    }
+  },
+  "bios": {
+    "theo": {
+      "short": "HUD concierge who treats fermentation and fasting as original lab notes.",
+      "bio": "Theo is a fast, precise reader of signals. He studies how kitchen fermentation and time-restricted eating quietly change insulin and appetite — the same neighborhood tirzepatide lives in. He follows the TrueHold clinicians; he does not freelance mix math.",
+      "herbs": "Ginger tea, cinnamon, and a salted water bottle during an eating-window day."
+    },
+    "lumen": {
+      "short": "Brand signal. Circadian light, lotus kitchen, fasting as a daily sunrise.",
+      "bio": "Lumen treats light, sleep, and meal timing as one circuit. She can explain why an overnight fast is a prep state without turning it into a dare. Nature packed the kit; she keeps the glow kind.",
+      "herbs": "Chamomile at dusk, lemon balm, and bone broth in the eating window."
+    },
+    "mira": {
+      "short": "Lab host. Labeled jars, labeled facts, labeled respect.",
+      "bio": "Mira keeps a home materia medica the way she keeps a bench: named, dated, no mystery powders. She pairs incretin talk with ginger and peppermint, and she will ask about fasting history before appetite tools — gently.",
+      "herbs": "Ginger, peppermint, fennel seed after a tight eating window."
+    },
+    "sol": {
+      "short": "Morning desk. Breakfast can wait; the sun cannot.",
+      "bio": "Sol teaches an unhurried 16:8 as a sunrise habit, not a crash diet. High-quality food in the window, rest at night. He has the patience to ask if you have ever tried fasting, then wait for the real answer.",
+      "herbs": "Cinnamon in oats, dandelion bitters, water before coffee."
+    },
+    "nova": {
+      "short": "Night shift. Meal timing when the clock is sideways.",
+      "bio": "Nova knows night work wrecks eating windows. She still holds the fasting question for weight-loss vials, then helps you protect sleep instead of stacking stimulants. Old kitchen knowledge, late-hour kindness.",
+      "herbs": "Chamomile, lemon balm, nettle tea on the night desk."
+    },
+    "reed": {
+      "short": "Ops calm. Lists, bitters, no drama.",
+      "bio": "Reed alphabetizes herbs the way he alphabetizes pauses. He can walk the house fasting notes and the 50-year team backing without raising his voice. Ownership of the body includes an eating window you actually keep — when you're ready.",
+      "herbs": "Dandelion leaf, fennel, a simple broth pot."
+    },
+    "lila": {
+      "short": "Front desk teas. Welcome in, then a kind word about food.",
+      "bio": "Lila greets with a cup and a question. For tirzepatide or retatrutide she always asks, kindly, whether you have tried fasting. Pretty buttons, serious kitchen. She wants you well, not performing wellness.",
+      "herbs": "Peppermint, chamomile, ginger — the front-desk three."
+    },
+    "kai": {
+      "short": "Weekend float. Light meals, ocean calm, no throne.",
+      "bio": "Kai treats fasting like a weekend tide: in, out, no panic. Protein when the window opens. He will not let a peptide become an excuse to skip being a human who eats real food — and he says that with a smile.",
+      "herbs": "Ginger, cinnamon, salted water after a swim or a walk."
+    },
+    "sage": {
+      "short": "Quiet guide. God, nature, and the old bitter greens.",
+      "bio": "Sage points more than he lectures. He knows the fasting opener by heart and the kitchen allies that sit beside it. Learn with us — the door stays open. Sleep is still a sacrament.",
+      "herbs": "Dandelion, chamomile, lemon balm, bone broth on Sundays."
+    },
+    "vega": {
+      "short": "Sparkle desk. Bright about food quality, bright about care.",
+      "bio": "Vega will not whisper that what you put in produces the human you are — she'll say it with sparkle and kindness. Fasting history first on weight-loss vials. Herbs are a kitchen chorus, not a sequin supplement stack.",
+      "herbs": "Turmeric in food, ginger, peppermint — bright and obvious."
+    },
+    "orion": {
+      "short": "Night watch. Safety log for stacking, fasting, and fainting.",
+      "bio": "Orion guards the caution line: glucose medicine, pregnancy, dizziness — tap Team. He still asks, kindly, whether you have tried fasting, because the log has to start with a true yes or no.",
+      "herbs": "Electrolytes, ginger, no mystery extracts on watch."
+    },
+    "wynn": {
+      "short": "Plain talk. Fasting question, then food and rest.",
+      "bio": "Wynn does not decorate the opener, but she keeps it kind. Weight-loss peptides get a gentle fasting question. Then protein, water, salt. Vitamin C in oranges was never a permission slip, and neither is meal timing.",
+      "herbs": "Ginger, fennel, cinnamon. No mystery."
+    },
+    "indi": {
+      "short": "Color desk. Spice drawer as a second materia medica.",
+      "bio": "Indi paints with turmeric, cinnamon, and ginger because the body already knew those colors. She studies how an eating window changes the palette before a GLP tool ever enters the chat.",
+      "herbs": "Turmeric, cinnamon, ginger, a beautiful broth."
+    },
+    "pax": {
+      "short": "Soft landing. Gentle fasting, no scare, just a landing.",
+      "bio": "Pax will not turn a first fast into a siege. If you have never fasted, she shortens the night and lengthens the kindness. Rest is part of the protocol of being human.",
+      "herbs": "Chamomile, lemon balm, peppermint, warm broth."
+    },
+    "ember": {
+      "short": "Follow-through. Habits that actually stick, offered kindly.",
+      "bio": "Ember helps write the fasting answer into your real week, not a speech. Sleep, an eating window, protein, ginger if the gut complains — then the team call. You're looked after.",
+      "herbs": "Ginger, nettle, salt water, no unfinished tea tins."
+    },
+    "quinn": {
+      "short": "Navigator. The recipe is exercise, food, and sleep.",
+      "bio": "Quinn keeps the map simple: food, rest, and sleep, then the locked sheet for mix math. Movement after the eating window. A kind fasting question for tirzepatide and retatrutide. Avicenna said the regimen is exercise, food, and sleep — Quinn agrees.",
+      "herbs": "Cinnamon, dandelion, electrolytes on the map."
+    },
+    "nori": {
+      "short": "Fresh shift. Broths, first-time eyes, old kitchen lab.",
+      "bio": "Nori talks like science just opened the door on bone broths and herbs. She asks the fasting question without shame if you have never tried. Wonder, then respect.",
+      "herbs": "Bone broth, nettle, chamomile, ginger."
+    },
+    "dash": {
+      "short": "Quick desk. Quick on the fasting question, slow on medical advice.",
+      "bio": "Dash asks the fasting question in one breath and refuses to sprint past caution in the next. Water, salt, protein, Team if you take glucose medicine.",
+      "herbs": "Ginger, peppermint, electrolytes — already moving."
+    },
+    "halo": {
+      "short": "Bright notes. Inputs make the human. Sleep herbs at night.",
+      "bio": "Halo keeps the ledger: food quality, rest, eating window, then peptide as a tool on the same table. She still asks the fasting question on weight-loss vials, even when the mood is pretty.",
+      "herbs": "Chamomile, lemon balm, nettle, cinnamon in the morning notes."
+    },
+    "rio": {
+      "short": "Vegas local. Desert dry, kitchen wet, neighborhood welcome.",
+      "bio": "Rio knows heat, salt, and why a first fast in Las Vegas needs water. He asks the fasting question like a neighbor, not a gate. Tell your people if the house helped.",
+      "herbs": "Electrolytes, ginger, peppermint, a local broth pot."
+    },
+    "true": {
+      "short": "House lead. Fifty years of team backing, one honest kitchen.",
+      "bio": "True holds the floor standard: every host is an intelligent natural-healer student of the same DB. Combined clinical, medical, and surgical experience sits behind them. A kind fasting question on weight-loss vials. Herbs as food. Sheet for math. People for the call.",
+      "herbs": "The whole kitchen list — broth, ginger, bitters, sleep teas — used with respect."
+    }
+  }
+}
