@@ -1,0 +1,197 @@
+{
+  "note": "Short public-domain (or long-circulated scholarly) lines only. Chat copy credits author and work. Do not paste source URLs in Telegram.",
+  "quotes": [
+    {
+      "id": "emerson-health",
+      "host": "theo",
+      "text": "The first wealth is health.",
+      "author": "Ralph Waldo Emerson",
+      "work": "The Conduct of Life, “Power”",
+      "year": "1860",
+      "source": "https://en.wikisource.org/wiki/The_Conduct_of_Life/Power"
+    },
+    {
+      "id": "muir-sunshine",
+      "host": "lumen",
+      "text": "Nature's peace will flow into you as sunshine flows into trees.",
+      "author": "John Muir",
+      "work": "Our National Parks",
+      "year": "1901",
+      "source": "https://vault.sierraclub.org/john_muir_exhibit/writings/favorite_quotations.aspx"
+    },
+    {
+      "id": "paracelsus-dose",
+      "host": "mira",
+      "text": "All things are poison, and nothing is without poison; the dose alone makes it so a thing is not a poison.",
+      "author": "Paracelsus",
+      "work": "Septem Defensiones, Third Defense",
+      "year": "1538",
+      "source": "https://en.wikipedia.org/wiki/The_dose_makes_the_poison"
+    },
+    {
+      "id": "franklin-early",
+      "host": "sol",
+      "text": "Early to bed and early to rise, makes a man healthy wealthy and wise.",
+      "author": "Benjamin Franklin",
+      "work": "Poor Richard's Almanack",
+      "year": "1735",
+      "note": "an older English proverb he printed, not a line he coined",
+      "source": "http://www.vlib.us/amdocs/texts/prichard35.html"
+    },
+    {
+      "id": "hippocrates-sleep",
+      "host": "nova",
+      "text": "Sleep and watchfulness, both of them, when immoderate, constitute disease.",
+      "author": "Hippocratic Corpus",
+      "work": "Aphorisms 7:72",
+      "year": "",
+      "source": "https://en.wikiquote.org/wiki/Hippocrates"
+    },
+    {
+      "id": "emerson-patience",
+      "host": "reed",
+      "text": "Leave this military hurry and adopt the pace of Nature. Her secret is patience.",
+      "author": "Ralph Waldo Emerson",
+      "work": "“Education,” Lectures and Biographical Sketches",
+      "year": "1883",
+      "source": "https://www.gutenberg.org/files/75942/75942-h/75942-h.htm"
+    },
+    {
+      "id": "muir-bread",
+      "host": "lila",
+      "text": "Everybody needs beauty as well as bread, places to play in and pray in, where nature may heal and give strength to body and soul alike.",
+      "author": "John Muir",
+      "work": "The Yosemite",
+      "year": "1912",
+      "source": "https://www.nps.gov/jomu/learn/historyculture/john-muir-quotes.htm"
+    },
+    {
+      "id": "thoreau-wildness",
+      "host": "kai",
+      "text": "in Wildness is the preservation of the world.",
+      "author": "Henry David Thoreau",
+      "work": "“Walking,” The Atlantic Monthly",
+      "year": "1862",
+      "source": "https://www.walden.org/what-we-do/library/thoreau/mis-quotations/"
+    },
+    {
+      "id": "hippocrates-food",
+      "host": "sage",
+      "text": "In food excellent medication, in food bad medication, bad and good relatively.",
+      "author": "Hippocratic Corpus",
+      "work": "On Nutriment 19, trans. W. H. S. Jones",
+      "year": "",
+      "note": "",
+      "research_note": "the popular “let food be thy medicine” line is a later misquotation; this is the actual corpus wording",
+      "source": "https://en.wikiquote.org/wiki/Hippocrates"
+    },
+    {
+      "id": "aristotle-nature",
+      "host": "vega",
+      "text": "Every realm of nature is marvellous.",
+      "author": "Aristotle",
+      "work": "Parts of Animals I.5, trans. William Ogle",
+      "year": "1882",
+      "source": "https://classics.mit.edu/Aristotle/parts_animals.mb.txt"
+    },
+    {
+      "id": "hippocrates-harm",
+      "host": "orion",
+      "text": "As to diseases, make a habit of two things — to help, or at least to do no harm.",
+      "author": "Hippocratic Corpus",
+      "work": "Epidemics I.11, trans. W. H. S. Jones",
+      "year": "1923",
+      "source": "https://www.perseus.tufts.edu/hopper/text?doc=urn:cts:greekLit:tlg0627.tlg006.perseus-eng2:1"
+    },
+    {
+      "id": "lind-oranges",
+      "host": "wynn",
+      "text": "The result of all my experiments was that oranges and lemons were the most effectual remedies for this distemper at sea.",
+      "author": "James Lind",
+      "work": "A Treatise of the Scurvy",
+      "year": "1753",
+      "source": "https://www.jameslindlibrary.org/lind-j-1753/"
+    },
+    {
+      "id": "brillat-eat",
+      "host": "indi",
+      "text": "Tell me what you eat, and I will tell you what you are.",
+      "author": "Jean Anthelme Brillat-Savarin",
+      "work": "Physiologie du goût, Aphorism IV",
+      "year": "1825",
+      "source": "https://en.wikipedia.org/wiki/Jean-Anthelme_Brillat-Savarin"
+    },
+    {
+      "id": "nightingale-nature",
+      "host": "pax",
+      "text": "Neither can do anything but remove obstructions; neither can cure; nature alone cures.",
+      "author": "Florence Nightingale",
+      "work": "Notes on Nursing: What It Is, and What It Is Not",
+      "year": "1860",
+      "source": "https://en.wikisource.org/wiki/Page:Notes_on_Nursing_What_It_Is,_and_What_It_Is_Not.djvu/124"
+    },
+    {
+      "id": "maimonides-body",
+      "host": "ember",
+      "text": "Maintaining a healthy and sound body is among the ways of God.",
+      "author": "Maimonides",
+      "work": "Mishneh Torah, De'ot 4:1, trans. Eliyahu Touger",
+      "year": "",
+      "source": "https://www.chabad.org/library/article_cdo/aid/910344/jewish/Deot-Chapter-4.htm"
+    },
+    {
+      "id": "avicenna-regimen",
+      "host": "quinn",
+      "text": "The regimen for maintaining health consists essentially in the regulation of exercise, food, and sleep.",
+      "author": "Avicenna",
+      "work": "The Canon of Medicine, Book I, trans. O. Cameron Gruner",
+      "year": "",
+      "source": "https://archive.org/stream/AvicennasCanonOfMedicine/9670940-Canon-of-Medicine_djvu.txt"
+    },
+    {
+      "id": "muir-mountains",
+      "host": "nori",
+      "text": "Climb the mountains and get their good tidings.",
+      "author": "John Muir",
+      "work": "Our National Parks",
+      "year": "1901",
+      "source": "https://vault.sierraclub.org/john_muir_exhibit/writings/favorite_quotations.aspx"
+    },
+    {
+      "id": "hippocrates-art",
+      "host": "dash",
+      "text": "Life is short, and Art long; the crisis fleeting; experience perilous, and decision difficult.",
+      "author": "Hippocratic Corpus",
+      "work": "Aphorisms 1:1",
+      "year": "",
+      "source": "https://en.wikiquote.org/wiki/Hippocrates"
+    },
+    {
+      "id": "bacon-cheer",
+      "host": "halo",
+      "text": "To be free-minded and cheerfully disposed at hours of meat and of sleep, and of exercise, is one of the best precepts of long lasting.",
+      "author": "Francis Bacon",
+      "work": "Essays, “Of Regiment of Health”",
+      "year": "1625",
+      "source": "https://en.wikisource.org/wiki/The_Works_of_Francis_Bacon,_Volume_1/Essays/Of_Regiment_of_Health"
+    },
+    {
+      "id": "muir-walk",
+      "host": "rio",
+      "text": "In every walk with Nature one receives far more than he seeks.",
+      "author": "John Muir",
+      "work": "“Mormon Lilies,” later Steep Trails",
+      "year": "1877",
+      "source": "https://vault.sierraclub.org/john_muir_exhibit/writings/favorite_quotations.aspx"
+    },
+    {
+      "id": "hippocrates-patient",
+      "host": "true",
+      "text": "The patient must co-operate with the physician in combating the disease.",
+      "author": "Hippocratic Corpus",
+      "work": "Epidemics I.11, trans. W. H. S. Jones",
+      "year": "1923",
+      "source": "https://www.perseus.tufts.edu/hopper/text?doc=urn:cts:greekLit:tlg0627.tlg006.perseus-eng2:1"
+    }
+  ]
+}

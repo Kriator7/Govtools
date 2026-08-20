@@ -1,0 +1,34 @@
+{
+  "kind": "business_inbox_snapshot",
+  "title": "TrueHold Wellness — business inbox",
+  "copy": "No new TrueHold Wellness order, payment, fulfillment request, shipping issue, cancellation/refund, peptide message, or other actionable business email appeared in the connected inbox since the previous check. The only new messages were routine/news content.",
+  "inbox_note": "The only new messages were routine/news content.",
+  "orders": {
+    "new": false,
+    "detail": "No new TrueHold Wellness order appeared in the connected inbox since the previous check."
+  },
+  "payments": {
+    "new": false,
+    "detail": "No new payment appeared in the connected inbox since the previous check."
+  },
+  "fulfillment": {
+    "new": false,
+    "detail": "No new fulfillment request appeared in the connected inbox since the previous check."
+  },
+  "shipping": {
+    "new": false,
+    "detail": "No new shipping issue appeared in the connected inbox since the previous check."
+  },
+  "cancellations": {
+    "new": false,
+    "detail": "No new cancellation/refund appeared in the connected inbox since the previous check."
+  },
+  "peptides": {
+    "new": false,
+    "detail": "No new peptide message appeared in the connected inbox since the previous check."
+  },
+  "other_actionable": {
+    "new": false,
+    "detail": "No other actionable business email appeared in the connected inbox since the previous check."
+  }
+}

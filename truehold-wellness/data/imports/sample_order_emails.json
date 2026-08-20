@@ -1,0 +1,14 @@
+[
+  {
+    "id": "msg-sample-001",
+    "from": "customer@example.invalid",
+    "subject": "Order: 2x Wellness starter kit",
+    "body": "Customer: Test Buyer\nProduct: Wellness starter kit\nQuantity: 2\nPlease confirm this TrueHold Wellness order."
+  },
+  {
+    "id": "msg-sample-002",
+    "from": "repeat@example.invalid",
+    "subject": "Order: Recovery bundle",
+    "body": "Customer: Repeat Buyer\nProduct: Recovery bundle\nQuantity: 1"
+  }
+]
