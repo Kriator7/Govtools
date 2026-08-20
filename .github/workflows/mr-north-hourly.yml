@@ -22,18 +22,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Require ALERT_WEBHOOK_URL
+      - name: Require North Telegram
         env:
-          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          NORTH_TELEGRAM_BOT_TOKEN: ${{ secrets.NORTH_TELEGRAM_BOT_TOKEN }}
+          NORTH_TELEGRAM_CHAT_ID: ${{ secrets.NORTH_TELEGRAM_CHAT_ID }}
         run: |
-          if [ -z "$ALERT_WEBHOOK_URL" ]; then
-            echo "Set repository secret ALERT_WEBHOOK_URL (Settings → Secrets and variables → Actions)." >&2
-            echo "Mr North composes the hourly BLS report but cannot deliver it without this webhook." >&2
+          if [ -z "$NORTH_TELEGRAM_BOT_TOKEN" ] || [ -z "$NORTH_TELEGRAM_CHAT_ID" ]; then
+            echo "Set repository secrets NORTH_TELEGRAM_BOT_TOKEN and NORTH_TELEGRAM_CHAT_ID." >&2
+            echo "Use North's own BotFather bot. Do not use @THWellness_bot or @PirateEye_bot." >&2
             exit 1
           fi
       - name: Install Mr North
         run: python -m pip install -e .
       - name: Send hourly BLS breakdown
         env:
+          NORTH_TELEGRAM_BOT_TOKEN: ${{ secrets.NORTH_TELEGRAM_BOT_TOKEN }}
+          NORTH_TELEGRAM_CHAT_ID: ${{ secrets.NORTH_TELEGRAM_CHAT_ID }}
+          NORTH_TELEGRAM_USERNAME: ${{ secrets.NORTH_TELEGRAM_USERNAME }}
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
         run: python -m mr_north hourly

@@ -37,11 +37,14 @@ def test_send_dry_run(capsys):
     assert "dry-run" in captured.err
 
 
-def test_send_without_webhook_fails(capsys, monkeypatch):
+def test_send_without_destination_fails(capsys, monkeypatch):
     monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_ID", raising=False)
     assert main(["send", "--type", "manual"]) == 1
     err = capsys.readouterr().err
-    assert "ALERT_WEBHOOK_URL" in err
+    assert "NORTH_TELEGRAM_BOT_TOKEN" in err
+    assert "THWellness_bot" in err
 
 
 def test_cli_rejects_wellness_business_trigger():

@@ -6,7 +6,7 @@
     {
       "id": "mr-north",
       "name": "Mr North",
-      "role": "TrueHold crypto alerts",
+      "role": "TrueHold crypto alerts and hourly BLS Telegram",
       "path": "mr_north",
       "required_files": [
         "mr_north/__init__.py",
@@ -14,6 +14,8 @@
         "mr_north/notify.py",
         "mr_north/bls.py",
         "mr_north/hourly.py",
+        "mr_north/identity.py",
+        "mr_north/telegram.py",
         "mr_north/SOUL.md",
         "mr_north/data/current_catalyst.json"
       ]

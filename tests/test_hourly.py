@@ -42,16 +42,46 @@ def test_hourly_dry_run_writes_bls_breakdown(tmp_path, monkeypatch):
     assert saved["fingerprint"] == "LNS14000000:2026M07:4.1"
 
 
-def test_hourly_without_webhook_records_not_delivered(tmp_path, monkeypatch):
+def test_hourly_without_destination_records_not_delivered(tmp_path, monkeypatch):
     monkeypatch.setenv("NORTH_HOURLY_HEARTBEAT_PATH", str(tmp_path / "hb.json"))
     monkeypatch.setenv("NORTH_HOURLY_LAST_PATH", str(tmp_path / "last.json"))
     monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_ID", raising=False)
     result = run_hourly(fetch=_snapshot)
     assert result["ok"] is False
-    assert "ALERT_WEBHOOK_URL" in result["reason"]
+    assert "NORTH_TELEGRAM_BOT_TOKEN" in result["reason"]
     heartbeat = json.loads((tmp_path / "hb.json").read_text(encoding="utf-8"))
     assert heartbeat["delivered"] is False
     assert main(["hourly-status"]) == 1
+
+
+def test_hourly_delivers_to_north_telegram(tmp_path, monkeypatch):
+    monkeypatch.setenv("NORTH_HOURLY_HEARTBEAT_PATH", str(tmp_path / "hb.json"))
+    monkeypatch.setenv("NORTH_HOURLY_LAST_PATH", str(tmp_path / "last.json"))
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "99")
+    captured = {}
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "CryptoNorthBot"
+
+        def send_report(self, chat_id, text):
+            captured["chat_id"] = chat_id
+            captured["text"] = text
+            return ["7"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    result = run_hourly(fetch=_snapshot)
+    assert result["ok"] is True
+    assert result["delivered"] is True
+    assert result["destination"] == "telegram:@CryptoNorthBot"
+    assert captured["chat_id"] == "99"
+    assert "Unemployment rate" in captured["text"]
+    assert "TrueHold Wellness" not in captured["text"]
+    assert main(["hourly-status"]) == 0
 
 
 def test_package_root_is_mr_north():

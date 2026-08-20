@@ -64,6 +64,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "hourly-status",
         help="Show whether the last hourly BLS report was delivered",
     )
+    sub.add_parser(
+        "telegram-whoami",
+        help="Call Telegram getMe and refuse Wellness/realtor bots",
+    )
+    sub.add_parser(
+        "telegram-capture",
+        help="One-shot: wait for a Start message and save NORTH chat id",
+    )
     return parser
 
 
@@ -136,9 +144,40 @@ def main(argv: Sequence[str] | None = None) -> int:
             sys.stderr.write(f"error: {result.get('reason')}\n")
             return 1
         if result.get("dry_run"):
-            sys.stderr.write("dry-run: hourly BLS breakdown saved; webhook not called\n")
+            sys.stderr.write("dry-run: hourly BLS breakdown saved; Telegram not called\n")
             return 0
         sys.stderr.write(f"sent: {result.get('destination')}\n")
+        return 0
+    if args.command == "telegram-whoami":
+        from mr_north.identity import WrongTelegramBotError
+        from mr_north.telegram import TelegramError, live_client
+
+        try:
+            client = live_client()
+            username = client.assert_identity()
+        except (TelegramError, WrongTelegramBotError) as exc:
+            sys.stderr.write(f"error: {exc}\n")
+            return 1
+        sys.stdout.write(json.dumps({"ok": True, "bot": username, "agent": "mr-north"}) + "\n")
+        return 0
+    if args.command == "telegram-capture":
+        from mr_north.identity import WrongTelegramBotError
+        from mr_north.telegram import TelegramError, live_client, save_chat_id
+
+        try:
+            client = live_client()
+            username = client.assert_identity()
+            chat_id = client.capture_chat_id()
+            path = save_chat_id(chat_id, username=username)
+        except (TelegramError, WrongTelegramBotError) as exc:
+            sys.stderr.write(f"error: {exc}\n")
+            return 1
+        sys.stdout.write(
+            json.dumps(
+                {"ok": True, "bot": username, "chat_id": chat_id, "saved": str(path), "agent": "mr-north"}
+            )
+            + "\n"
+        )
         return 0
     alert = compose_alert(_trigger_from_args(args))
     if args.command == "compose":
@@ -160,7 +199,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     if result.dry_run:
         sys.stdout.write(result.text)
-        sys.stderr.write("dry-run: Mr North catalyst briefing included; webhook not called\n")
+        sys.stderr.write("dry-run: Mr North catalyst briefing included; Telegram not called\n")
         return 0
     sys.stdout.write(result.text)
     sys.stderr.write(f"sent: {result.destination}\n")

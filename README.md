@@ -4,11 +4,11 @@ This repository holds **three independent products**. They do not share Telegram
 
 | Product | Company / job | Telegram | Folder |
 | --- | --- | --- | --- |
-| Mr North | TrueHold **crypto** alerts | none (webhook JSON) | [`mr_north/`](mr_north/) |
+| Mr North | TrueHold **crypto** alerts + hourly BLS | North's own bot (`NORTH_TELEGRAM_*`) | [`mr_north/`](mr_north/) |
 | Realtor acquisition | Property matching for one Nevada realtor | **@PirateEye_bot** | [`realtor-agent/`](realtor-agent/) |
 | TrueHold Wellness | Order-email workflow | **@THWellness_bot** | [`truehold-wellness/`](truehold-wellness/) |
 
-Never put the Wellness token in `realtor-agent/`. Never put the realtor token in `truehold-wellness/`. Live mode in each package calls Telegram `getMe` and refuses to start on the wrong username.
+Never put the Wellness token in `realtor-agent/` or `mr_north/`. Never put the realtor token in `truehold-wellness/` or `mr_north/`. Live mode in each package calls Telegram `getMe` and refuses to start on the wrong username.
 
 These three agents are **protected business infrastructure**. CI fails if one is deleted unless two different people complete `.github/DELETE_AGENT_CONFIRMATION.json`. See [`PROTECTED_AGENTS.md`](PROTECTED_AGENTS.md).
 
@@ -26,23 +26,25 @@ python -m pip install -e ".[dev]"
 python -m mr_north compose
 python -m mr_north compose --type btc_threshold --detail "BTC crossed the $65K watch level."
 python -m mr_north send --dry-run
-ALERT_WEBHOOK_URL=https://example.invalid/alerts python -m mr_north send --type btc_threshold
+NORTH_TELEGRAM_BOT_TOKEN=... NORTH_TELEGRAM_CHAT_ID=... python -m mr_north send --type btc_threshold
 ```
 
-`send` POSTs JSON with `agent=mr-north`, `trigger`, `catalyst`, and `text`.
+`send` drops the text on North's Telegram bot (`sendMessage`) and may also POST JSON to `ALERT_WEBHOOK_URL`.
 
 ### Hourly Bureau of Labor Statistics breakdown
 
-The old Cursor agent could compose a report and still fail to deliver: there was no in-repo timer (`No live scheduler exists yet`), and `ALERT_WEBHOOK_URL` was unset. Mr North now fetches official BLS prints every hour and POSTs that webhook.
+The hourly BLS print is **North's job**. He fetches official series and drops the breakdown in Telegram (not @THWellness_bot, not @PirateEye_bot).
 
 ```bash
 python -m mr_north hourly --dry-run
 python -m mr_north hourly
 python -m mr_north hourly-status
+python -m mr_north telegram-whoami
+python -m mr_north telegram-capture
 bash mr_north/scripts/keep_hourly.sh
 ```
 
-Soul / timer contract: [`mr_north/SOUL.md`](mr_north/SOUL.md). Durable cron is GitHub Action `.github/workflows/mr-north-hourly.yml` (`7 * * * *` UTC). GitHub only runs scheduled workflows on **main** after merge. Set repository secret `ALERT_WEBHOOK_URL`. Without it, `hourly-status` reports `not-delivered`. BLS API: https://www.bls.gov/developers/api_signature.htm
+Soul / timer contract: [`mr_north/SOUL.md`](mr_north/SOUL.md). Durable cron is GitHub Action `.github/workflows/mr-north-hourly.yml` (`7 * * * *` UTC). GitHub only runs scheduled workflows on **main** after merge. Set repository secrets `NORTH_TELEGRAM_BOT_TOKEN` and `NORTH_TELEGRAM_CHAT_ID`. BLS API: https://www.bls.gov/developers/api_signature.htm — Telegram: https://core.telegram.org/bots/api#sendmessage
 
 ## Realtor Property Acquisition (@PirateEye_bot)
 

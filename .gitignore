@@ -10,3 +10,4 @@ build/
 .DS_Store
 mr_north/data/hourly.heartbeat.json
 mr_north/data/last_hourly.json
+mr_north/data/telegram_chat.json
