@@ -1,9 +1,10 @@
 import json
+import urllib.error
 
 import pytest
 
 from mr_north.identity import WrongTelegramBotError, assert_north_telegram_username
-from mr_north.telegram import NorthTelegram, split_telegram_text
+from mr_north.telegram import NorthTelegram, TelegramError, split_telegram_text
 
 
 class _FakeResponse:
@@ -62,6 +63,21 @@ def test_send_report_posts_sendMessage():
     assert send["body"]["chat_id"] == "99"
     assert "Bureau of Labor Statistics" in send["body"]["text"]
     assert "123:abc" in send["url"]
+
+
+def test_getupdates_conflict_explains_chat_id():
+    def opener(request, timeout=15):
+        raise urllib.error.HTTPError(
+            request.full_url,
+            409,
+            "Conflict",
+            hdrs=None,
+            fp=None,
+        )
+
+    client = NorthTelegram("123:abc", opener=opener)
+    with pytest.raises(TelegramError, match="NORTH_TELEGRAM_CHAT_ID"):
+        client.capture_chat_id()
 
 
 def test_assert_identity_refuses_wellness_token():

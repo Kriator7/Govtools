@@ -122,6 +122,19 @@ class NorthTelegram:
         try:
             with self._opener(request, timeout=self.timeout) as response:
                 raw = response.read().decode("utf-8")
+        except urllib.error.HTTPError as exc:
+            detail = ""
+            try:
+                detail = exc.read().decode("utf-8")[:300]
+            except Exception:
+                detail = str(exc)
+            if exc.code == 409 and method == "getUpdates":
+                raise TelegramError(
+                    "Another app is already polling @Mr_North_bot (Telegram 409). "
+                    "That is OK — North only needs sendMessage. Set NORTH_TELEGRAM_CHAT_ID "
+                    "(your numeric Telegram user id from @userinfobot, or the group id)."
+                ) from exc
+            raise TelegramError(f"Telegram {method} failed: HTTP {exc.code} {detail}") from exc
         except urllib.error.URLError as exc:
             raise TelegramError(f"Telegram {method} failed: {exc}") from exc
         try:
