@@ -4,11 +4,11 @@ This repository holds **three independent products**. They do not share Telegram
 
 | Product | Company / job | Telegram | Folder |
 | --- | --- | --- | --- |
-| Mr North | TrueHold **crypto** alerts + hourly BLS | North's own bot (`NORTH_TELEGRAM_*`) | [`mr_north/`](mr_north/) |
+| Mr North | TrueHold **crypto** alerts + hourly BLS | **@Mr_North_bot** | [`mr_north/`](mr_north/) |
 | Realtor acquisition | Property matching for one Nevada realtor | **@PirateEye_bot** | [`realtor-agent/`](realtor-agent/) |
 | TrueHold Wellness | Order-email workflow | **@THWellness_bot** | [`truehold-wellness/`](truehold-wellness/) |
 
-Never put the Wellness token in `realtor-agent/` or `mr_north/`. Never put the realtor token in `truehold-wellness/` or `mr_north/`. Live mode in each package calls Telegram `getMe` and refuses to start on the wrong username.
+Never put the Wellness token in `realtor-agent/` or `mr_north/`. Never put the realtor token in `truehold-wellness/` or `mr_north/`. Live `getMe` must return `@Mr_North_bot`, `@THWellness_bot`, or `@PirateEye_bot` for that package.
 
 These three agents are **protected business infrastructure**. CI fails if one is deleted unless two different people complete `.github/DELETE_AGENT_CONFIRMATION.json`. See [`PROTECTED_AGENTS.md`](PROTECTED_AGENTS.md).
 

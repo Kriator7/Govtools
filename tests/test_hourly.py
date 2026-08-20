@@ -66,7 +66,7 @@ def test_hourly_delivers_to_north_telegram(tmp_path, monkeypatch):
 
     class _FakeNorth:
         def assert_identity(self):
-            return "CryptoNorthBot"
+            return "Mr_North_bot"
 
         def send_report(self, chat_id, text):
             captured["chat_id"] = chat_id
@@ -77,7 +77,7 @@ def test_hourly_delivers_to_north_telegram(tmp_path, monkeypatch):
     result = run_hourly(fetch=_snapshot)
     assert result["ok"] is True
     assert result["delivered"] is True
-    assert result["destination"] == "telegram:@CryptoNorthBot"
+    assert result["destination"] == "telegram:@Mr_North_bot"
     assert captured["chat_id"] == "99"
     assert "Unemployment rate" in captured["text"]
     assert "TrueHold Wellness" not in captured["text"]

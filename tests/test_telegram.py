@@ -28,12 +28,12 @@ def test_identity_rejects_wellness_and_realtor():
 
 
 def test_identity_accepts_north_bot():
-    assert assert_north_telegram_username("CryptoNorthBot") == "CryptoNorthBot"
+    assert assert_north_telegram_username("Mr_North_bot") == "Mr_North_bot"
+    assert assert_north_telegram_username("@Mr_North_bot") == "Mr_North_bot"
 
 
-def test_identity_locks_expected_username(monkeypatch):
-    monkeypatch.setenv("NORTH_TELEGRAM_USERNAME", "CryptoNorthBot")
-    with pytest.raises(WrongTelegramBotError, match="CryptoNorthBot"):
+def test_identity_rejects_other_bot():
+    with pytest.raises(WrongTelegramBotError, match="Mr_North_bot"):
         assert_north_telegram_username("SomeOtherBot")
 
 
@@ -50,11 +50,11 @@ def test_send_report_posts_sendMessage():
         body = json.loads(request.data.decode("utf-8")) if request.data else {}
         calls.append({"url": request.full_url, "body": body})
         if request.full_url.endswith("/getMe"):
-            return _FakeResponse({"ok": True, "result": {"username": "CryptoNorthBot"}})
+            return _FakeResponse({"ok": True, "result": {"username": "Mr_North_bot"}})
         return _FakeResponse({"ok": True, "result": {"message_id": 11}})
 
     client = NorthTelegram("123:abc", opener=opener)
-    assert client.assert_identity() == "CryptoNorthBot"
+    assert client.assert_identity() == "Mr_North_bot"
     ids = client.send_report("99", "Mr North hourly — Bureau of Labor Statistics")
     assert ids == ["11"]
     send = calls[-1]

@@ -122,7 +122,7 @@ def send_alert(
         destinations.append(webhook)
     if not destinations:
         raise NotifyError(
-            f"No Telegram destination. Set {TOKEN_ENV} and {CHAT_ENV} for North's own bot "
+            f"No Telegram destination. Set {TOKEN_ENV} and {CHAT_ENV} for @Mr_North_bot "
             "(not @THWellness_bot or @PirateEye_bot). Optional extra: ALERT_WEBHOOK_URL."
         )
     return NotifyResult(

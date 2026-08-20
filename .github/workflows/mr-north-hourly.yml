@@ -38,6 +38,6 @@ jobs:
         env:
           NORTH_TELEGRAM_BOT_TOKEN: ${{ secrets.NORTH_TELEGRAM_BOT_TOKEN }}
           NORTH_TELEGRAM_CHAT_ID: ${{ secrets.NORTH_TELEGRAM_CHAT_ID }}
-          NORTH_TELEGRAM_USERNAME: ${{ secrets.NORTH_TELEGRAM_USERNAME }}
+          NORTH_TELEGRAM_USERNAME: Mr_North_bot
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
         run: python -m mr_north hourly

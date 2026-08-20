@@ -128,7 +128,7 @@ def test_send_drops_report_on_north_telegram(monkeypatch):
 
     class _FakeNorth:
         def assert_identity(self):
-            return "CryptoNorthBot"
+            return "Mr_North_bot"
 
         def send_report(self, chat_id, text):
             captured["chat_id"] = chat_id
@@ -138,7 +138,7 @@ def test_send_drops_report_on_north_telegram(monkeypatch):
     monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
     result = send_alert(_btc_alert())
     assert result.delivered is True
-    assert result.destination == "telegram:@CryptoNorthBot"
+    assert result.destination == "telegram:@Mr_North_bot"
     assert captured["chat_id"] == "42"
     assert "Strait of Hormuz" in captured["text"]
     assert "TrueHold Wellness" not in captured["text"]
