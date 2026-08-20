@@ -31,6 +31,19 @@ ALERT_WEBHOOK_URL=https://example.invalid/alerts python -m mr_north send --type 
 
 `send` POSTs JSON with `agent=mr-north`, `trigger`, `catalyst`, and `text`.
 
+### Hourly Bureau of Labor Statistics breakdown
+
+The old Cursor agent could compose a report and still fail to deliver: there was no in-repo timer (`No live scheduler exists yet`), and `ALERT_WEBHOOK_URL` was unset. Mr North now fetches official BLS prints every hour and POSTs that webhook.
+
+```bash
+python -m mr_north hourly --dry-run
+python -m mr_north hourly
+python -m mr_north hourly-status
+bash mr_north/scripts/keep_hourly.sh
+```
+
+Soul / timer contract: [`mr_north/SOUL.md`](mr_north/SOUL.md). Durable cron is GitHub Action `.github/workflows/mr-north-hourly.yml` (`7 * * * *` UTC). GitHub only runs scheduled workflows on **main** after merge. Set repository secret `ALERT_WEBHOOK_URL`. Without it, `hourly-status` reports `not-delivered`. BLS API: https://www.bls.gov/developers/api_signature.htm
+
 ## Realtor Property Acquisition (@PirateEye_bot)
 
 Self-contained in [`realtor-agent/`](realtor-agent/). Not TrueHold Wellness.

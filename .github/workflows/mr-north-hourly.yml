@@ -1,0 +1,39 @@
+name: mr-north-hourly
+
+# Durable timer for the BLS breakdown. In-process loops die when the cloud VM sleeps.
+# GitHub only runs `schedule` on the default branch (main).
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: mr-north-hourly
+  cancel-in-progress: true
+
+jobs:
+  hourly-bls:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Require ALERT_WEBHOOK_URL
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+        run: |
+          if [ -z "$ALERT_WEBHOOK_URL" ]; then
+            echo "Set repository secret ALERT_WEBHOOK_URL (Settings → Secrets and variables → Actions)." >&2
+            echo "Mr North composes the hourly BLS report but cannot deliver it without this webhook." >&2
+            exit 1
+          fi
+      - name: Install Mr North
+        run: python -m pip install -e .
+      - name: Send hourly BLS breakdown
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+        run: python -m mr_north hourly

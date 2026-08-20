@@ -12,6 +12,9 @@
         "mr_north/__init__.py",
         "mr_north/cli.py",
         "mr_north/notify.py",
+        "mr_north/bls.py",
+        "mr_north/hourly.py",
+        "mr_north/SOUL.md",
         "mr_north/data/current_catalyst.json"
       ]
     },

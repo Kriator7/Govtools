@@ -41,6 +41,7 @@ def test_mr_north_alerts_never_include_wellness_content():
         ("btc_threshold", "BTC threshold"),
         ("capital_regime", "capital-regime transition"),
         ("macro_liquidity", "Macro Liquidity"),
+        ("hourly_bls", "hourly BLS breakdown"),
         ("manual", "manual alert"),
     ):
         alert = compose_alert(AlertTrigger(type=trigger_type, headline=headline, detail="x"))
