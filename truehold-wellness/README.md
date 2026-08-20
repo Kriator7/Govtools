@@ -80,7 +80,7 @@ Wrong or missing staff identity replies `That command is for TrueHold staff only
 2. `.env`: `TELEGRAM_MODE=live`, `TELEGRAM_BOT_TOKEN=…`, plus a staff allowlist as above.
 3. `python -m wellness_agent whoami` — must return `THWellness_bot`.
 4. `python -m wellness_agent configure-telegram` — customer command menu by default; staff `/inbox` only on operator chats.
-5. `python -m wellness_agent telegram-poll` — stays up: if getUpdates or the process dies, it restarts. `python -m wellness_agent telegram-status` shows whether the heartbeat is fresh. Production wrapper: `bash scripts/keep_telegram_poll.sh` (only one copy).
+5. `python -m wellness_agent telegram-poll` — stays up: if getUpdates or the process dies, it restarts. `python -m wellness_agent telegram-status` shows whether the heartbeat is fresh. Production wrapper: `bash scripts/keep_telegram_poll.sh` (only one copy). Cloud boots run that keeper from `.cursor/environment.json` `start` so @THWellness_bot comes back automatically. Set `TELEGRAM_BOT_TOKEN` in the environment secrets; never commit `.env`.
 6. In Telegram as a customer: `/start` for the welcome, tap one name, order 1–3 vials, then share a phone if asked. `/schedule` shows `trueholdwellness@gmail.com` as a tappable email that opens the client’s mail app with our address filled in.
 7. In Telegram as staff: `/inbox` and `/stock` after allowlisting.
 

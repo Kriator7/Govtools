@@ -1,0 +1,4 @@
+{
+  "install": "python3 -m pip install -e ./truehold-wellness",
+  "start": "bash /workspace/truehold-wellness/scripts/keep_telegram_poll.sh"
+}
