@@ -109,6 +109,13 @@ def test_trestle_access_mail_is_packet_candidate_and_not_idx_options():
     )
     assert is_packet_candidate(options) is True
     assert is_mls_api_access_mail(options) is False
+    damian_fwd = _rfc822_msg(
+        sender="Damian Einbinder Realtor <binder@thehomefinderlv.com>",
+        subject="Fwd: IDX options from association",
+        body="Here are the following options for obtaining IDX for your website. Do NOT choose 2 and 3 together. Trestle WebAPI, sign up as a technology provider. API Key plugin from an IDX vendor.",
+        message_id="<damian-fwd-idx@test.example>",
+    )
+    assert is_mls_api_access_mail(damian_fwd) is False
 
 
 def test_watch_alerts_telegram_for_trestle_access_mail(db, tmp_path, monkeypatch):

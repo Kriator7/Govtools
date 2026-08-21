@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 
-from app.services.inbox.classify import is_mls_association_sender
 from app.services.inbox.message import InboundMessage
 from app.services.inbox.redact import redact_text
 
@@ -39,13 +38,31 @@ CONNECTED_HINT_RE = re.compile(
 
 def is_mls_api_access_mail(message: InboundMessage) -> bool:
     blob = _blob(message)
-    if IDX_OPTIONS_ONLY_RE.search(blob) and not CREDENTIAL_HINT_RE.search(blob) and not CONNECTED_HINT_RE.search(blob):
+    subject = message.subject or ""
+    if IDX_OPTIONS_ONLY_RE.search(blob) or re.search(r"idx options", subject, re.I):
         return False
-    if TRESTLE_SENDER_RE.search(f"{message.from_header} {message.subject}"):
+    from_vendor = bool(
+        re.search(
+            r"trestle|cotality|corelogic\.com|trestlesupport|catalino|"
+            r"lasvegasrealtor|las vegas realtor",
+            message.from_header or "",
+            re.I,
+        )
+    )
+    if from_vendor:
         return True
-    if is_mls_association_sender(message) and ACCESS_HINT_RE.search(blob):
-        return True
-    return bool(TRESTLE_SENDER_RE.search(blob) and ACCESS_HINT_RE.search(blob))
+    if re.search(r"\bpacket\s*(?:1|3|4|5|6|7|8|9|10)\b", subject, re.I):
+        return False
+    return bool(
+        TRESTLE_SENDER_RE.search(blob)
+        and ACCESS_HINT_RE.search(blob)
+        and (
+            CREDENTIAL_HINT_RE.search(blob)
+            or ESIGN_HINT_RE.search(blob)
+            or CONNECTED_HINT_RE.search(blob)
+            or re.search(r"mlo connection", blob, re.I)
+        )
+    )
 
 
 def mls_access_kind(message: InboundMessage) -> str:
