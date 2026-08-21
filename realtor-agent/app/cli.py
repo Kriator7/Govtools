@@ -29,7 +29,13 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("demo")
     sub.add_parser("ingest")
     sub.add_parser("match")
-    sub.add_parser("alert", help="Ingest, match, and send Telegram alerts without auto-approving")
+    alert = sub.add_parser("alert", help="Ingest, match, and send Telegram alerts without auto-approving")
+    alert.add_argument(
+        "--resend-pending",
+        action="store_true",
+        help="Re-send existing AWAITING_REALTOR_REVIEW cards (no new ingest)",
+    )
+    alert.add_argument("--limit", type=int, default=0, help="Max cards to send when resending (0 = no cap)")
     sub.add_parser("send-test-email", help="Send a ping to EMAIL_RELAY_TO via the configured provider")
     sub.add_parser("send-test-sms", help="Send a ping to SMS_RELAY_TO (mock outbox unless Twilio is live)")
     poll = sub.add_parser("telegram-poll", help="Long-poll Telegram getUpdates for phone approve/reject/snooze")
@@ -98,15 +104,31 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "alert":
             link_operator_group_chat(db)
             db.refresh(realtor)
-            ListingIngestService(db, get_mls_provider()).sync(realtor)
-            created = OpportunityMatcher(db).match_all(realtor)
-            telegram = RealtorTelegramService(db)
             sent = []
+            telegram = RealtorTelegramService(db)
+            if args.resend_pending:
+                from app.models.enums import OpportunityStatus
+                from app.models.opportunity import Opportunity
+
+                query = (
+                    db.query(Opportunity)
+                    .filter(
+                        Opportunity.realtor_id == realtor.id,
+                        Opportunity.status == OpportunityStatus.AWAITING_REALTOR_REVIEW.value,
+                    )
+                    .order_by(Opportunity.created_at.asc())
+                )
+                if args.limit and args.limit > 0:
+                    query = query.limit(args.limit)
+                created = query.all()
+            else:
+                ListingIngestService(db, get_mls_provider()).sync(realtor)
+                created = OpportunityMatcher(db).match_all(realtor)
             for opportunity in created:
                 telegram.alert_opportunity(realtor, opportunity)
                 sent.append(opportunity.public_id)
             db.commit()
-            print({"alerted": sent, "telegram_chat_id": realtor.telegram_chat_id})
+            print({"alerted": sent, "telegram_chat_id": realtor.telegram_chat_id, "resend": bool(args.resend_pending)})
             return 0
         if args.command == "telegram-poll":
             link_operator_group_chat(db)
