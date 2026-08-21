@@ -58,8 +58,8 @@ OPTION_1_RE = re.compile(r"\boption\s*1\b|\bframe\s*link\b|\bmatrix\s+frame\b", 
 YES_RE = re.compile(r"\byes\b|\bapproved\b|\bconfirm(?:ed)?\b|\bok\b|\bgo\s+ahead\b", re.I)
 NO_RE = re.compile(r"\bno\b|\bnot\s+yet\b|\bdon'?t\b|\bdo not\b", re.I)
 AGENT_ID_RE = re.compile(
-    r"(?:mls\s*)?(?:agent|member)\s*id\s*[:#]?\s*(\d{4,})|"
-    r"\bid\s*[:#]\s*(\d{4,})",
+    r"(?:mls\s*)?(?:agent|member)\s*id(?:\s+is)?\s*[:#]?\s*(\d{4,})|"
+    r"\bid(?:\s+is)?\s*[:#]\s*(\d{4,})",
     re.I,
 )
 ASK_CONTEXT_RE = re.compile(r"packet\s*2|trestle|webapi|idx option|mls agent id", re.I)

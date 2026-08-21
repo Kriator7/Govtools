@@ -15,6 +15,13 @@ def test_parse_option_3_and_agent_id():
     assert parsed["listing_statuses"] == "active"
 
 
+def test_parse_damian_mls_agent_id_241888():
+    parsed = parse_idx_reply("Damians MLS agent id is 241888")
+    assert parsed["has_idx"] is True
+    assert parsed["mls_agent_id"] == "241888"
+    assert parsed["chosen_idx_option"] is None
+
+
 def test_yes_on_idx_ask_thread_means_option_3():
     parsed = parse_idx_reply("Yes", reply_to="Packet 2 — live MLS for Agent Real. Trestle WebAPI")
     assert parsed["chosen_idx_option"] == "3"

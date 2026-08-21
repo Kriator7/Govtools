@@ -61,6 +61,12 @@ def main(argv: list[str] | None = None) -> int:
     apply_note.add_argument("--text", default="")
     apply_note.add_argument("--text-file")
     apply_note.add_argument("--send", action="store_true", help="Post the confirmation to TELEGRAM_OPERATOR_CHAT_ID")
+    apply_idx = sub.add_parser(
+        "telegram-apply-idx",
+        help="Apply a Packet 2 IDX / MLS agent-ID reply and optionally post confirmation",
+    )
+    apply_idx.add_argument("--text", default="")
+    apply_idx.add_argument("--send", action="store_true", help="Post the confirmation to TELEGRAM_OPERATOR_CHAT_ID")
     apply_mail = sub.add_parser(
         "inbox-apply",
         help="Apply a pasted packet email (file) to realtor packet data",
@@ -100,6 +106,8 @@ def main(argv: list[str] | None = None) -> int:
             return _inbox_apply(db, args)
         if args.command == "telegram-apply-note":
             return _telegram_apply_note(db, args)
+        if args.command == "telegram-apply-idx":
+            return _telegram_apply_idx(db, args)
         realtor = seed_realtor(db)
         seed_pirates_ig(db, realtor)
         if args.command == "telegram-hello":
@@ -314,6 +322,31 @@ def _telegram_apply_note(db, args) -> int:
         if settings.telegram_mode == "live" and chat_id and chat_id != "mock-realtor":
             telegram = get_telegram_provider(settings)
             sent = telegram.send_message(str(chat_id), result.get("reply") or "Buy box updated.")
+            result["sent"] = {k: v for k, v in sent.items() if k != "raw"}
+            result["chat_id"] = str(chat_id)
+    print(json.dumps(result, default=str))
+    return 0 if result.get("ok") else 1
+
+
+def _telegram_apply_idx(db, args) -> int:
+    from app.services.telegram.idx_ask import apply_idx_reply
+
+    text = str(args.text or "").strip()
+    if not text:
+        print({"ok": False, "error": "Pass --text with the IDX / MLS agent ID reply."})
+        return 1
+    result = apply_idx_reply(
+        db,
+        text=text,
+        from_user={"username": "damianlasvegas", "id": "7592412078"},
+    )
+    db.commit()
+    if args.send and result.get("ok"):
+        settings = get_settings()
+        chat_id = settings.telegram_operator_chat_id
+        if settings.telegram_mode == "live" and chat_id and chat_id != "mock-realtor":
+            telegram = get_telegram_provider(settings)
+            sent = telegram.send_message(str(chat_id), result.get("reply") or "Packet 2 updated.")
             result["sent"] = {k: v for k, v in sent.items() if k != "raw"}
             result["chat_id"] = str(chat_id)
     print(json.dumps(result, default=str))
