@@ -192,3 +192,85 @@ def _opportunity(db, realtor, listing_url: str | None = None):
     db.add(opportunity)
     db.flush()
     return investor, listing, opportunity
+
+
+def test_hello_from_operator_asks_how_it_can_help(db, realtor, tmp_path):
+    telegram = MockTelegramProvider(outbox_path=tmp_path / "tg.json")
+    result = process_telegram_update(
+        db,
+        realtor,
+        {
+            "message": {
+                "text": "hello",
+                "chat": {"id": -5372586958, "type": "group"},
+                "from": {"id": 1150046483, "username": "MaximumMint_AMINT"},
+            }
+        },
+        telegram=telegram,
+    )
+    assert result["action"] == "help"
+    assert "How can I help" in telegram.sent[0]["text"]
+    assert "@PirateEye_bot" in telegram.sent[0]["text"]
+    assert "Agent Real" in telegram.sent[0]["text"]
+    assert "Mr_North" not in telegram.sent[0]["text"]
+    assert "Wellness" not in telegram.sent[0]["text"]
+
+
+def test_help_command_and_bot_mention(db, realtor, tmp_path):
+    telegram = MockTelegramProvider(outbox_path=tmp_path / "tg.json")
+    for text in ("/help", "/help@PirateEye_bot", "@PirateEye_bot", "Agent Real", "hey"):
+        telegram.sent.clear()
+        result = process_telegram_update(
+            db,
+            realtor,
+            {
+                "message": {
+                    "text": text,
+                    "chat": {"id": -5372586958, "type": "group"},
+                    "from": {"id": 1150046483, "username": "MaximumMint_AMINT"},
+                }
+            },
+            telegram=telegram,
+        )
+        assert result["action"] == "help", text
+        assert "How can I help" in telegram.sent[0]["text"]
+
+
+def test_damian_hello_is_not_a_buy_box_note(db, realtor, tmp_path):
+    from app.services.seed import DAMIAN_NAME, upsert_damian_realtor
+
+    upsert_damian_realtor(db, {"name": DAMIAN_NAME})
+    telegram = MockTelegramProvider(outbox_path=tmp_path / "tg.json")
+    result = process_telegram_update(
+        db,
+        realtor,
+        {
+            "message": {
+                "text": "hello",
+                "chat": {"id": -5372586958, "type": "group"},
+                "from": {"id": 7592412078, "username": "damianlasvegas"},
+            }
+        },
+        telegram=telegram,
+    )
+    assert result["action"] == "help"
+    assert "buy box" not in telegram.sent[0]["text"].lower() or "How can I help" in telegram.sent[0]["text"]
+    assert "Saved your note" not in telegram.sent[0]["text"]
+
+
+def test_unrelated_group_chatter_stays_ignored(db, realtor, tmp_path):
+    telegram = MockTelegramProvider(outbox_path=tmp_path / "tg.json")
+    result = process_telegram_update(
+        db,
+        realtor,
+        {
+            "message": {
+                "text": "see you at lunch",
+                "chat": {"id": -5372586958, "type": "group"},
+                "from": {"id": 1150046483, "username": "MaximumMint_AMINT"},
+            }
+        },
+        telegram=telegram,
+    )
+    assert result.get("ignored") is True
+    assert telegram.sent == []

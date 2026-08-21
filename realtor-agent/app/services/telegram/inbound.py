@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from sqlalchemy.orm import Session
 
 from app.models.opportunity import Opportunity
@@ -9,6 +11,7 @@ from app.models.realtor import Realtor
 from app.services.providers import get_telegram_provider
 from app.services.seed import is_damian_telegram_user, link_damian_telegram
 from app.services.sms.investor_notify import InvestorNotificationService
+from app.services.telegram.notes import parse_realtor_note
 from app.services.telegram.realtor_agent import RealtorTelegramService
 
 GROUP_INTRO = (
@@ -18,6 +21,25 @@ GROUP_INTRO = (
     "This is still the test flow: investor SMS/email stay on the relay. "
     "Approve does not text Damian or investors.\n"
 )
+
+HELP_REPLY = (
+    "I'm Agent Real (@PirateEye_bot). How can I help?\n"
+    "\n"
+    "I can post listing cards, take APPROVE / REJECT / SNOOZE / DETAILS, "
+    "and update the buy box when Damian sends a price or buy-and-hold note.\n"
+    "Approve does not text Damian, Amos, or investors. Relays stay on.\n"
+    "Say hello, /help, or tell me the next listing or buy-box change."
+)
+
+HELP_COMMAND = re.compile(r"(?i)^/(help|hello|hi)(?:@pirateeye_bot)?\s*$")
+BOT_ADDRESSED = re.compile(r"(?i)@pirateeye_bot\b|\bagent\s*real\b|\bpirate\s*eye\b")
+GREETING = re.compile(
+    r"(?is)^\s*(?:@pirateeye_bot\b|agent\s*real\b|pirate\s*eye\b)?\s*[,:]?\s*"
+    r"(?:hi|hello|hey|yo|howdy|good\s+(?:morning|afternoon|evening)|"
+    r"help(?:\s+me)?|how can (?:you|we|i) help|what can you do)"
+    r"(?:\s*[!.?]*)?\s*$"
+)
+BARE_ADDRESS = re.compile(r"(?i)^\s*(?:@pirateeye_bot|agent\s*real|pirate\s*eye)\s*[!.?]*\s*$")
 
 
 def process_telegram_update(
@@ -55,8 +77,10 @@ def process_telegram_update(
             }
 
     text = str(message.get("text") or "").strip()
+    from_user = message.get("from") or {}
+    if from_user.get("is_bot"):
+        return {"ok": True, "ignored": True, "reason": "bot"}
     if text.startswith("/start") or text.lower() in {"/id", "id"}:
-        from_user = message.get("from") or {}
         if chat_id:
             realtor.telegram_chat_id = chat_id
             if is_damian_telegram_user(from_user):
@@ -66,7 +90,15 @@ def process_telegram_update(
             telegram.send_message(chat_id, _start_reply(chat, from_user, chat_id))
             return {"ok": True, "action": "linked", "chat_id": chat_id}
 
-    from_user = message.get("from") or {}
+    if text and chat_id and _wants_help(text, message):
+        if is_damian_telegram_user(from_user) and parse_realtor_note(text).get("has_criteria"):
+            pass
+        else:
+            if is_damian_telegram_user(from_user):
+                link_damian_telegram(db, from_user, chat_id)
+            telegram.send_message(chat_id, HELP_REPLY)
+            return {"ok": True, "action": "help", "chat_id": chat_id}
+
     if text and is_damian_telegram_user(from_user) and not text.startswith("/"):
         from app.services.criteria.telegram_apply import TelegramCriteriaService
 
@@ -163,3 +195,18 @@ def _reply_text(result: dict) -> str:
     if action == "view":
         return result.get("url") or "No listing URL on file."
     return f"Done ({action})."
+
+
+def _wants_help(text: str, message: dict) -> bool:
+    if HELP_COMMAND.match(text) or GREETING.match(text) or BARE_ADDRESS.match(text):
+        return True
+    if BOT_ADDRESSED.search(text) and GREETING.match(BOT_ADDRESSED.sub("", text).strip(" ,:")):
+        return True
+    entities = message.get("entities") or message.get("caption_entities") or []
+    mentioned = any(
+        str(item.get("type") or "") in {"mention", "text_mention", "bot_command"}
+        and "pirateeye" in str(item.get("text") or text).lower()
+        for item in entities
+    )
+    remainder = BOT_ADDRESSED.sub("", text).strip(" ,:")
+    return bool(mentioned and (not remainder or GREETING.match(remainder) or HELP_COMMAND.match(text)))
