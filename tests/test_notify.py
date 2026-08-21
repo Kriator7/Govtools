@@ -138,7 +138,52 @@ def test_send_drops_report_on_north_telegram(monkeypatch):
     monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
     result = send_alert(_btc_alert())
     assert result.delivered is True
-    assert result.destination == "telegram:@Mr_North_bot"
+    assert result.destination == "telegram:@Mr_North_bot:42"
     assert captured["chat_id"] == "42"
     assert "Strait of Hormuz" in captured["text"]
     assert "TrueHold Wellness" not in captured["text"]
+
+
+def test_send_fans_out_to_both_north_chats(monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "111")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-1003939359929")
+    captured = {"chats": []}
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def send_report(self, chat_id, text):
+            captured["chats"].append(chat_id)
+            captured["text"] = text
+            return ["1"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    result = send_alert(_btc_alert())
+    assert result.delivered is True
+    assert result.destination == "telegram:@Mr_North_bot:111,-1003939359929"
+    assert captured["chats"] == ["111", "-1003939359929"]
+    assert "Strait of Hormuz" in captured["text"]
+
+
+def test_send_skips_pirateeye_group(monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "-5372586958")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-1003939359929")
+    captured = {"chats": []}
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def send_report(self, chat_id, text):
+            captured["chats"].append(chat_id)
+            return ["1"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    result = send_alert(_btc_alert())
+    assert captured["chats"] == ["-1003939359929"]
+    assert "-5372586958" not in (result.destination or "")

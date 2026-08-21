@@ -22,7 +22,13 @@ from mr_north.identity import assert_north_telegram_username
 TELEGRAM_API = "https://api.telegram.org"
 TOKEN_ENV = "NORTH_TELEGRAM_BOT_TOKEN"
 CHAT_ENV = "NORTH_TELEGRAM_CHAT_ID"
+GROUP_ENV = "NORTH_TELEGRAM_GROUP_CHAT_ID"
+CHATS_ENV = "NORTH_TELEGRAM_CHAT_IDS"
 CHAT_FILE_NAME = "telegram_chat.json"
+# Documented Mr North BLS / TrueHold crypto group. Never the PirateEye realtor group.
+# realtor-agent/README.md on the Damian-group branch: do not use -1003939359929 for PirateEye.
+DEFAULT_GROUP_CHAT_ID = "-1003939359929"
+FORBIDDEN_CHAT_IDS = frozenset({"-5372586958"})
 # sendMessage text limit: https://core.telegram.org/bots/api#sendmessage
 MAX_MESSAGE_CHARS = 4096
 DEFAULT_TIMEOUT_SECONDS = 15
@@ -43,26 +49,85 @@ def chat_file_path() -> Path:
     return PACKAGE_ROOT / "data" / CHAT_FILE_NAME
 
 
-def configured_chat_id() -> str:
-    env = (os.environ.get(CHAT_ENV) or "").strip()
-    if env:
-        return env
+def _parse_chat_ids(raw: str) -> list[str]:
+    ids: list[str] = []
+    for part in (raw or "").replace(";", ",").split(","):
+        chat_id = part.strip()
+        if not chat_id or chat_id in ids or chat_id in FORBIDDEN_CHAT_IDS:
+            continue
+        ids.append(chat_id)
+    return ids
+
+
+def _default_group_chat_id() -> str:
+    """Production default is the North BLS group. Tests must opt in via GROUP_ENV."""
+    in_pytest = bool(os.environ.get("PYTEST_CURRENT_TEST"))
+    if GROUP_ENV in os.environ:
+        value = (os.environ.get(GROUP_ENV) or "").strip()
+        if value:
+            return value
+        return "" if in_pytest else DEFAULT_GROUP_CHAT_ID
+    if in_pytest:
+        return ""
+    return DEFAULT_GROUP_CHAT_ID
+
+
+def _chat_ids_from_file() -> list[str]:
     path = chat_file_path()
     if not path.is_file():
-        return ""
+        return []
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
-        return ""
-    return str(payload.get("chat_id") or "").strip()
+        return []
+    ids = _parse_chat_ids(str(payload.get("chat_id") or ""))
+    extra = payload.get("chat_ids") or []
+    if isinstance(extra, str):
+        ids.extend(_parse_chat_ids(extra))
+    elif isinstance(extra, list):
+        for item in extra:
+            ids.extend(_parse_chat_ids(str(item)))
+    return _parse_chat_ids(",".join(ids))
+
+
+def configured_chat_ids() -> list[str]:
+    """Unique Telegram destinations for every North report (hourly + catalyst + watch)."""
+    ids: list[str] = []
+    for raw in (
+        os.environ.get(CHAT_ENV) or "",
+        _default_group_chat_id(),
+        os.environ.get(CHATS_ENV) or "",
+    ):
+        for chat_id in _parse_chat_ids(raw):
+            if chat_id not in ids:
+                ids.append(chat_id)
+    for chat_id in _chat_ids_from_file():
+        if chat_id not in ids:
+            ids.append(chat_id)
+    return ids
+
+
+def configured_chat_id() -> str:
+    ids = configured_chat_ids()
+    return ids[0] if ids else ""
 
 
 def save_chat_id(chat_id: str, *, username: str = "") -> Path:
     path = chat_file_path()
     path.parent.mkdir(parents=True, exist_ok=True)
+    existing = _chat_ids_from_file()
+    ids = _parse_chat_ids(chat_id)
+    for item in existing:
+        if item not in ids:
+            ids.append(item)
     path.write_text(
         json.dumps(
-            {"chat_id": str(chat_id), "bot": username, "agent": "mr-north"},
+            {
+                "chat_id": ids[0] if ids else str(chat_id),
+                "chat_ids": ids,
+                "bot": username,
+                "agent": "mr-north",
+            },
             indent=2,
         )
         + "\n",
@@ -132,7 +197,7 @@ class NorthTelegram:
                 raise TelegramError(
                     "Another app is already polling @Mr_North_bot (Telegram 409). "
                     "That is OK — North only needs sendMessage. Set NORTH_TELEGRAM_CHAT_ID "
-                    "(your numeric Telegram user id from @userinfobot, or the group id)."
+                    "and NORTH_TELEGRAM_GROUP_CHAT_ID (numeric user id and/or group ids)."
                 ) from exc
             raise TelegramError(f"Telegram {method} failed: HTTP {exc.code} {detail}") from exc
         except urllib.error.URLError as exc:

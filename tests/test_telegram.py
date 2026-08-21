@@ -4,7 +4,13 @@ import urllib.error
 import pytest
 
 from mr_north.identity import WrongTelegramBotError, assert_north_telegram_username
-from mr_north.telegram import NorthTelegram, TelegramError, split_telegram_text
+from mr_north.telegram import (
+    DEFAULT_GROUP_CHAT_ID,
+    NorthTelegram,
+    TelegramError,
+    configured_chat_ids,
+    split_telegram_text,
+)
 
 
 class _FakeResponse:
@@ -87,3 +93,23 @@ def test_assert_identity_refuses_wellness_token():
     client = NorthTelegram("wellness-token", opener=opener)
     with pytest.raises(WrongTelegramBotError, match="THWellness_bot"):
         client.assert_identity()
+
+
+def test_configured_chat_ids_combines_both_locations(monkeypatch):
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "111")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", DEFAULT_GROUP_CHAT_ID)
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_IDS", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_PATH", raising=False)
+    assert configured_chat_ids() == ["111", DEFAULT_GROUP_CHAT_ID]
+
+
+def test_configured_chat_ids_skips_pirateeye_group(monkeypatch):
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "-5372586958,222")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", DEFAULT_GROUP_CHAT_ID)
+    assert configured_chat_ids() == ["222", DEFAULT_GROUP_CHAT_ID]
+
+
+def test_configured_chat_ids_accepts_comma_list(monkeypatch):
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "111,-1003939359929")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "")
+    assert configured_chat_ids() == ["111", "-1003939359929"]
