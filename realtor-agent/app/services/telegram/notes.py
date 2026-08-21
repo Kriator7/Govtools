@@ -18,6 +18,22 @@ HOLD_RE = re.compile(
 )
 RENTAL_RE = re.compile(r"\brentals?\b", re.I)
 STRETCH_RE = re.compile(r"very good deal|more expensive|different parameters", re.I)
+NO_HOA_RE = re.compile(r"\bno\s+hoa\b|\bwithout\s+(?:an\s+)?hoa\b|\bhoa\s*(?:is\s+)?(?:not|no)\b", re.I)
+ADDITIONAL_RE = re.compile(
+    r"\badditional(?:\s+one)?\b|\bextra(?:\s+one)?\b|\bsecondary\b|"
+    r"\bjust\s+(?:an\s+)?add(?:ed|itional)\b",
+    re.I,
+)
+MAIN_RE = re.compile(
+    r"\b(?:the\s+)?main\s+(?:one|box|search|criteria|buy\s*box)\b|"
+    r"\bprimary\s+(?:one|box|search|criteria)\b",
+    re.I,
+)
+LOW_PRIORITY_RE = re.compile(
+    r"not a priority|no(?:t)?\s+priority|low(?:er)?\s+priority|"
+    r"don'?t prioritize|do not prioritize|no rush",
+    re.I,
+)
 ARV_PCT_RE = re.compile(
     r"(?P<n>\d{1,3}(?:\.\d+)?)\s*%\s*(?:of\s+)?(?:arv|after[\s-]?repair(?:\s+value)?|market(?:\s+value)?)"
     r"|(?:arv|after[\s-]?repair(?:\s+value)?|market(?:\s+value)?)\s*(?:of\s+|at\s+|is\s+)?"
@@ -67,6 +83,7 @@ def parse_realtor_note(text: str) -> dict:
         buy_and_hold = True
     property_types = _property_types(raw)
     max_price_pct_of_arv = _arv_pct(raw)
+    hoa_required = False if NO_HOA_RE.search(raw) else None
     parsed = {
         "raw": raw,
         "min_price": min_price,
@@ -75,6 +92,10 @@ def parse_realtor_note(text: str) -> dict:
         "stretch_over_max": bool(STRETCH_RE.search(raw)),
         "property_types": property_types,
         "max_price_pct_of_arv": max_price_pct_of_arv,
+        "hoa_required": hoa_required,
+        "mentions_additional": bool(ADDITIONAL_RE.search(raw)),
+        "mentions_main": bool(MAIN_RE.search(raw)),
+        "low_priority": bool(LOW_PRIORITY_RE.search(raw)),
         "opportunity_id": extract_opportunity_id(raw),
     }
     parsed["has_criteria"] = any(
@@ -85,6 +106,10 @@ def parse_realtor_note(text: str) -> dict:
             parsed["stretch_over_max"],
             bool(parsed["property_types"]),
             parsed["max_price_pct_of_arv"] is not None,
+            parsed["hoa_required"] is False,
+            parsed["mentions_additional"],
+            parsed["mentions_main"],
+            parsed["low_priority"],
         ]
     )
     return parsed
@@ -92,17 +117,28 @@ def parse_realtor_note(text: str) -> dict:
 
 def format_note_confirmation(applied: dict) -> str:
     lines = ["Got it. Buy box updated from your Telegram note."]
+    ranking = bool(applied.get("main_box") or applied.get("additional_box") or applied.get("low_priority"))
+    if applied.get("main_box"):
+        lines.append(f"Main box: {applied['main_box']}.")
     min_price = applied.get("min_price")
     max_price = applied.get("max_price")
     if min_price is not None or max_price is not None:
         lines.append(f"Primary: {money_label(min_price)} min / {money_label(max_price)} max.")
     if applied.get("buy_and_hold"):
         lines.append("Strategy: buy-and-hold rentals, not flips.")
+    if applied.get("additional_box"):
+        extra = str(applied["additional_box"])
+        if applied.get("low_priority"):
+            lines.append(f"Additional box: {extra} — not a priority. I will not lead with this box.")
+        else:
+            lines.append(f"Additional box: {extra} (not the main box).")
+    elif applied.get("low_priority"):
+        lines.append("That additional box is not a priority. I will not lead with it.")
     types = applied.get("property_types") or []
-    if types:
+    if types and not ranking:
         lines.append("Property types: " + ", ".join(types) + ".")
     pct = applied.get("max_price_pct_of_arv")
-    if pct is not None:
+    if pct is not None and not ranking:
         lines.append(f"Max purchase: {float(pct) * 100:.0f}% of ARV. ARV is not invented.")
     if applied.get("stretch"):
         stretch = applied["stretch"]
@@ -120,7 +156,7 @@ def format_note_confirmation(applied: dict) -> str:
     search = applied.get("search") or {}
     if search:
         types = applied.get("property_types") or []
-        kind = ", ".join(types) if types else "matching"
+        kind = applied.get("main_box") or (", ".join(types) if types else "matching")
         if not search.get("connected"):
             lines.append(f"I'll check MLS for {kind} listings that pass this box.")
             lines.append("No MLS data connection yet — I cannot pull listings.")

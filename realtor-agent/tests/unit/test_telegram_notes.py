@@ -238,3 +238,105 @@ def test_apply_condo_arv_keeps_sfh_box_and_does_not_post_mock_cards(db, realtor,
     engine = MatchingEngine()
     assert engine.evaluate(pass_listing, condo).matched is True
     assert engine.evaluate(fail_listing, condo).matched is False
+
+
+def test_parse_additional_main_sfh_no_hoa():
+    parsed = parse_realtor_note(
+        "OK, that's just an additional one. The main one is single-family no HOA like we discussed."
+    )
+    assert parsed["mentions_additional"] is True
+    assert parsed["mentions_main"] is True
+    assert parsed["property_types"] == ["single_family"]
+    assert parsed["hoa_required"] is False
+    assert parsed["has_criteria"] is True
+
+
+def test_parse_not_a_priority():
+    parsed = parse_realtor_note("Not a priority at all")
+    assert parsed["low_priority"] is True
+    assert parsed["has_criteria"] is True
+    assert parsed["property_types"] == []
+
+
+def test_additional_condo_is_not_the_main_sfh_no_hoa_box(db, realtor, tmp_path, monkeypatch):
+    monkeypatch.setattr("app.services.criteria.telegram_apply.NOTES_PATH", tmp_path / "notes.jsonl")
+    from app.config import PROJECT_ROOT
+    from app.services.seed import seed_pirates_ig
+
+    InvestorImportService(db).import_path(realtor, PROJECT_ROOT / "data" / "imports" / "sample_investors.csv")
+    pirates = seed_pirates_ig(db, realtor)
+    upsert_damian_realtor(db, {"name": DAMIAN_NAME})
+    TelegramCriteriaService(db).apply_note(realtor, DAMIAN_PRICE_NOTE, from_user={"username": "damianlasvegas"})
+    TelegramCriteriaService(db).apply_note(realtor, "Condos 25% arv", from_user={"username": "damianlasvegas"})
+    telegram = MockTelegramProvider(outbox_path=tmp_path / "tg.json")
+    result = process_telegram_update(
+        db,
+        realtor,
+        {
+            "message": {
+                "text": (
+                    "OK, that's just an additional one. "
+                    "The main one is single-family no HOA like we discussed."
+                ),
+                "chat": {"id": -5372586958, "type": "group"},
+                "from": {"id": 7592412078, "username": "damianlasvegas"},
+            }
+        },
+        telegram=telegram,
+    )
+    assert result["action"] == "damian_note"
+    assert result["note"]["applied"] is True
+    abc = db.query(Investor).filter(Investor.name == "ABC Capital").one()
+    sfh = (
+        db.query(InvestorCriteria)
+        .filter(InvestorCriteria.investor_id == abc.id, InvestorCriteria.name.contains("single-family"))
+        .one()
+    )
+    mf = (
+        db.query(InvestorCriteria)
+        .filter(InvestorCriteria.investor_id == abc.id, InvestorCriteria.name.contains("multifamily"))
+        .one()
+    )
+    condo = (
+        db.query(InvestorCriteria)
+        .filter(InvestorCriteria.investor_id == abc.id, InvestorCriteria.name == "Telegram condo")
+        .one()
+    )
+    assert sfh.min_price == Decimal("300000")
+    assert sfh.max_price == Decimal("600000")
+    assert sfh.hoa_required is False
+    assert "multi_family" in (mf.property_types or []) or "multi" in (mf.name or "").lower()
+    assert mf.hoa_required is not False
+    assert condo.max_price_pct_of_arv == Decimal("0.2500")
+    assert "additional" in (condo.notes or "").lower()
+    assert db.query(InvestorCriteria).filter(InvestorCriteria.name == "Telegram SFH").one_or_none() is None
+    pirates_box = db.query(InvestorCriteria).filter(InvestorCriteria.investor_id == pirates.id).one()
+    assert pirates_box.property_types == ["single_family"]
+    assert pirates_box.max_price_pct_of_arv == Decimal("0.9000")
+    reply = telegram.sent[0]["text"]
+    assert "Main box: single-family, no HOA" in reply
+    assert "Additional box" in reply
+    assert "condo" in reply.lower()
+    assert "I'll check MLS" in reply
+    assert "No MLS data connection yet" in reply
+    assert "Saved your note. I did not find" not in reply
+    telegram.sent.clear()
+    result = process_telegram_update(
+        db,
+        realtor,
+        {
+            "message": {
+                "text": "Not a priority at all",
+                "chat": {"id": -5372586958, "type": "group"},
+                "from": {"id": 7592412078, "username": "damianlasvegas"},
+            }
+        },
+        telegram=telegram,
+    )
+    assert result["action"] == "damian_note"
+    db.refresh(condo)
+    assert "not a priority" in (condo.notes or "").lower() or "low" in (condo.notes or "").lower()
+    reply = telegram.sent[0]["text"]
+    assert "not a priority" in reply.lower()
+    assert "Saved your note. I did not find" not in reply
+    assert not any("NEW INVESTOR MATCH" in (item.get("text") or "") for item in telegram.sent)

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from pathlib import Path
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -40,6 +41,9 @@ HOLD_NOTE = (
     "Buy-and-hold rentals held for a long time. Not a flip. "
     "Telegram note from Damian Einbinder."
 )
+ADDITIONAL_NOTE = "Telegram lane: additional (not the main box)."
+LOW_PRIORITY_NOTE = "Telegram priority: low. Not a priority; do not lead search with this box."
+MAIN_SFH_NOTE = "Main Telegram-confirmed box: single-family, no HOA."
 NOTES_PATH = PROJECT_ROOT / "data" / "telegram" / "notes.jsonl"
 
 
@@ -98,6 +102,9 @@ class TelegramCriteriaService:
                 "property_types": applied.get("property_types") or [],
                 "max_price_pct_of_arv": str(applied.get("max_price_pct_of_arv") or ""),
                 "telegram_profile": applied.get("telegram_profile"),
+                "main_box": applied.get("main_box"),
+                "additional_box": applied.get("additional_box"),
+                "low_priority": bool(applied.get("low_priority")),
             },
             detail=parsed.get("raw"),
         )
@@ -140,12 +147,42 @@ class TelegramCriteriaService:
         arv_pct = parsed.get("max_price_pct_of_arv")
         min_price = parsed.get("min_price")
         max_price = parsed.get("max_price")
+        mentions_main = bool(parsed.get("mentions_main"))
+        mentions_additional = bool(parsed.get("mentions_additional"))
+        low_priority = bool(parsed.get("low_priority"))
+        no_hoa = parsed.get("hoa_required") is False
         typed_profile = None
+        additional_profile = None
+        main_profiles: list[InvestorCriteria] = []
         profiles: list[InvestorCriteria] = []
-        if types or arv_pct is not None:
+        create_typed = bool(types or arv_pct is not None) and not mentions_main
+        ranking = mentions_main or mentions_additional or low_priority
+
+        if create_typed:
             typed_profile = self._upsert_telegram_profile(realtor, investor, parsed, types, arv_pct)
+            self._remember_telegram_profile(realtor, typed_profile)
             profiles = [typed_profile]
-        else:
+            if mentions_additional:
+                additional_profile = self._mark_additional(typed_profile)
+
+        if mentions_additional and additional_profile is None:
+            additional_profile = self._last_telegram_profile(realtor, investor)
+            if additional_profile is not None:
+                self._mark_additional(additional_profile)
+                self._remember_telegram_profile(realtor, additional_profile)
+
+        if mentions_main and (not types or "single_family" in types):
+            main_profiles = self._confirm_main_sfh_no_hoa(investor, no_hoa=no_hoa)
+        elif no_hoa and "single_family" in types:
+            main_profiles = self._confirm_main_sfh_no_hoa(investor, no_hoa=True)
+
+        if low_priority:
+            target = additional_profile or typed_profile or self._last_telegram_profile(realtor, investor)
+            if target is not None:
+                self._mark_low_priority(target)
+                additional_profile = target
+
+        if not create_typed and not ranking:
             profiles = (
                 self.db.query(InvestorCriteria)
                 .filter(
@@ -186,20 +223,34 @@ class TelegramCriteriaService:
                     max_price = profile.max_price or before_max
 
         stretch = None
-        if parsed.get("stretch_over_max") and typed_profile is None:
+        if parsed.get("stretch_over_max") and typed_profile is None and not ranking:
             stretch = self._upsert_stretch(realtor, investor, profiles, max_price)
-        rejected = self._rescreen_pending(realtor, investor)
-        search = self._mls_search_status(realtor, typed_profile) if typed_profile is not None else None
+        should_rescreen = (not ranking) or bool(main_profiles)
+        rejected = self._rescreen_pending(realtor, investor) if should_rescreen else []
+        search_profile = None
+        if not low_priority:
+            if main_profiles:
+                search_profile = main_profiles[0]
+            elif typed_profile is not None and additional_profile is None:
+                search_profile = typed_profile
+        search = None
+        if typed_profile is not None or ranking or search_profile is not None:
+            search = self._mls_search_status(realtor, search_profile or typed_profile or additional_profile)
         return {
             "min_price": min_price,
             "max_price": max_price,
             "buy_and_hold": bool(parsed.get("buy_and_hold")),
             "stretch": stretch,
             "rejected": rejected,
-            "profiles": [item.name for item in profiles],
+            "profiles": [item.name for item in (profiles or main_profiles or ([additional_profile] if additional_profile else []))],
             "property_types": list(typed_profile.property_types or []) if typed_profile else types,
             "max_price_pct_of_arv": typed_profile.max_price_pct_of_arv if typed_profile else arv_pct,
-            "telegram_profile": typed_profile.name if typed_profile else None,
+            "telegram_profile": typed_profile.name if typed_profile else (
+                additional_profile.name if additional_profile else None
+            ),
+            "main_box": "single-family, no HOA" if main_profiles else None,
+            "additional_box": _profile_summary(additional_profile) if additional_profile else None,
+            "low_priority": low_priority and additional_profile is not None,
             "search": search,
         }
 
@@ -261,7 +312,78 @@ class TelegramCriteriaService:
         self.db.flush()
         return profile
 
-    def _mls_search_status(self, realtor: Realtor, profile: InvestorCriteria) -> dict:
+    def _remember_telegram_profile(self, realtor: Realtor, profile: InvestorCriteria) -> None:
+        settings = dict(realtor.notification_settings or {})
+        settings["last_telegram_profile_id"] = str(profile.id)
+        settings["last_telegram_profile_name"] = profile.name
+        realtor.notification_settings = settings
+        self.db.flush()
+
+    def _last_telegram_profile(self, realtor: Realtor, investor: Investor) -> InvestorCriteria | None:
+        settings = realtor.notification_settings or {}
+        raw_id = settings.get("last_telegram_profile_id")
+        if raw_id:
+            try:
+                profile = self.db.get(InvestorCriteria, UUID(str(raw_id)))
+            except (TypeError, ValueError):
+                profile = None
+            if profile is not None and profile.investor_id == investor.id:
+                return profile
+        return (
+            self.db.query(InvestorCriteria)
+            .filter(
+                InvestorCriteria.investor_id == investor.id,
+                InvestorCriteria.name.startswith("Telegram "),
+            )
+            .order_by(InvestorCriteria.updated_at.desc())
+            .first()
+        )
+
+    def _mark_additional(self, profile: InvestorCriteria) -> InvestorCriteria:
+        profile.notes = _merge_note(profile.notes, ADDITIONAL_NOTE)
+        profile.nl_criteria = _merge_note(profile.nl_criteria, "Additional buy box; not the main search.")
+        self.db.flush()
+        return profile
+
+    def _mark_low_priority(self, profile: InvestorCriteria) -> InvestorCriteria:
+        profile.notes = _merge_note(profile.notes, LOW_PRIORITY_NOTE)
+        profile.nl_criteria = _merge_note(
+            profile.nl_criteria,
+            "Low priority. Do not lead MLS search or listing cards with this box.",
+        )
+        self.db.flush()
+        return profile
+
+    def _confirm_main_sfh_no_hoa(self, investor: Investor, *, no_hoa: bool) -> list[InvestorCriteria]:
+        profiles = (
+            self.db.query(InvestorCriteria)
+            .filter(
+                InvestorCriteria.investor_id == investor.id,
+                InvestorCriteria.is_active.is_(True),
+                InvestorCriteria.name != STRETCH_PROFILE_NAME,
+                ~InvestorCriteria.name.startswith("Telegram "),
+            )
+            .all()
+        )
+        updated: list[InvestorCriteria] = []
+        for profile in profiles:
+            if not _is_sfh_profile(profile):
+                continue
+            if no_hoa:
+                profile.hoa_required = False
+                strict = list(profile.strict_fields or [])
+                for field_name in ("property_types", "hoa_required"):
+                    if field_name not in strict:
+                        strict.append(field_name)
+                profile.strict_fields = strict
+            if not profile.property_types:
+                profile.property_types = ["single_family"]
+            profile.notes = _merge_note(profile.notes, MAIN_SFH_NOTE)
+            updated.append(profile)
+        self.db.flush()
+        return updated
+
+    def _mls_search_status(self, realtor: Realtor, profile: InvestorCriteria | None) -> dict:
         """Search only when a live MLS provider is connected. Mock is not live MLS."""
         from app.services.providers import get_mls_provider
 
@@ -273,13 +395,21 @@ class TelegramCriteriaService:
                 "connected": False,
                 "matched": 0,
                 "opportunity_ids": [],
-                "profile": profile.name,
+                "profile": profile.name if profile is not None else "main",
             }
         from app.services.matching.runner import OpportunityMatcher
         from app.services.mls.ingest import ListingIngestService
 
         ListingIngestService(self.db, provider).sync(realtor, incremental=False)
         self.db.flush()
+        if profile is None:
+            return {
+                "provider": name,
+                "connected": True,
+                "matched": 0,
+                "opportunity_ids": [],
+                "profile": "main",
+            }
         created = OpportunityMatcher(self.db).match_profile(realtor, profile)
         return {
             "provider": name,
@@ -395,7 +525,17 @@ class TelegramCriteriaService:
         if damian is None:
             return
         parts: list[str] = []
-        if parsed.get("property_types") or parsed.get("max_price_pct_of_arv") is not None:
+        if parsed.get("mentions_main") or parsed.get("hoa_required") is False:
+            parts.append("main box remains single-family, no HOA (as discussed); Pirates 80% SFH unchanged")
+        if parsed.get("mentions_additional") or parsed.get("low_priority"):
+            extra = applied.get("additional_box") or "typed Telegram box"
+            if parsed.get("low_priority"):
+                parts.append(f"{extra} is additional and not a priority")
+            else:
+                parts.append(f"{extra} is additional, not the main box")
+        if (parsed.get("property_types") or parsed.get("max_price_pct_of_arv") is not None) and not parsed.get(
+            "mentions_main"
+        ):
             types = parsed.get("property_types") or []
             pct = parsed.get("max_price_pct_of_arv")
             bit = "typed box on ABC Capital test flow (not Pirates 80% SFH)"
@@ -444,6 +584,27 @@ def _telegram_strict_fields(types: list[str], arv_pct: Decimal | None, parsed: d
     if parsed.get("max_price") is not None:
         fields.append("max_price")
     return fields
+
+
+def _is_sfh_profile(profile: InvestorCriteria) -> bool:
+    types = [normalize_property_type(item) for item in (profile.property_types or [])]
+    if types:
+        return "single_family" in types and "condo" not in types and "multi_family" not in types
+    name = (profile.name or "").lower()
+    return "single-family" in name or "single family" in name or "sfh" in name
+
+
+def _profile_summary(profile: InvestorCriteria | None) -> str | None:
+    if profile is None:
+        return None
+    types = [normalize_property_type(item) for item in (profile.property_types or [])]
+    bits = [profile.name]
+    if types:
+        bits.append(", ".join(types))
+    pct = profile.max_price_pct_of_arv
+    if pct is not None:
+        bits.append(f"max {float(pct) * 100:.0f}% of ARV")
+    return " — ".join(bits)
 
 
 def _append_note_log(parsed: dict, from_user: dict | None) -> None:
