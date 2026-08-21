@@ -104,8 +104,17 @@ def process_telegram_update(
 
     if text and is_damian_telegram_user(from_user) and not text.startswith("/"):
         from app.services.criteria.telegram_apply import TelegramCriteriaService
+        from app.services.telegram.idx_ask import apply_idx_reply, parse_idx_reply
 
         link_damian_telegram(db, from_user, chat_id or None)
+        reply_to = str((message.get("reply_to_message") or {}).get("text") or "")
+        idx = parse_idx_reply(text, reply_to=reply_to)
+        if idx.get("has_idx"):
+            result = apply_idx_reply(db, text=text, reply_to=reply_to, from_user=from_user)
+            if chat_id:
+                telegram.send_message(chat_id, result.get("reply") or "Packet 2 updated.")
+            return {"ok": True, "action": "idx_choice", "idx": result}
+
         note = TelegramCriteriaService(db).apply_note(
             realtor,
             text,

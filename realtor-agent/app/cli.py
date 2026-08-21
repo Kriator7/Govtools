@@ -45,6 +45,10 @@ def main(argv: list[str] | None = None) -> int:
         "telegram-hello",
         help="Send a group intro to TELEGRAM_OPERATOR_CHAT_ID (@PirateEye_bot only)",
     )
+    sub.add_parser(
+        "telegram-ask-idx",
+        help="Ask Damian in the PirateEye group for Packet 2 IDX option 3 (Trestle)",
+    )
     inbox = sub.add_parser(
         "inbox-poll",
         help="Watch Gmail for Damian packet replies and apply them to realtor packet data",
@@ -100,6 +104,8 @@ def main(argv: list[str] | None = None) -> int:
         seed_pirates_ig(db, realtor)
         if args.command == "telegram-hello":
             return _telegram_hello(db, realtor)
+        if args.command == "telegram-ask-idx":
+            return _telegram_ask_idx(db, realtor)
         if args.command == "ingest":
             result = ListingIngestService(db, get_mls_provider()).sync(realtor)
             db.commit()
@@ -212,6 +218,24 @@ def _telegram_hello(db, realtor) -> int:
 
     telegram = get_telegram_provider(settings)
     result = telegram.send_message(str(chat_id), f"{GROUP_INTRO}chat_id={chat_id}")
+    db.commit()
+    print({"ok": True, "chat_id": str(chat_id), "result": {k: v for k, v in result.items() if k != "raw"}})
+    return 0
+
+
+def _telegram_ask_idx(db, realtor) -> int:
+    from app.services.telegram.idx_ask import IDX_ASK_TEXT
+
+    settings = get_settings()
+    if settings.telegram_mode != "live":
+        print({"ok": False, "error": "Set TELEGRAM_MODE=live and TELEGRAM_BOT_TOKEN, then retry."})
+        return 1
+    chat_id = link_operator_group_chat(db) or realtor.telegram_chat_id
+    if not chat_id or chat_id == "mock-realtor":
+        print({"ok": False, "error": "Set TELEGRAM_OPERATOR_CHAT_ID to the PirateEye group id."})
+        return 1
+    telegram = get_telegram_provider(settings)
+    result = telegram.send_message(str(chat_id), IDX_ASK_TEXT)
     db.commit()
     print({"ok": True, "chat_id": str(chat_id), "result": {k: v for k, v in result.items() if k != "raw"}})
     return 0
