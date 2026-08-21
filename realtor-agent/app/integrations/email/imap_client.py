@@ -22,6 +22,7 @@ GMAIL_PACKET_QUERY = (
     'OR from:cotality.com OR from:corelogic.com OR from:trestle.corelogic.com '
     'OR "las vegas realtor" OR lasvegasrealtor OR idx OR webapi OR "web api" '
     'OR "mlo connection" OR "technology provider" OR "data license" '
+    'OR "api key" OR "client secret" OR "client id" '
     'OR "packet 1" OR "packet 2" OR "packet 3" OR "packet 4" OR "packet 5" '
     'OR "packet 6" OR "packet 7" OR "packet 8" OR "packet 9" OR "packet 10" '
     'OR "buy box" OR "investor list")'

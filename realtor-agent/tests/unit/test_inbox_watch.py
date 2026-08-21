@@ -126,25 +126,78 @@ def test_watch_alerts_telegram_for_trestle_access_mail(db, tmp_path, monkeypatch
     monkeypatch.setenv("IMAP_PASSWORD", "sixteencharspass")
     monkeypatch.setenv("TELEGRAM_MODE", "mock")
     monkeypatch.setenv("TELEGRAM_OPERATOR_CHAT_ID", "-5372586958")
+    monkeypatch.setenv("MLS_PROVIDER", "mock")
+    monkeypatch.setenv("MLS_CLIENT_ID", "")
+    monkeypatch.setenv("MLS_CLIENT_SECRET", "")
+    monkeypatch.setenv("MLS_API_KEY", "")
     from app.config import get_settings
 
     get_settings.cache_clear()
     seed_realtor(db)
     access = _rfc822_msg(
         sender="Trestle Support <trestlesupport@cotality.com>",
-        subject="Your Trestle API credentials",
-        body="Client ID: abc123\nClient Secret: super-secret-value\nAdd MLO connection for Las Vegas REALTORS.",
-        message_id="<trestle-creds@test.example>",
+        subject="Add MLO Connection — Las Vegas REALTORS",
+        body="Please sign the data license and add an MLO connection for your technology provider account.",
+        message_id="<trestle-mlo@test.example>",
     )
     telegram = MockTelegramProvider(outbox_path=tmp_path / "tg.json")
-    watcher = InboxWatchService(db, get_settings(), source=FakeSource([access]), telegram=telegram)
+    watcher = InboxWatchService(
+        db, get_settings(), source=FakeSource([access]), telegram=telegram, env_path=tmp_path / ".env"
+    )
     result = watcher.poll_once()
     applied = result["processed"][0]
     assert applied["status"] in {"applied", "partial"}
     assert applied["mls_access_alert"]["sent"] is True
     reply = telegram.sent[0]["text"]
     assert "MLS API access mail arrived" in reply
-    assert "super-secret-value" not in reply
     assert "will not scrape" in reply.lower()
     assert "will not text Damian" in reply
-    assert len(telegram.sent) == 1
+    assert "We have live MLS access" not in reply
+
+
+def test_watch_applies_api_key_and_announces_live_access(db, tmp_path, monkeypatch):
+    monkeypatch.setenv("INBOX_STORAGE_PATH", str(tmp_path / "inbox"))
+    monkeypatch.setenv("EMAIL_SMTP_USERNAME", "")
+    monkeypatch.setenv("EMAIL_SMTP_PASSWORD", "")
+    monkeypatch.setenv("IMAP_USERNAME", "jrupe7@gmail.com")
+    monkeypatch.setenv("IMAP_PASSWORD", "sixteencharspass")
+    monkeypatch.setenv("TELEGRAM_MODE", "mock")
+    monkeypatch.setenv("TELEGRAM_OPERATOR_CHAT_ID", "-5372586958")
+    monkeypatch.setenv("MLS_PROVIDER", "mock")
+    monkeypatch.setenv("MLS_CLIENT_ID", "")
+    monkeypatch.setenv("MLS_CLIENT_SECRET", "")
+    monkeypatch.setenv("MLS_API_KEY", "")
+    from app.config import get_settings
+    from app.services.inbox.mls_access import extract_mls_credentials
+    from app.services.seed import DAMIAN_NAME, find_damian_realtor
+
+    get_settings.cache_clear()
+    seed_realtor(db)
+    access = _rfc822_msg(
+        sender="Trestle Support <trestlesupport@cotality.com>",
+        subject="Your Trestle API credentials",
+        body="API Key: trestle-live-key-9f3a2c1b8e\nClient ID: trestle-client-4411\nClient Secret: super-secret-value",
+        message_id="<trestle-creds@test.example>",
+    )
+    assert extract_mls_credentials(access)["api_key"] == "trestle-live-key-9f3a2c1b8e"
+    telegram = MockTelegramProvider(outbox_path=tmp_path / "tg-live.json")
+    env_path = tmp_path / ".env"
+    env_path.write_text("MLS_PROVIDER=mock\n", encoding="utf-8")
+    watcher = InboxWatchService(
+        db, get_settings(), source=FakeSource([access]), telegram=telegram, env_path=env_path
+    )
+    result = watcher.poll_once()
+    applied = result["processed"][0]
+    assert applied["credentials_applied"]["ok"] is True
+    reply = telegram.sent[0]["text"]
+    assert "We have live MLS access" in reply
+    assert "Time to test" in reply
+    assert "trestle-live-key-9f3a2c1b8e" not in reply
+    assert "super-secret-value" not in reply
+    saved = env_path.read_text(encoding="utf-8")
+    assert "MLS_PROVIDER=trestle" in saved
+    assert "MLS_API_KEY=trestle-live-key-9f3a2c1b8e" in saved
+    damian = find_damian_realtor(db)
+    assert damian is not None
+    assert damian.mls_config_ref == "secret:mls-trestle-env"
+    assert damian.name == DAMIAN_NAME

@@ -17,6 +17,12 @@ from app.services.ai.service import AIService
 
 def get_mls_provider(settings: Settings | None = None) -> MLSProvider:
     settings = settings or get_settings()
+    if settings.mls_provider in {"trestle", "live"} and (
+        settings.mls_client_id or settings.mls_client_secret or settings.mls_api_key
+    ):
+        from app.integrations.mls.trestle import TrestleMLSProvider
+
+        return TrestleMLSProvider(settings)
     return MockMLSProvider()
 
 
