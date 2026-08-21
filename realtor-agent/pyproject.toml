@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "realtor-agent"
+version = "0.1.0"
+description = "Realtor Property Acquisition Automation System — Nevada MVP for one realtor, one authorized MLS connection, and existing investor clientele."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "sqlalchemy>=2.0.36",
+    "alembic>=1.14.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    "psycopg[binary]>=3.2.0",
+    "python-multipart>=0.0.17",
+    "httpx>=0.28.0",
+    "jinja2>=3.1.4",
+    "pypdf>=5.1.0",
+    "reportlab>=4.2.0",
+    "openpyxl>=3.1.5",
+    "python-dateutil>=2.9.0",
+    "celery>=5.4.0",
+    "redis>=5.2.0",
+    "email-validator>=2.2.0",
+    "pyyaml>=6.0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+]
+gcp = [
+    "google-cloud-secret-manager>=2.21.0",
+    "google-cloud-storage>=2.18.0",
+    "google-cloud-logging>=3.11.0",
+]
+
+[project.scripts]
+realtor-agent = "app.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+"app" = ["prompts/*.txt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+asyncio_mode = "auto"
+pythonpath = ["."]

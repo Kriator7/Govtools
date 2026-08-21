@@ -1,0 +1,8 @@
+{
+  "buyer_name": "BuyerFullName",
+  "property_address": "PropertyAddress",
+  "purchase_price": "PurchasePrice",
+  "earnest_money": "EarnestDeposit",
+  "closing_date": "ClosingDate",
+  "financing_type": "FinancingType"
+}

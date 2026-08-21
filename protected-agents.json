@@ -1,0 +1,50 @@
+{
+  "policy": "These agents are production business infrastructure. Do not delete a folder, package, or Telegram binding without two independent human confirmations.",
+  "required_warning": "THIS DELETES PRODUCTION BUSINESS INFRASTRUCTURE",
+  "confirmation_file": ".github/DELETE_AGENT_CONFIRMATION.json",
+  "agents": [
+    {
+      "id": "mr-north",
+      "name": "Mr North",
+      "role": "TrueHold crypto alerts and hourly BLS Telegram",
+      "path": "mr_north",
+      "required_files": [
+        "mr_north/__init__.py",
+        "mr_north/cli.py",
+        "mr_north/notify.py",
+        "mr_north/bls.py",
+        "mr_north/hourly.py",
+        "mr_north/identity.py",
+        "mr_north/telegram.py",
+        "mr_north/SOUL.md",
+        "mr_north/data/current_catalyst.json"
+      ]
+    },
+    {
+      "id": "realtor-agent",
+      "name": "Realtor acquisition",
+      "role": "Nevada realtor matching; Telegram @PirateEye_bot",
+      "path": "realtor-agent",
+      "required_files": [
+        "realtor-agent/app/main.py",
+        "realtor-agent/app/cli.py",
+        "realtor-agent/app/integrations/telegram/identity.py"
+      ]
+    },
+    {
+      "id": "truehold-wellness",
+      "name": "TrueHold Wellness",
+      "role": "Order/inbox workflow; Telegram @THWellness_bot",
+      "path": "truehold-wellness",
+      "required_files": [
+        "truehold-wellness/wellness_agent/cli.py",
+        "truehold-wellness/wellness_agent/compose.py",
+        "truehold-wellness/wellness_agent/notify.py",
+        "truehold-wellness/wellness_agent/data/current_inbox.json",
+        "truehold-wellness/wellness_agent/identity.py",
+        "truehold-wellness/ORIGINAL_SPEC.md",
+        "truehold-wellness/wellness_agent/inventory/catalog.json"
+      ]
+    }
+  ]
+}

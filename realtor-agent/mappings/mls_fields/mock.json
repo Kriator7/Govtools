@@ -1,0 +1,12 @@
+{
+  "provider": "mock",
+  "notes": "Internal fixture mapping. Replace with an authorized MLS vendor map when credentials and docs are available. Do not invent vendor schemas.",
+  "fields": {
+    "mls_id": "mls_listing_id",
+    "street_address": "street_address",
+    "city": "city",
+    "state": "state",
+    "zip_code": "zip_code",
+    "asking_price": "asking_price"
+  }
+}

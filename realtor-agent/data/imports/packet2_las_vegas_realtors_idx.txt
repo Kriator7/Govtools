@@ -1,0 +1,11 @@
+Here are the following options for obtaining IDX for your website:
+1.      Frame link from Matrix, in Matrix, click your name, click settings, and go into IDX Configuration to create your frame link (this one is free). This option does not require an agreement.
+2.      API Key plugin, can be obtained from an IDX vendor such as iHomefinder, Placester, Proagent websites, Constellation Web Solutions, ListReports, Inside Real Estate, or Broker IDX/Elm Street Technologies (these companies charge for their services). You may also ask for recommendations from someone you know. This website also has a list of companies that provide IDX: https://wordpress.com/plugins/browse/idx
+Here is the list of vendors that we do not charge the $250 setup fee: Perfect Storm, Placester.Com, Moxiworks, Bold Street, Real Scout, Terradatum, Follow Up Boss/Zillow, Inside Real Estate/Amp Stats, Home Junction, Proagent Websites, Sierra Interactive, Brokermint, Clearcapital.Com Inc, Constellation Web Solutions, List Reports, Relitix, Home Asap, Ihomefinder, Agent Personal Assist., Idx.Inc/Elm Street Technologies, Property Hook Up, Anywhere Real Estate
+3.      WebAPI Data Feed from Trestle, go to https://trestle.corelogic.com/SubscriptionWizard and sign up as a technology provider (there is a $100 monthly fee that needs to be paid to Cotality)
+Do NOT choose 2 and 3 together, choose only one of them.
+Thank you,
+
+Catalino "Cat" Yee
+MLS Training & IDX Specialist/CALV Coordinator
+Las Vegas REALTORS

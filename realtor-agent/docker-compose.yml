@@ -1,0 +1,77 @@
+# Local stack. Production uses Cloud Run + Cloud SQL + Memorystore/Redis + Secret Manager.
+# Postgres image: https://hub.docker.com/_/postgres
+# Redis image: https://hub.docker.com/_/redis
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: realtor
+      POSTGRES_PASSWORD: realtor
+      POSTGRES_DB: realtor_agent
+    ports:
+      - "5432:5432"
+    volumes:
+      - realtor_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U realtor -d realtor_agent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    environment:
+      ENVIRONMENT: local
+      DATABASE_URL: postgresql+psycopg://realtor:realtor@postgres:5432/realtor_agent
+      REDIS_URL: redis://redis:6379/0
+      AUTO_CREATE_TABLES: "true"
+      MLS_PROVIDER: mock
+      TELEGRAM_MODE: mock
+      SMS_PROVIDER: mock
+      AI_PROVIDER: mock
+      ESIGN_PROVIDER: mock
+      STORAGE_BACKEND: local
+      LOCAL_STORAGE_PATH: /app/data/storage
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./data:/app/data
+      - ./templates:/app/templates
+      - ./mappings:/app/mappings
+
+  worker:
+    build: .
+    command: celery -A app.workers.celery_app.celery_app worker --loglevel=info
+    environment:
+      ENVIRONMENT: local
+      DATABASE_URL: postgresql+psycopg://realtor:realtor@postgres:5432/realtor_agent
+      REDIS_URL: redis://redis:6379/0
+      AUTO_CREATE_TABLES: "true"
+      MLS_PROVIDER: mock
+      TELEGRAM_MODE: mock
+      SMS_PROVIDER: mock
+      AI_PROVIDER: mock
+      STORAGE_BACKEND: local
+      LOCAL_STORAGE_PATH: /app/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./data:/app/data
+      - ./templates:/app/templates
+      - ./mappings:/app/mappings
+
+volumes:
+  realtor_pg:

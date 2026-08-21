@@ -8,6 +8,7 @@ from typing import Sequence
 from mr_north.compose import compose_alert, format_alert
 from mr_north.models import AlertTrigger
 from mr_north.notify import NotifyError, send_alert
+from mr_north.envfile import load_local_env
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -41,6 +42,36 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Build the payload but do not POST it",
     )
+    hourly = sub.add_parser(
+        "hourly",
+        help="Fetch official BLS prints and send the hourly breakdown",
+    )
+    hourly.add_argument(
+        "--webhook-url",
+        default=None,
+        help="Destination webhook. Defaults to ALERT_WEBHOOK_URL.",
+    )
+    hourly.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Build and save the report but do not POST it",
+    )
+    sub.add_parser(
+        "hourly-loop",
+        help="Run the hourly BLS report forever (restart with mr_north/scripts/keep_hourly.sh)",
+    )
+    sub.add_parser(
+        "hourly-status",
+        help="Show whether the last hourly BLS report was delivered",
+    )
+    sub.add_parser(
+        "telegram-whoami",
+        help="Call Telegram getMe and refuse Wellness/realtor bots",
+    )
+    sub.add_parser(
+        "telegram-capture",
+        help="One-shot: wait for a Start message and save NORTH chat id",
+    )
     return parser
 
 
@@ -54,6 +85,7 @@ def _add_trigger_args(parser: argparse.ArgumentParser) -> None:
             "btc_threshold",
             "capital_regime",
             "macro_liquidity",
+            "hourly_bls",
             "manual",
         ),
         help="Mr North trigger type. TrueHold Wellness inbox triggers are out of scope.",
@@ -76,6 +108,7 @@ def _default_headline(trigger_type: str) -> str:
         "btc_threshold": "BTC threshold",
         "capital_regime": "capital-regime transition",
         "macro_liquidity": "Macro Liquidity",
+        "hourly_bls": "hourly BLS breakdown",
         "manual": "manual alert",
     }
     return defaults[trigger_type]
@@ -90,7 +123,62 @@ def _trigger_from_args(args: argparse.Namespace) -> AlertTrigger:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    load_local_env()
     args = _build_parser().parse_args(argv)
+    if args.command == "hourly-status":
+        from mr_north.hourly import hourly_status
+
+        status = hourly_status()
+        sys.stdout.write(json.dumps(status) + "\n")
+        return 0 if status.get("ok") else 1
+    if args.command == "hourly-loop":
+        from mr_north.hourly import hourly_loop
+
+        return hourly_loop()
+    if args.command == "hourly":
+        from mr_north.hourly import run_hourly
+
+        result = run_hourly(dry_run=args.dry_run, webhook_url=args.webhook_url)
+        sys.stdout.write(result["text"])
+        if not result.get("ok"):
+            sys.stderr.write(f"error: {result.get('reason')}\n")
+            return 1
+        if result.get("dry_run"):
+            sys.stderr.write("dry-run: hourly BLS breakdown saved; Telegram not called\n")
+            return 0
+        sys.stderr.write(f"sent: {result.get('destination')}\n")
+        return 0
+    if args.command == "telegram-whoami":
+        from mr_north.identity import WrongTelegramBotError
+        from mr_north.telegram import TelegramError, live_client
+
+        try:
+            client = live_client()
+            username = client.assert_identity()
+        except (TelegramError, WrongTelegramBotError) as exc:
+            sys.stderr.write(f"error: {exc}\n")
+            return 1
+        sys.stdout.write(json.dumps({"ok": True, "bot": username, "agent": "mr-north"}) + "\n")
+        return 0
+    if args.command == "telegram-capture":
+        from mr_north.identity import WrongTelegramBotError
+        from mr_north.telegram import TelegramError, live_client, save_chat_id
+
+        try:
+            client = live_client()
+            username = client.assert_identity()
+            chat_id = client.capture_chat_id()
+            path = save_chat_id(chat_id, username=username)
+        except (TelegramError, WrongTelegramBotError) as exc:
+            sys.stderr.write(f"error: {exc}\n")
+            return 1
+        sys.stdout.write(
+            json.dumps(
+                {"ok": True, "bot": username, "chat_id": chat_id, "saved": str(path), "agent": "mr-north"}
+            )
+            + "\n"
+        )
+        return 0
     alert = compose_alert(_trigger_from_args(args))
     if args.command == "compose":
         if args.json:
@@ -111,7 +199,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     if result.dry_run:
         sys.stdout.write(result.text)
-        sys.stderr.write("dry-run: Mr North catalyst briefing included; webhook not called\n")
+        sys.stderr.write("dry-run: Mr North catalyst briefing included; Telegram not called\n")
         return 0
     sys.stdout.write(result.text)
     sys.stderr.write(f"sent: {result.destination}\n")

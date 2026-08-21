@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "truehold-wellness"
+version = "0.1.0"
+description = "TrueHold Wellness inbox/order agent. Telegram: @THWellness_bot only. Independent of realtor-agent and Mr North."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    "sqlalchemy>=2.0.36",
+    "httpx>=0.28.0",
+    "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "reportlab>=4.0",
+    "pypdf>=5.0",
+]
+
+[project.scripts]
+truehold-wellness = "wellness_agent.cli:main"
+truehold-wellness-agent = "wellness_agent.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["wellness_agent*", "thw*"]
+
+[tool.setuptools.package-data]
+"wellness_agent" = [
+    "data/*.json",
+    "inventory/*.json",
+    "inventory/pdfs/*.pdf",
+    "inventory/assets/*",
+    "inventory/assets/agent/*",
+    "inventory/cards/*.jpg",
+    "inventory/workbooks/*.xlsx",
+    "knowledge/*.json",
+    "team/*.json",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]

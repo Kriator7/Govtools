@@ -1,0 +1,3 @@
+Explain why this listing matched an investor profile using the provided reasons
+and potential issues. Do not change the numeric score. Do not recommend signing
+or submitting an offer. Flag missing financial data instead of guessing.

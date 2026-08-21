@@ -1,8 +1,16 @@
 # Govtools
 
-This repo contains **Mr North**, the TrueHold crypto agent.
+This repository holds **three independent products**. They do not share Telegram bots, databases, or application code.
 
-TrueHold Wellness is a separate, already-working agent. It is not in this repository and must not be modified here.
+| Product | Company / job | Telegram | Folder |
+| --- | --- | --- | --- |
+| Mr North | TrueHold **crypto** alerts + hourly BLS | **@Mr_North_bot** | [`mr_north/`](mr_north/) |
+| Realtor acquisition | Property matching for one Nevada realtor | **@PirateEye_bot** | [`realtor-agent/`](realtor-agent/) |
+| TrueHold Wellness | Order-email workflow | **@THWellness_bot** | [`truehold-wellness/`](truehold-wellness/) |
+
+Never put the Wellness token in `realtor-agent/` or `mr_north/`. Never put the realtor token in `truehold-wellness/` or `mr_north/`. Live `getMe` must return `@Mr_North_bot`, `@THWellness_bot`, or `@PirateEye_bot` for that package.
+
+These three agents are **protected business infrastructure**. CI fails if one is deleted unless two different people complete `.github/DELETE_AGENT_CONFIRMATION.json`. See [`PROTECTED_AGENTS.md`](PROTECTED_AGENTS.md).
 
 ## Mr North (TrueHold crypto)
 
@@ -18,13 +26,58 @@ python -m pip install -e ".[dev]"
 python -m mr_north compose
 python -m mr_north compose --type btc_threshold --detail "BTC crossed the $65K watch level."
 python -m mr_north send --dry-run
-ALERT_WEBHOOK_URL=https://example.invalid/alerts python -m mr_north send --type btc_threshold
+NORTH_TELEGRAM_BOT_TOKEN=... NORTH_TELEGRAM_CHAT_ID=... python -m mr_north send --type btc_threshold
 ```
 
-`send` POSTs JSON with `agent=mr-north`, `trigger`, `catalyst`, and `text`.
+`send` drops the text on North's Telegram bot (`sendMessage`) and may also POST JSON to `ALERT_WEBHOOK_URL`.
+
+### Hourly Bureau of Labor Statistics breakdown
+
+The hourly BLS print is **North's job**. He fetches official series and drops the breakdown in Telegram (not @THWellness_bot, not @PirateEye_bot).
+
+```bash
+python -m mr_north hourly --dry-run
+python -m mr_north hourly
+python -m mr_north hourly-status
+python -m mr_north telegram-whoami
+python -m mr_north telegram-capture
+bash mr_north/scripts/keep_hourly.sh
+```
+
+Soul / timer contract: [`mr_north/SOUL.md`](mr_north/SOUL.md). Durable cron is GitHub Action `.github/workflows/mr-north-hourly.yml` (`7 * * * *` UTC). GitHub only runs scheduled workflows on **main** after merge. Set repository secrets `NORTH_TELEGRAM_BOT_TOKEN` and `NORTH_TELEGRAM_CHAT_ID`. BLS API: https://www.bls.gov/developers/api_signature.htm — Telegram: https://core.telegram.org/bots/api#sendmessage
+
+## Realtor Property Acquisition (@PirateEye_bot)
+
+Self-contained in [`realtor-agent/`](realtor-agent/). Not TrueHold Wellness.
+
+```bash
+cd realtor-agent
+python -m pip install -e ".[dev]"
+cp .env.example .env
+python -m app.cli demo
+python -m pytest
+```
+
+## TrueHold Wellness order emails (@THWellness_bot)
+
+Original inbox-snapshot agent, restored under [`truehold-wellness/`](truehold-wellness/). Spec: [`truehold-wellness/ORIGINAL_SPEC.md`](truehold-wellness/ORIGINAL_SPEC.md). Not realtor-agent. `@Npeppers_bot` was deleted and cannot be undeleted.
+
+```bash
+cd truehold-wellness
+python -m pip install -e ".[dev]"
+python -m wellness_agent compose
+python -m wellness_agent send --dry-run --type order
+python -m pytest
+```
+
+Telegram: **@THWellness_bot** (`/start`, `/inbox`, `/catalog`, `/product`, `/order`). Live `getMe` must return `THWellness_bot`. Inventory PDFs live in `truehold-wellness/wellness_agent/inventory/pdfs/`.
 
 ## Tests
+
+Root pytest is **Mr North only**:
 
 ```bash
 python -m pytest
 ```
+
+Realtor and Wellness each have their own install + pytest in their folders (and separate CI jobs).

@@ -1,0 +1,3 @@
+Summarize this normalized listing for a Nevada realtor. Use only provided facts.
+Do not invent rents, prices, legal conclusions, or missing contract terms.
+Keep the summary under 120 words.

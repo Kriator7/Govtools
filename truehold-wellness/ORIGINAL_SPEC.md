@@ -1,0 +1,101 @@
+# TrueHold Wellness — original agent spec
+
+Restored from the deleted Govtools Wellness duplicate and bound to the live Telegram replacement **@THWellness_bot**.
+
+| Source | Location |
+| --- | --- |
+| Original package | commit `cf24ec1` (`truehold/wellness_agent`) |
+| Why it left this repo | commit `17d9c76` (user: live Wellness was already working elsewhere; this repo is Mr North / crypto) |
+| Cloud agent that wrote it | [bc-01a00bdb-3ee5-7e43-829f-f2e9b1f1b839](https://cursor.com/agents/bc-01a00bdb-3ee5-7e43-829f-f2e9b1f1b839) |
+| Telegram identity now | **@THWellness_bot** (`t.me/THWellness_bot`) |
+| Deleted predecessor | `@Npeppers_bot` — BotFather `/deletebot` cannot be undone ([Telegram Bot Features](https://core.telegram.org/bots/features)) |
+
+This folder is the Wellness agent. Do not mix it with Mr North (`ALERT_WEBHOOK_URL`, Hormuz/crypto copy) or realtor-agent (`@PirateEye_bot`).
+
+## Canonical business copy
+
+Every alert includes a **complete** inbox snapshot so none of these are dropped:
+
+- orders
+- payments
+- fulfillment requests
+- shipping issues
+- cancellations/refunds
+- peptide messages
+- other actionable business email
+
+Default snapshot copy (also stored in `wellness_agent/data/current_inbox.json`):
+
+> Business: No new TrueHold Wellness order, payment, fulfillment request, shipping issue, cancellation/refund, peptide message, or other actionable business email appeared in the connected inbox since the previous check. The only new messages were routine/news content.
+
+Categories are fail-closed. A missing key or empty `detail` raises `ValueError`.
+
+## CLI (identical to commit `cf24ec1`)
+
+Console scripts: `truehold-wellness-agent` and `truehold-wellness`.
+
+```bash
+cd truehold-wellness
+python -m pip install -e ".[dev]"
+python -m wellness_agent compose
+python -m wellness_agent compose --json
+python -m wellness_agent compose --type order --detail "New TrueHold Wellness order received."
+python -m wellness_agent send --dry-run --type business
+WELLNESS_ALERT_WEBHOOK_URL=https://example.invalid/wellness python -m wellness_agent send --type order
+python -m wellness_agent ingest-email
+python -m pytest
+```
+
+`--type` choices: `business` (default), `order`, `payment`, `fulfillment`, `shipping`, `cancellation`, `peptide`, `manual`.
+
+Default headlines: business inbox, order, payment, fulfillment request, shipping issue, cancellation/refund, peptide message, manual alert.
+
+`send` POSTs JSON to **`WELLNESS_ALERT_WEBHOOK_URL` only**. It does not read Mr North’s `ALERT_WEBHOOK_URL`. User-Agent: `truehold-wellness-agent/0.1`. Timeout: 15s.
+
+Payload `agent` / `source`: `truehold-wellness-agent`.
+
+A `business` compose with no `--detail` prints the snapshot only (no `TrueHold Wellness alert —` prefix). Other types prepend:
+
+```
+TrueHold Wellness alert — {headline}
+
+{detail}
+
+---
+
+{inbox snapshot}
+```
+
+## Telegram (@THWellness_bot)
+
+The original `cf24ec1` agent had no Telegram. The later `@Npeppers_bot` layer added `/start`, `/inbox`, and `/order`. That inbound surface is preserved here on **@THWellness_bot**, plus live-shop inventory sheets and a picture menu (`/menu`).
+
+`/start` asks the visitor to **say hi**. Any salutation (hello, hey, good morning) on that first visit plays the introduction and a **quick menu** (not every SKU photo), with a brand graphic. Tapping a name sends that tile. Telegram does not expose phone numbers; the bot requests contact or asks the client to type a number so staff can call to confirm, consult, and complete required documentation. Prep and local delivery are for Las Vegas residents only. Shipping is dry (lyophilized) vials only. It does not grant staff access. No Telegram command can grant staff access. Staff user ids are set only in env (`WELLNESS_OPERATOR_USER_IDS` / `WELLNESS_TELEGRAM_CHAT_ID`). `/order` (slash or picture-menu confirm) and `ingest-email` fire the original inbox reflexes so **allowlisted staff** are notified of orders, payments, fulfillment, shipping, cancellations, peptides, and other actionable email. Every staff alert still includes the complete snapshot. Customers receive only a short confirmation. `/inbox` is refused in groups.
+
+Bot API: https://core.telegram.org/bots/api (`sendPhoto`, `InlineKeyboardMarkup`, `callback_query`, `setMyCommands` with `BotCommandScopeChat`)
+
+| Command | Who | Behavior |
+| --- | --- | --- |
+| `/start` | Customer | Ask them to say hi to start |
+| `/menu` | Customer | Quick menu — tap one name, then that tile |
+| `/help` `/schedule` | Customer | Short help / team contact |
+| `/inbox` | Staff only | Full business-inbox snapshot; private allowlisted chat only |
+| `/staff` `/admin` `/operator` `/grant` | Nobody | Always denied. Cannot grant admin |
+| `/product <name>` | Hidden | Locked inventory PDF |
+| `/order <detail>` | Hidden | Interest order; staff notify; no inbox leak to the customer |
+
+Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_bot` username.
+
+```bash
+python -m wellness_agent whoami
+python -m wellness_agent configure-telegram
+python -m wellness_agent telegram-poll
+```
+
+## Isolation vs crypto
+
+Wellness must not include keys `catalyst`, `btc_threshold`, `capital_regime`, `macro_liquidity`, `geopolitical_catalyst`, or phrases such as Strait of Hormuz / BTC threshold. Crypto triggers raise `ValueError("TrueHold Wellness agent does not send crypto/macro triggers")`.
+
+## What was never in the original duplicate
+
+Live Gmail/IMAP polling was not shipped. The inbox is the JSON snapshot until a live mailbox connector is added **in this folder only**.

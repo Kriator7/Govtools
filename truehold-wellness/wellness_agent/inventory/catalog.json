@@ -1,0 +1,87 @@
+{
+  "source": "https://trueholdwellness.com/sitemap.ols.xml",
+  "disclaimer": "Educational information only. Protocol details reviewed case by case. Research use only. Not realtor-agent.",
+  "shop_url": "https://trueholdwellness.com/shop",
+  "products": [
+    {
+      "id": "tirzepatide",
+      "name": "Tirzepatide",
+      "shop_title": "GLP-2 + Tirzepatide | Premium Research Formula | 20 mg",
+      "shop_url": "https://trueholdwellness.com/ols/products/glp-2-tirzepatide-premium-research-formula-20-mg",
+      "category": "glp-research-compounds",
+      "vial": "20 mg lyophilized vial",
+      "pdf": "tirzepatide.pdf",
+      "aliases": ["tirzepatide", "tirz", "glp-2", "glp2", "mounjaro"]
+    },
+    {
+      "id": "retatrutide",
+      "name": "Retatrutide",
+      "shop_title": "GLP-3 + Retatrutide • Premium Research Formula • 20 mg",
+      "shop_url": "https://trueholdwellness.com/ols/products/glp-3-retatrutide-premium-research-formula-20-mg",
+      "category": "glp-research-compounds",
+      "vial": "20 mg lyophilized vial",
+      "pdf": "retatrutide.pdf",
+      "aliases": ["retatrutide", "reta", "glp-3", "glp3", "ly3437943"]
+    },
+    {
+      "id": "semax",
+      "name": "Semax",
+      "shop_title": "Semax • Premium Research Formula • 10 mg",
+      "shop_url": "https://trueholdwellness.com/ols/products/semax-premium-research-formula-10-mg",
+      "category": "neuropeptide-research-compounds",
+      "vial": "10 mg lyophilized vial",
+      "pdf": "semax.pdf",
+      "aliases": ["semax"]
+    },
+    {
+      "id": "nad",
+      "name": "NAD+",
+      "shop_title": "NAD+ Cellular Renewal",
+      "shop_url": "https://trueholdwellness.com/ols/products/nad-cellular-renewal",
+      "category": "mitochondrial-research-compounds",
+      "vial": "1000 mg lyophilized vial",
+      "pdf": "nad-plus.pdf",
+      "aliases": ["nad", "nad+", "nad plus", "nad-plus"]
+    },
+    {
+      "id": "klow",
+      "name": "KLOW",
+      "shop_title": "KLOW • Premium Research Formula • 80 mg",
+      "shop_url": "https://trueholdwellness.com/ols/products/klow-premium-research-formula-80-mg",
+      "category": "regenerative-research-compounds",
+      "vial": "80 mg lyophilized vial",
+      "pdf": "klow.pdf",
+      "aliases": ["klow"]
+    },
+    {
+      "id": "mots-c",
+      "name": "MOTS-c",
+      "shop_title": "MOTS-c • Premium Research Formula • 20 mg",
+      "shop_url": "https://trueholdwellness.com/ols/products/mots-c-premium-research-formula-20-mg",
+      "category": "metabolic-signaling-peptides",
+      "vial": "20 mg lyophilized vial",
+      "pdf": "mots-c.pdf",
+      "aliases": ["mots-c", "motsc", "mots c", "mots"]
+    },
+    {
+      "id": "ss-31",
+      "name": "SS-31",
+      "shop_title": "SS-31 • Premium Research Formula • 10 mg",
+      "shop_url": "https://trueholdwellness.com/ols/products/ss-31-premium-research-formula-10-mg",
+      "category": "mitochondrial-research-compounds",
+      "vial": "10 mg lyophilized vial",
+      "pdf": "ss-31.pdf",
+      "aliases": ["ss-31", "ss31", "ss 31", "elamipretide"]
+    },
+    {
+      "id": "ghk-cu",
+      "name": "GHK-Cu",
+      "shop_title": "GHK-Cu • Premium Research Formula • 100 mg",
+      "shop_url": "https://trueholdwellness.com/ols/products/ghk-cu-premium-research-formula-100-mg",
+      "category": "regenerative-research-compounds",
+      "vial": "100 mg lyophilized vial",
+      "pdf": "ghk-cu.pdf",
+      "aliases": ["ghk-cu", "ghkcu", "ghk cu", "ghk", "copper peptide"]
+    }
+  ]
+}

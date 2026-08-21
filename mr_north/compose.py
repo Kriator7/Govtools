@@ -37,4 +37,11 @@ def format_alert(alert: Alert) -> str:
     catalyst_block = format_catalyst(alert.catalyst)
     if alert.trigger.type == "geopolitical_catalyst":
         return catalyst_block
+    if alert.trigger.type == "hourly_bls":
+        detail = alert.trigger.detail.strip()
+        if detail:
+            return f"{detail}\n\n---\n\n{catalyst_block}"
+        return (
+            f"Mr North alert — {alert.trigger.headline}\n\n---\n\n{catalyst_block}"
+        )
     return f"{trigger_block}\n\n---\n\n{catalyst_block}"

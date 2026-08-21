@@ -11,6 +11,7 @@ TRIGGER_TYPES = (
     "btc_threshold",
     "capital_regime",
     "macro_liquidity",
+    "hourly_bls",
     "manual",
 )
 

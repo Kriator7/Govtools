@@ -63,7 +63,9 @@ def test_dry_run_does_not_call_webhook():
     assert result.payload["catalyst"]["title"] == "Alert — geopolitical / market catalyst"
 
 
-def test_send_posts_json_including_catalyst():
+def test_send_posts_json_including_catalyst(monkeypatch):
+    monkeypatch.delenv("NORTH_TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_ID", raising=False)
     captured = {}
 
     def opener(request, timeout=15):
@@ -90,6 +92,8 @@ def test_send_posts_json_including_catalyst():
 
 def test_send_uses_env_webhook(monkeypatch):
     monkeypatch.setenv("ALERT_WEBHOOK_URL", "https://example.test/from-env")
+    monkeypatch.delenv("NORTH_TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_ID", raising=False)
 
     def opener(request, timeout=15):
         assert request.full_url == "https://example.test/from-env"
@@ -99,7 +103,42 @@ def test_send_uses_env_webhook(monkeypatch):
     assert result.destination == "https://example.test/from-env"
 
 
-def test_send_without_webhook_raises(monkeypatch):
+def test_send_without_destination_raises(monkeypatch):
     monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
-    with pytest.raises(NotifyError, match="ALERT_WEBHOOK_URL"):
+    monkeypatch.delenv("NORTH_TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_ID", raising=False)
+    with pytest.raises(NotifyError, match="NORTH_TELEGRAM_BOT_TOKEN"):
         send_alert(_btc_alert(), webhook_url=None)
+
+
+def test_send_ignores_wellness_telegram_token(monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_ID", raising=False)
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "wellness-token-must-not-be-used")
+    with pytest.raises(NotifyError, match="NORTH_TELEGRAM_BOT_TOKEN"):
+        send_alert(_btc_alert(), webhook_url=None)
+
+
+def test_send_drops_report_on_north_telegram(monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "42")
+    captured = {}
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def send_report(self, chat_id, text):
+            captured["chat_id"] = chat_id
+            captured["text"] = text
+            return ["1"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    result = send_alert(_btc_alert())
+    assert result.delivered is True
+    assert result.destination == "telegram:@Mr_North_bot"
+    assert captured["chat_id"] == "42"
+    assert "Strait of Hormuz" in captured["text"]
+    assert "TrueHold Wellness" not in captured["text"]

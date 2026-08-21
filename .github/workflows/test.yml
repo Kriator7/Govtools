@@ -6,6 +6,16 @@ on:
   pull_request:
 
 jobs:
+  protected-agents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Refuse accidental agent deletion
+        run: python scripts/check_protected_agents.py
+
   pytest:
     runs-on: ubuntu-latest
     steps:
@@ -15,5 +25,37 @@ jobs:
           python-version: "3.12"
       - name: Install
         run: python -m pip install -e ".[dev]"
+      - name: Refuse accidental agent deletion
+        run: python scripts/check_protected_agents.py
       - name: Test
+        run: python -m pytest
+
+  realtor-agent:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: realtor-agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install realtor-agent
+        run: python -m pip install -e ".[dev]"
+      - name: Test realtor-agent
+        run: python -m pytest
+
+  truehold-wellness:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: truehold-wellness
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install truehold-wellness
+        run: python -m pip install -e ".[dev]"
+      - name: Test truehold-wellness
         run: python -m pytest

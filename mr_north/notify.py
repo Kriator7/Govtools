@@ -8,7 +8,16 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from mr_north.compose import format_alert
+from mr_north.identity import WrongTelegramBotError
 from mr_north.models import AGENT_ID, Alert
+from mr_north.telegram import (
+    CHAT_ENV,
+    TOKEN_ENV,
+    TelegramError,
+    configured_chat_id,
+    configured_token,
+    live_client,
+)
 
 DEFAULT_TIMEOUT_SECONDS = 15
 
@@ -35,37 +44,13 @@ def alert_payload(alert: Alert) -> dict[str, Any]:
     }
 
 
-def send_alert(
-    alert: Alert,
+def _post_webhook(
+    destination: str,
+    payload: dict[str, Any],
     *,
-    webhook_url: str | None = None,
-    dry_run: bool = False,
-    opener: Callable[..., Any] | None = None,
-    timeout: int = DEFAULT_TIMEOUT_SECONDS,
-) -> NotifyResult:
-    """
-    Send an Mr North alert.
-
-    When dry_run is true, the payload is returned without network I/O.
-    Otherwise the agent POSTs JSON (including catalyst data) to ALERT_WEBHOOK_URL
-    or the explicit webhook_url argument.
-    """
-    payload = alert_payload(alert)
-    text = payload["text"]
-    destination = webhook_url or os.environ.get("ALERT_WEBHOOK_URL")
-    if dry_run:
-        return NotifyResult(
-            delivered=False,
-            dry_run=True,
-            text=text,
-            payload=payload,
-            destination=destination,
-            status="dry_run",
-        )
-    if not destination:
-        raise NotifyError(
-            "No ALERT_WEBHOOK_URL configured. Pass webhook_url or set the environment variable."
-        )
+    opener: Callable[..., Any] | None,
+    timeout: int,
+) -> None:
     body = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
         destination,
@@ -84,11 +69,67 @@ def send_alert(
                 raise NotifyError(f"Webhook returned HTTP {status_code}")
     except urllib.error.URLError as exc:
         raise NotifyError(f"Webhook delivery failed: {exc}") from exc
+
+
+def send_alert(
+    alert: Alert,
+    *,
+    webhook_url: str | None = None,
+    dry_run: bool = False,
+    opener: Callable[..., Any] | None = None,
+    timeout: int = DEFAULT_TIMEOUT_SECONDS,
+    telegram_opener: Callable[..., Any] | None = None,
+) -> NotifyResult:
+    """
+    Send an Mr North alert.
+
+    Primary: Telegram sendMessage on North's own bot
+    (`NORTH_TELEGRAM_BOT_TOKEN` + `NORTH_TELEGRAM_CHAT_ID`).
+    Optional extra: POST JSON to ALERT_WEBHOOK_URL.
+
+    Never reads Wellness TELEGRAM_BOT_TOKEN or the realtor token.
+    """
+    payload = alert_payload(alert)
+    text = payload["text"]
+    webhook = webhook_url or os.environ.get("ALERT_WEBHOOK_URL")
+    token = configured_token()
+    chat_id = configured_chat_id()
+    if dry_run:
+        dest = []
+        if token and chat_id:
+            dest.append(f"telegram:{chat_id}")
+        if webhook:
+            dest.append(webhook)
+        return NotifyResult(
+            delivered=False,
+            dry_run=True,
+            text=text,
+            payload=payload,
+            destination=",".join(dest) or None,
+            status="dry_run",
+        )
+    destinations: list[str] = []
+    if token and chat_id:
+        try:
+            client = live_client(opener=telegram_opener)
+            username = client.assert_identity()
+            client.send_report(chat_id, text)
+        except (TelegramError, WrongTelegramBotError) as exc:
+            raise NotifyError(str(exc)) from exc
+        destinations.append(f"telegram:@{username}")
+    if webhook:
+        _post_webhook(webhook, payload, opener=opener, timeout=timeout)
+        destinations.append(webhook)
+    if not destinations:
+        raise NotifyError(
+            f"No Telegram destination. Set {TOKEN_ENV} and {CHAT_ENV} for @Mr_North_bot "
+            "(not @THWellness_bot or @PirateEye_bot). Optional extra: ALERT_WEBHOOK_URL."
+        )
     return NotifyResult(
         delivered=True,
         dry_run=False,
         text=text,
         payload=payload,
-        destination=destination,
+        destination=",".join(destinations),
         status="sent",
     )
