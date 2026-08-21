@@ -7,10 +7,14 @@ import zipfile
 from io import BytesIO
 from pathlib import Path
 
+from decimal import Decimal
+
 from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
 from app.models.enums import ActorOrigin, ActorType, PacketStatus
+from app.models.investor import Investor
+from app.models.investor_criteria import PIRATES_IG_STRICT_FIELDS, InvestorCriteria
 from app.models.realtor import Realtor
 from app.models.realtor_packet import RealtorPacket
 from app.services.audit import AuditService
@@ -19,9 +23,10 @@ from app.services.inbox.classify import classify_packets, is_packet_candidate
 from app.services.inbox.message import Attachment, InboundMessage
 from app.services.inbox.parse import extract_packet_fields
 from app.services.inbox.redact import looks_like_secret_filename, redact_text
+from app.services.matching.screening import normalize_property_type
 from app.services.seed import DAMIAN_EMAIL, upsert_damian_realtor
 from app.utilities.ids import next_public_id
-from app.utilities.parsing import as_bool, as_int
+from app.utilities.parsing import as_bool, as_int, split_list
 
 
 TABULAR_SUFFIXES = {".csv", ".xlsx", ".xlsm", ".xls"}
@@ -88,11 +93,22 @@ class PacketIntakeService:
             }
         elif number in {3, 4}:
             apply_result["import"] = self._import_tabular(realtor, message)
+            if number == 4:
+                apply_result["buybox"] = self._apply_buybox_nl(realtor, fields)
+            else:
+                pending = (realtor.notification_settings or {}).get("pending_buybox") or {}
+                if pending:
+                    apply_result["buybox"] = self._apply_buybox_nl(realtor, pending)
         elif number == 5:
             apply_result["notification_settings"] = self._apply_alerts(realtor, fields)
         elif number == 2:
             apply_result["mls"] = self._apply_mls_notes(realtor, fields)
-        elif number in {6, 7, 8, 9, 10}:
+        elif number == 6:
+            apply_result["notification_settings"] = self._apply_investor_notify(realtor, fields)
+        elif number == 8:
+            apply_result["platform"] = self._apply_platform(realtor, fields)
+            self._append_notes(realtor, number, fields, message)
+        elif number in {7, 9, 10}:
             apply_result["stored"] = True
             self._append_notes(realtor, number, fields, message)
         missing = _missing_for_packet(number, fields, apply_result)
@@ -153,11 +169,95 @@ class PacketIntakeService:
         self.db.flush()
         return settings
 
+    def _apply_investor_notify(self, realtor: Realtor, fields: dict[str, str]) -> dict:
+        settings = dict(realtor.notification_settings or {})
+        blob = " ".join(str(value) for value in fields.values()).lower()
+        settings["investor_notify_mode"] = "manual"
+        settings["auto_notify_investors"] = False
+        settings["twilio"] = False
+        if "twilio" in blob and any(token in blob for token in ("no", "do not", "don't", "not have")):
+            settings["twilio"] = False
+        if fields.get("outbound_number"):
+            settings["outbound_number"] = fields["outbound_number"]
+        if fields.get("sample_text"):
+            settings["sample_investor_text"] = fields["sample_text"]
+        if fields.get("reply_words"):
+            settings["investor_reply_words"] = fields["reply_words"]
+        realtor.notification_settings = settings
+        self._append_notes(realtor, 6, fields, None, extra="Packet 6: manual investor contact only. Do not auto-text or auto-call.")
+        self.db.flush()
+        return settings
+
+    def _apply_platform(self, realtor: Realtor, fields: dict[str, str]) -> dict:
+        platform = (fields.get("platform") or "").strip()
+        lowered = platform.lower()
+        if "authentisign" in lowered:
+            if not realtor.transaction_platform_config_ref or realtor.transaction_platform_config_ref.startswith(
+                ("pending:", "secret:transaction-platform-test")
+            ):
+                realtor.transaction_platform_config_ref = "pending:authentisign"
+        self.db.flush()
+        return {
+            "platform": platform,
+            "transaction_platform_config_ref": realtor.transaction_platform_config_ref,
+            "who_must_sign": fields.get("who_must_sign"),
+            "who_may_send": fields.get("who_may_send"),
+        }
+
+    def _apply_buybox_nl(self, realtor: Realtor, fields: dict) -> dict:
+        buybox = {
+            key: fields[key]
+            for key in ("max_price_pct_of_arv", "property_types", "hoa_required", "notes")
+            if fields.get(key) not in (None, "")
+        }
+        settings = dict(realtor.notification_settings or {})
+        if buybox:
+            settings["pending_buybox"] = buybox
+            realtor.notification_settings = settings
+        investors = self.db.query(Investor).filter(Investor.realtor_id == realtor.id).all()
+        updated: list[str] = []
+        for investor in investors:
+            for criteria in investor.criteria_profiles:
+                if buybox.get("max_price_pct_of_arv") is not None:
+                    criteria.max_price_pct_of_arv = Decimal(str(buybox["max_price_pct_of_arv"]))
+                if buybox.get("property_types"):
+                    raw = buybox["property_types"]
+                    types = raw if isinstance(raw, list) else split_list(raw)
+                    criteria.property_types = [normalize_property_type(item) for item in types]
+                if buybox.get("hoa_required") is not None:
+                    parsed = as_bool(buybox["hoa_required"])
+                    if parsed is not None:
+                        criteria.hoa_required = parsed
+                if "pirates" in (investor.name or "").lower():
+                    criteria.strict_fields = list(PIRATES_IG_STRICT_FIELDS)
+                    if criteria.max_price_pct_of_arv is not None:
+                        pct = float(criteria.max_price_pct_of_arv) * 100
+                        criteria.nl_criteria = (
+                            "A property qualifies only if it is a single-family home in Las Vegas, "
+                            "North Las Vegas, or Henderson, has no HOA, and can be purchased for "
+                            f"{pct:.0f}% or less of ARV."
+                        )
+                if buybox.get("notes"):
+                    existing = criteria.notes or ""
+                    note = f"Packet 4 overlay: {buybox['notes']}"
+                    if note not in existing:
+                        criteria.notes = f"{existing}\n{note}".strip()
+                updated.append(criteria.public_id)
+        self.db.flush()
+        return {"updated_profiles": updated, "fields": buybox}
+
     def _apply_mls_notes(self, realtor: Realtor, fields: dict[str, str]) -> dict:
-        safe = {key: value for key, value in fields.items() if "password" not in key.lower()}
-        if safe.get("chosen_idx_option") == "3" and not realtor.mls_config_ref:
+        secretish = ("password", "secret", "api_key", "apikey", "token", "client_id", "client_secret")
+        safe = {
+            key: value
+            for key, value in fields.items()
+            if not any(token in key.lower() for token in secretish)
+        }
+        current = (realtor.mls_config_ref or "").strip()
+        placeholder = (not current) or current.startswith("pending:")
+        if safe.get("chosen_idx_option") == "3" and placeholder:
             realtor.mls_config_ref = "secret:mls-trestle-pending"
-        elif safe.get("mls_name") and not realtor.mls_config_ref:
+        elif safe.get("mls_name") and not current:
             realtor.mls_config_ref = "pending:las-vegas-realtors-idx-choice"
         note = "Packet 2 MLS metadata (no passwords stored): " + json.dumps(safe, sort_keys=True)
         self._append_notes(realtor, 2, safe, None, extra=note)
@@ -282,6 +382,12 @@ def _missing_for_packet(number: int, fields: dict, apply_result: dict) -> list[s
     if number in {3, 4}:
         imported = apply_result.get("import") or {}
         if imported.get("created_investors") or imported.get("created_profiles"):
+            return []
+        if number == 4 and (
+            fields.get("max_price_pct_of_arv")
+            or fields.get("property_types")
+            or (apply_result.get("buybox") or {}).get("updated_profiles")
+        ):
             return []
         return ["investor spreadsheet"]
     if number == 2:

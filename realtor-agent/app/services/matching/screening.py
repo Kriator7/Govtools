@@ -23,9 +23,13 @@ PROPERTY_TYPE_ALIASES = {
     "multi_family": "multi_family",
     "multifamily": "multi_family",
     "condo": "condo",
+    "condos": "condo",
     "condominium": "condo",
+    "condominiums": "condo",
     "townhouse": "townhouse",
+    "townhouses": "townhouse",
     "townhome": "townhouse",
+    "townhomes": "townhouse",
     "land": "land",
 }
 

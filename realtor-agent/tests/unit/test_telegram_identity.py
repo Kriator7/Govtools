@@ -34,3 +34,12 @@ def test_realtor_rejects_other_usernames():
         raise AssertionError("expected WrongTelegramBotError")
     except WrongTelegramBotError as exc:
         assert "PirateEye_bot" in str(exc)
+
+
+def test_realtor_rejects_mr_north_bot():
+    try:
+        assert_realtor_telegram_username("Mr_North_bot")
+        raise AssertionError("expected WrongTelegramBotError")
+    except WrongTelegramBotError as exc:
+        assert "Mr_North_bot" in str(exc)
+        assert "PirateEye_bot" in str(exc)

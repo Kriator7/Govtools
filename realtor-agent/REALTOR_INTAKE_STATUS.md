@@ -29,7 +29,9 @@ Recorded from the association IDX email. MLS name: Las Vegas REALTORS MLS (Matri
 | 2. IDX vendor API key plugin | Vendor charges. LVR waives $250 setup for a listed vendor set. https://wordpress.com/plugins/browse/idx | No (website plugin) |
 | 3. Trestle WebAPI | Sign up as **technology provider** at https://trestle.corelogic.com/SubscriptionWizard. $100/month to Cotality. | Yes (authorized feed) |
 
-Cat: **do not choose option 2 and option 3 together.** Chosen option is still empty. `MLS_PROVIDER` stays `mock`. Do not scrape Matrix. Do not sign up for Trestle until Damian or the broker picks option 3 only.
+Cat: **do not choose option 2 and option 3 together.** Damian chose **option 3** (Trestle WebAPI). MLS agent ID **241888**. `mls_config_ref` is `secret:mls-trestle-pending`. `MLS_PROVIDER` stays `mock` until Trestle credentials exist.
+
+Watch `jrupe7@gmail.com` and the CardanoMint fallback mailbox for a **Trestle / Cotality / Las Vegas REALTORS MLO** access reply. If the mail includes an **API key / client id+secret**, apply it to the gitignored `.env` (`MLS_PROVIDER=trestle`), keep secrets out of git/db/Telegram, and post **“We have live MLS access. Time to test.”** in the PirateEye group. Do not scrape Matrix. Do not text Damian, Amos, or investors.
 
 Paste apply:
 
@@ -53,13 +55,14 @@ SMS and email **relays stay on**. Do not text Damian or investors from this envi
 | Email relay inbox | `cardanomint@gmail.com` | `EMAIL_RELAY_TO` |
 | Relay mode | on (all mail goes to the relay inbox) | `EMAIL_RELAY_MODE=true\|false` |
 | Live Gmail send | off until `EMAIL_PROVIDER=smtp` + App Password | `EMAIL_SMTP_PASSWORD` |
-| Telegram | mock until `TELEGRAM_MODE=live` | `TELEGRAM_BOT_TOKEN` + `python -m app.cli telegram-poll` |
+| Telegram | live @PirateEye_bot in **MaximumMint & Agent Real** (`TELEGRAM_OPERATOR_CHAT_ID`) | `TELEGRAM_MODE=live` + `python -m app.cli telegram-poll` |
 | Investor preferred channel | SMS (Damian’s stated preference) | test template only |
 | SMS relay | on; live Twilio blocked without `SMS_RELAY_TO` | `SMS_RELAY_TO` = your test phone |
 | Email copy of investor notices | on | `NOTIFY_EMAIL_COPY` |
 | Test investor template | Pirates IG LLC rules from the Numbers workbook | seed only |
 | Live realtor email | `binder@thehomefinderlv.com` | Packet 1 / `DAMIAN_EMAIL` |
 | Live realtor | created when Packet 1 arrives, or from `binder@thehomefinderlv.com` mail | inbox-poll |
+| Damian Telegram | `@damianlasvegas` in **MaximumMint & Agent Real**; alerts via @PirateEye_bot; buy-box notes (`$300k–$600k` buy-and-hold + stretch) | `TELEGRAM_OPERATOR_CHAT_ID` + telegram-poll |
 
 Template matching rules (for tests, not production traffic):
 

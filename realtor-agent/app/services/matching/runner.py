@@ -47,6 +47,15 @@ class OpportunityMatcher:
             created.extend(self.match_listing(realtor, listing))
         return created
 
+    def match_profile(self, realtor: Realtor, criteria: InvestorCriteria) -> list[Opportunity]:
+        listings = self.db.query(Listing).filter(Listing.realtor_id == realtor.id).all()
+        created: list[Opportunity] = []
+        for listing in listings:
+            opportunity = self._match_one(realtor, listing, criteria)
+            if opportunity is not None:
+                created.append(opportunity)
+        return created
+
     def _match_one(self, realtor: Realtor, listing: Listing, criteria: InvestorCriteria) -> Opportunity | None:
         result = self.engine.evaluate(listing, criteria)
         if not result.matched:

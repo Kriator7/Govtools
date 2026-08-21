@@ -94,5 +94,43 @@
     "hoa_monthly": 185,
     "remarks": "HOA present — Pirates IG rejects any HOA.",
     "listing_url": "https://example.invalid/listings/NV99901"
+  },
+  {
+    "mls_id": "NVCONDO25",
+    "street_address": "2210 Sahara Avenue Unit 412",
+    "city": "Las Vegas",
+    "state": "NV",
+    "zip_code": "89104",
+    "asking_price": 75000,
+    "arv": 320000,
+    "property_type": "condo",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "sqft": 980,
+    "year_built": 1994,
+    "days_on_market": 18,
+    "listing_status": "active",
+    "hoa_monthly": 245,
+    "remarks": "Mock condo with stated ARV. Price ÷ ARV = 23.4% — would PASS a 25% ARV condo box once live MLS is connected.",
+    "listing_url": "https://example.invalid/listings/NVCONDO25"
+  },
+  {
+    "mls_id": "NVCONDO56",
+    "street_address": "900 Las Vegas Boulevard Unit 18",
+    "city": "Las Vegas",
+    "state": "NV",
+    "zip_code": "89101",
+    "asking_price": 180000,
+    "arv": 320000,
+    "property_type": "condo",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "sqft": 1100,
+    "year_built": 1988,
+    "days_on_market": 41,
+    "listing_status": "active",
+    "hoa_monthly": 310,
+    "remarks": "Mock condo with stated ARV. Price ÷ ARV = 56.3% — FAIL a 25% ARV condo box.",
+    "listing_url": "https://example.invalid/listings/NVCONDO56"
   }
 ]

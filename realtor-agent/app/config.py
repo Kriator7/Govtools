@@ -85,6 +85,11 @@ class Settings(BaseSettings):
     twilio_from_number: str | None = None
     mls_api_base_url: str | None = None
     mls_api_key_secret_name: str | None = None
+    mls_api_key: str | None = None
+    mls_client_id: str | None = None
+    mls_client_secret: str | None = None
+    mls_token_url: str | None = None
+    mls_oauth_scope: str = "api"
     ai_api_key: str | None = None
     esign_api_key: str | None = None
     gcs_bucket: str | None = None

@@ -12,7 +12,15 @@ from sqlalchemy.orm import Session
 from app.config import Settings, get_settings
 from app.integrations.email.imap_client import ImapAccount, ImapMessageSource, MessageSource
 from app.services.inbox.apply import PacketIntakeService
+from app.services.inbox.mls_access import (
+    apply_mls_credentials,
+    extract_mls_credentials,
+    format_mls_access_alert,
+    is_mls_api_access_mail,
+)
 from app.services.inbox.status import write_intake_snapshot
+from app.services.providers import get_telegram_provider
+from app.services.seed import find_damian_realtor
 
 
 def configured_imap_accounts(settings: Settings) -> list[ImapAccount]:
@@ -54,11 +62,15 @@ class InboxWatchService:
         db: Session,
         settings: Settings | None = None,
         source: MessageSource | None = None,
+        telegram=None,
+        env_path: Path | None = None,
     ) -> None:
         self.db = db
         self.settings = settings or get_settings()
         self.source = source or ImapMessageSource()
         self.intake = PacketIntakeService(db, self.settings)
+        self.telegram = telegram
+        self.env_path = env_path
 
     def poll_once(self) -> dict:
         accounts = configured_imap_accounts(self.settings)
@@ -90,8 +102,18 @@ class InboxWatchService:
                     skipped += 1
                     continue
                 result = self.intake.apply_message(message)
+                creds = extract_mls_credentials(message) if result.get("status") != "ignored" else {}
+                if creds:
+                    applied = apply_mls_credentials(creds, env_path=self.env_path)
+                    result["credentials_applied"] = {"ok": applied.get("ok"), "fields": applied.get("fields")}
+                    damian = find_damian_realtor(self.db)
+                    if damian is not None:
+                        damian.mls_config_ref = "secret:mls-trestle-env"
                 seen.add(key, result.get("status", "processed"))
                 processed.append(result)
+                alert = self._maybe_alert_mls_access(message, result)
+                if alert:
+                    result["mls_access_alert"] = alert
         self.db.commit()
         seen.save()
         snapshot = write_intake_snapshot(self.db, self.settings)
@@ -103,7 +125,27 @@ class InboxWatchService:
             "skipped": skipped,
             "errors": errors,
             "snapshot": str(snapshot) if snapshot else None,
+            "waiting_for": "MLS API access reply (Trestle Technology Provider / Las Vegas REALTORS MLO)",
         }
+
+    def _maybe_alert_mls_access(self, message, result: dict) -> dict | None:
+        if result.get("status") in {"ignored"}:
+            return None
+        if not result.get("credentials_applied") and not is_mls_api_access_mail(message):
+            return None
+        text = format_mls_access_alert(message, result)
+        chat_id = self.settings.telegram_operator_chat_id
+        payload = {"text": text, "chat_id": chat_id, "sent": False}
+        if self.settings.telegram_mode == "live" and chat_id and chat_id != "mock-realtor":
+            telegram = self.telegram or get_telegram_provider(self.settings)
+            sent = telegram.send_message(str(chat_id), text)
+            payload["sent"] = True
+            payload["provider_message_id"] = sent.get("provider_message_id")
+        elif self.telegram is not None and chat_id:
+            sent = self.telegram.send_message(str(chat_id), text)
+            payload["sent"] = True
+            payload["provider_message_id"] = sent.get("provider_message_id")
+        return payload
 
 
 def poll_forever(db: Session, *, once: bool = False, source: MessageSource | None = None) -> int:

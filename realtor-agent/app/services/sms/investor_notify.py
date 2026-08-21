@@ -46,8 +46,31 @@ class InvestorNotificationService:
         if investor is None or listing is None:
             raise ValueError("Investor or listing missing")
         settings = get_settings()
-        permissions = investor.communication_permissions or {}
+        realtor_settings = realtor.notification_settings or {}
+        if realtor_settings.get("investor_notify_mode") == "manual" or realtor_settings.get(
+            "auto_notify_investors"
+        ) is False:
+            self._hold(
+                realtor,
+                opportunity,
+                listing,
+                investor,
+                "INVESTOR_NOTIFY_HELD",
+                "Manual communication only (Packet 6). Do not auto-text or auto-call investors.",
+            )
+            return
         preferred = (investor.preferred_channel or "sms").lower()
+        if preferred in {"phone", "call"}:
+            self._hold(
+                realtor,
+                opportunity,
+                listing,
+                investor,
+                "INVESTOR_NOTIFY_HELD",
+                "Preferred channel is phone call. Do not auto-text or auto-email this investor.",
+            )
+            return
+        permissions = investor.communication_permissions or {}
         context = {
             "address": listing.street_address,
             "city": listing.city,
@@ -88,9 +111,7 @@ class InvestorNotificationService:
 
         send_email = preferred == "email" or settings.notify_email_copy
         if send_email:
-            email_allowed = permissions.get("email") is True or (
-                settings.notify_email_copy and preferred == "sms"
-            )
+            email_allowed = permissions.get("email") is True
             if not email_allowed:
                 self._hold(
                     realtor,

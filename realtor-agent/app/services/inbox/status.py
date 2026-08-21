@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from sqlalchemy.orm import Session
@@ -48,7 +49,7 @@ def write_intake_snapshot(db: Session, settings: Settings | None = None) -> Path
         if not packet_rows:
             lines.append(f"| {number} | {title} | waiting | — | — | — |")
             continue
-        latest = packet_rows[-1]
+        latest = _best_packet_row(packet_rows)
         missing = ", ".join(latest.missing_fields or []) or "—"
         subject = (latest.subject or "—").replace("|", "/")
         sender = (latest.from_header or "—").replace("|", "/")
@@ -62,3 +63,19 @@ def write_intake_snapshot(db: Session, settings: Settings | None = None) -> Path
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
+
+
+def _best_packet_row(rows: list[RealtorPacket]) -> RealtorPacket:
+    """Prefer a complete apply over a later false-positive partial row."""
+    rank = {"applied": 3, "partial": 2, "unclassified": 1, "ignored": 0}
+
+    def score(row: RealtorPacket) -> tuple:
+        payload = row.payload or {}
+        missing = row.missing_fields or []
+        created = row.created_at.timestamp() if row.created_at else 0
+        subject = (row.subject or "").lower()
+        number = row.packet_number
+        subject_hit = 1 if re.search(rf"\bpacket\s*{number}\b", subject) else 0
+        return (rank.get(row.status or "", 0), subject_hit, -len(missing), len(payload), created)
+
+    return max(rows, key=score)
