@@ -50,6 +50,13 @@ def main(argv: list[str] | None = None) -> int:
         help="Watch Gmail for Damian packet replies and apply them to realtor packet data",
     )
     inbox.add_argument("--once", action="store_true", help="Poll once and exit")
+    apply_note = sub.add_parser(
+        "telegram-apply-note",
+        help="Apply a Damian Telegram buy-box note (file or --text) and optionally reply in the group",
+    )
+    apply_note.add_argument("--text", default="")
+    apply_note.add_argument("--text-file")
+    apply_note.add_argument("--send", action="store_true", help="Post the confirmation to TELEGRAM_OPERATOR_CHAT_ID")
     apply_mail = sub.add_parser(
         "inbox-apply",
         help="Apply a pasted packet email (file) to realtor packet data",
@@ -87,6 +94,8 @@ def main(argv: list[str] | None = None) -> int:
             return poll_forever(db, once=args.once)
         if args.command == "inbox-apply":
             return _inbox_apply(db, args)
+        if args.command == "telegram-apply-note":
+            return _telegram_apply_note(db, args)
         realtor = seed_realtor(db)
         seed_pirates_ig(db, realtor)
         if args.command == "telegram-hello":
@@ -252,6 +261,39 @@ def _read_offset() -> int | None:
 def _write_offset(offset: int) -> None:
     OFFSET_PATH.parent.mkdir(parents=True, exist_ok=True)
     OFFSET_PATH.write_text(json.dumps({"offset": offset}), encoding="utf-8")
+
+
+def _telegram_apply_note(db, args) -> int:
+    from app.services.criteria.telegram_apply import TelegramCriteriaService
+    from app.services.seed import seed_realtor
+
+    text = str(args.text or "").strip()
+    if args.text_file:
+        path = Path(args.text_file)
+        if not path.is_file():
+            print({"ok": False, "error": f"text file not found: {path}"})
+            return 1
+        text = path.read_text(encoding="utf-8").strip()
+    if not text:
+        print({"ok": False, "error": "Pass --text or --text-file with Damian's note."})
+        return 1
+    realtor = seed_realtor(db)
+    result = TelegramCriteriaService(db).apply_note(
+        realtor,
+        text,
+        from_user={"username": "damianlasvegas", "id": "7592412078"},
+    )
+    db.commit()
+    if args.send and result.get("ok"):
+        settings = get_settings()
+        chat_id = settings.telegram_operator_chat_id or realtor.telegram_chat_id
+        if settings.telegram_mode == "live" and chat_id and chat_id != "mock-realtor":
+            telegram = get_telegram_provider(settings)
+            sent = telegram.send_message(str(chat_id), result.get("reply") or "Buy box updated.")
+            result["sent"] = {k: v for k, v in sent.items() if k != "raw"}
+            result["chat_id"] = str(chat_id)
+    print(json.dumps(result, default=str))
+    return 0 if result.get("ok") else 1
 
 
 def _inbox_apply(db, args) -> int:

@@ -14,6 +14,7 @@ from app.services.telegram.realtor_agent import RealtorTelegramService
 GROUP_INTRO = (
     "PirateEye is live in this group.\n"
     "Listing cards post here. Tap APPROVE / REJECT / SNOOZE / DETAILS on each card.\n"
+    "Reply here to correct the buy box (price, buy-and-hold vs flip).\n"
     "This is still the test flow: investor SMS/email stay on the relay. "
     "Approve does not text Damian or investors.\n"
 )
@@ -65,6 +66,22 @@ def process_telegram_update(
             telegram.send_message(chat_id, _start_reply(chat, from_user, chat_id))
             return {"ok": True, "action": "linked", "chat_id": chat_id}
 
+    from_user = message.get("from") or {}
+    if text and is_damian_telegram_user(from_user) and not text.startswith("/"):
+        from app.services.criteria.telegram_apply import TelegramCriteriaService
+
+        link_damian_telegram(db, from_user, chat_id or None)
+        note = TelegramCriteriaService(db).apply_note(
+            realtor,
+            text,
+            payload=payload,
+            from_user=from_user,
+        )
+        reply = note.get("reply") or "Saved your note."
+        if chat_id:
+            telegram.send_message(chat_id, reply)
+        return {"ok": True, "action": "damian_note", "note": note}
+
     callback = payload.get("callback_query") or {}
     data = callback.get("data")
     if not data:
@@ -81,6 +98,12 @@ def process_telegram_update(
 
     service = RealtorTelegramService(db)
     result = service.handle_callback(realtor, data)
+    if result.get("ok") and result.get("action") in {"details", "approve", "reject", "snooze"}:
+        from app.services.criteria.telegram_apply import TelegramCriteriaService
+
+        public_id = data.split(":", 1)[1] if ":" in data else ""
+        if public_id:
+            TelegramCriteriaService(db).remember_opportunity(realtor, public_id)
     reply_chat_id = str(
         ((callback.get("message") or {}).get("chat") or {}).get("id")
         or realtor.telegram_chat_id

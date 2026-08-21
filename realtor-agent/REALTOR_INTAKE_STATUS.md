@@ -60,7 +60,7 @@ SMS and email **relays stay on**. Do not text Damian or investors from this envi
 | Test investor template | Pirates IG LLC rules from the Numbers workbook | seed only |
 | Live realtor email | `binder@thehomefinderlv.com` | Packet 1 / `DAMIAN_EMAIL` |
 | Live realtor | created when Packet 1 arrives, or from `binder@thehomefinderlv.com` mail | inbox-poll |
-| Damian Telegram | `@damianlasvegas` in **MaximumMint & Agent Real**; alerts via @PirateEye_bot | `TELEGRAM_OPERATOR_CHAT_ID` + telegram-poll |
+| Damian Telegram | `@damianlasvegas` in **MaximumMint & Agent Real**; alerts via @PirateEye_bot; buy-box notes (`$300k–$600k` buy-and-hold + stretch) | `TELEGRAM_OPERATOR_CHAT_ID` + telegram-poll |
 
 Template matching rules (for tests, not production traffic):
 

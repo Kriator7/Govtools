@@ -233,6 +233,8 @@ TELEGRAM_OPERATOR_CHAT_ID=-5372586958
 6. Intro ping: `python -m app.cli telegram-hello`
 7. Mock listing cards: `python -m app.cli alert` (use `python -m app.cli alert --resend-pending --limit 2` if listings already matched)
 8. Damian or the operator taps APPROVE / REJECT / SNOOZE in the group. APPROVE notifies the **test** investor channel (SMS relay + email copy). Relays stay on. Do not text Damian or live investors.
+9. Damian can reply in the group to correct the buy box (`300k min`, `$600,000 max`, buy-and-hold). PirateEye applies that to the investor on the last DETAILS card. For group text to arrive, reply to a PirateEye card or disable BotFather privacy for `@PirateEye_bot`.
+10. Pasted note: `python -m app.cli telegram-apply-note --text-file note.txt --send`
 
 If Damian is added to the group, PirateEye records `@damianlasvegas` on the Damian realtor row and keeps Test Operator as the matcher/alert sender. Packet 1 still does not overwrite Test Operator.
 
