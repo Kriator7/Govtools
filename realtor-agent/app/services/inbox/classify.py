@@ -23,7 +23,12 @@ MLS_ASSOCIATION_SENDER_NEEDLES = (
     "lasvegasrealtor",
     "glvar",
     "trestle.corelogic.com",
+    "trestle",
     "cotality.com",
+    "cotality",
+    "corelogic.com",
+    "trestlesupport",
+    "mlo connection",
 )
 
 IGNORE_SENDER_NEEDLES = (
@@ -53,7 +58,8 @@ PACKET_PATTERNS = {
     1: re.compile(r"\bpacket\s*1\b|who you are|license number|brokerage legal name", re.I),
     2: re.compile(
         r"\bpacket\s*2\b|listing access|\bmls agent\b|glvar|reso web api|\bidx\b|trestle|"
-        r"matrix|cotality|catalino|las vegas realtor",
+        r"matrix|cotality|catalino|las vegas realtor|mlo connection|technology provider|"
+        r"webapi|corelogic",
         re.I,
     ),
     3: re.compile(r"\bpacket\s*3\b|investor list|investor clientele", re.I),

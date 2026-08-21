@@ -18,7 +18,10 @@ from app.services.seed import DAMIAN_EMAIL
 GMAIL_PACKET_QUERY = (
     f"(einbinder OR damian OR from:{DAMIAN_EMAIL} OR from:thehomefinderlv.com "
     'OR "home finder" OR homefinder OR thehomefinderlv '
-    'OR catalino OR trestle OR cotality OR "las vegas realtor" OR idx '
+    "OR catalino OR trestle OR cotality OR corelogic "
+    'OR from:cotality.com OR from:corelogic.com OR from:trestle.corelogic.com '
+    'OR "las vegas realtor" OR lasvegasrealtor OR idx OR webapi OR "web api" '
+    'OR "mlo connection" OR "technology provider" OR "data license" '
     'OR "packet 1" OR "packet 2" OR "packet 3" OR "packet 4" OR "packet 5" '
     'OR "packet 6" OR "packet 7" OR "packet 8" OR "packet 9" OR "packet 10" '
     'OR "buy box" OR "investor list")'
@@ -84,6 +87,13 @@ def _search_uids(client: imaplib.IMAP4, lookback_days: int) -> list[bytes]:
         ("SINCE", since, "FROM", "homefinder"),
         ("FROM", DAMIAN_EMAIL),
         ("FROM", "thehomefinderlv.com"),
+        ("SINCE", since, "FROM", "cotality.com"),
+        ("SINCE", since, "FROM", "corelogic.com"),
+        ("SINCE", since, "FROM", "trestle"),
+        ("SINCE", since, "FROM", "catalino"),
+        ("SINCE", since, "SUBJECT", "Trestle"),
+        ("SINCE", since, "SUBJECT", "MLO"),
+        ("SINCE", since, "SUBJECT", "WebAPI"),
     ):
         try:
             typ, data = client.uid("SEARCH", None, *criteria)

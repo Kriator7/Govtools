@@ -29,7 +29,9 @@ Recorded from the association IDX email. MLS name: Las Vegas REALTORS MLS (Matri
 | 2. IDX vendor API key plugin | Vendor charges. LVR waives $250 setup for a listed vendor set. https://wordpress.com/plugins/browse/idx | No (website plugin) |
 | 3. Trestle WebAPI | Sign up as **technology provider** at https://trestle.corelogic.com/SubscriptionWizard. $100/month to Cotality. | Yes (authorized feed) |
 
-Cat: **do not choose option 2 and option 3 together.** Chosen option is still empty. `MLS_PROVIDER` stays `mock`. Do not scrape Matrix. Do not sign up for Trestle until Damian or the broker picks option 3 only.
+Cat: **do not choose option 2 and option 3 together.** Damian chose **option 3** (Trestle WebAPI). MLS agent ID **241888**. `mls_config_ref` is `secret:mls-trestle-pending`. `MLS_PROVIDER` stays `mock` until Trestle credentials exist.
+
+Watch `jrupe7@gmail.com` and the CardanoMint fallback mailbox for a **Trestle / Cotality / Las Vegas REALTORS MLO** access reply (Technology Provider account, ADD MLO CONNECTION, e-sign, or credentials). Do not scrape Matrix. Do not store API secrets in the database. Do not text Damian, Amos, or investors. When that mail arrives, Agent Real posts a redacted notice in the PirateEye group.
 
 Paste apply:
 

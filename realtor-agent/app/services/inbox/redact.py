@@ -6,10 +6,12 @@ import re
 
 SECRET_LINE = re.compile(
     r"(?im)^(.*\b(?:password|passwd|passcode|app password|secret|api[_ ]?key|auth[_ ]?token|"
-    r"access[_ ]?token|twilio[_ ]?(?:auth_)?token|bot[_ ]?token)\b\s*[:=]\s*)(\S+.*)$"
+    r"access[_ ]?token|twilio[_ ]?(?:auth_)?token|bot[_ ]?token|client[_ -]?secret|"
+    r"client[_ -]?id|consumer[_ -]?secret|refresh[_ -]?token)\b\s*[:=]\s*)(\S+.*)$"
 )
 SECRET_INLINE = re.compile(
-    r"(?i)\b((?:password|secret|api[_ ]?key|auth[_ ]?token|app password)\s*[:=]\s*)(\S+)"
+    r"(?i)\b((?:password|secret|api[_ ]?key|auth[_ ]?token|app password|client[_ -]?secret|"
+    r"client[_ -]?id|consumer[_ -]?secret)\s*[:=]\s*)(\S+)"
 )
 
 
