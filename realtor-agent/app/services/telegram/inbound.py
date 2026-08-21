@@ -26,7 +26,10 @@ HELP_REPLY = (
     "I'm Agent Real (@PirateEye_bot). How can I help?\n"
     "\n"
     "I can post listing cards, take APPROVE / REJECT / SNOOZE / DETAILS, "
-    "and update the buy box when Damian sends a price or buy-and-hold note.\n"
+    "and update the buy box when Damian sends a price, property type "
+    "(for example condos), ARV %, or buy-and-hold note.\n"
+    "I'll search MLS after a buy-box change once IDX option 3 (Trestle) is connected. "
+    "Live MLS is not connected yet. I will not scrape Matrix.\n"
     "Approve does not text Damian, Amos, or investors. Relays stay on.\n"
     "Say hello, /help, or tell me the next listing or buy-box change."
 )
@@ -112,6 +115,9 @@ def process_telegram_update(
         reply = note.get("reply") or "Saved your note."
         if chat_id:
             telegram.send_message(chat_id, reply)
+        search = (note.get("result") or {}).get("search") or {}
+        if search.get("connected"):
+            _post_search_cards(db, realtor, telegram, search)
         return {"ok": True, "action": "damian_note", "note": note}
 
     callback = payload.get("callback_query") or {}
@@ -195,6 +201,25 @@ def _reply_text(result: dict) -> str:
     if action == "view":
         return result.get("url") or "No listing URL on file."
     return f"Done ({action})."
+
+
+def _post_search_cards(db: Session, realtor: Realtor, telegram, search: dict) -> None:
+    """Post listing cards only after a live MLS search. Mock feed is not live MLS."""
+    from app.services.communications import CommunicationService
+
+    ids = list(search.get("opportunity_ids") or [])
+    if not ids:
+        return
+    comms = CommunicationService(db, telegram=telegram)
+    agent = RealtorTelegramService(db, comms=comms)
+    for public_id in ids:
+        opportunity = (
+            db.query(Opportunity)
+            .filter(Opportunity.public_id == public_id, Opportunity.realtor_id == realtor.id)
+            .one_or_none()
+        )
+        if opportunity is not None:
+            agent.alert_opportunity(realtor, opportunity)
 
 
 def _wants_help(text: str, message: dict) -> bool:

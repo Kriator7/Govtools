@@ -8,6 +8,7 @@ from __future__ import annotations
 import re
 from decimal import Decimal
 
+from app.services.matching.screening import normalize_property_type
 from app.utilities.money import as_decimal, money_label
 
 OPP_ID_RE = re.compile(r"OPP-\d{4}-\d+")
@@ -17,6 +18,18 @@ HOLD_RE = re.compile(
 )
 RENTAL_RE = re.compile(r"\brentals?\b", re.I)
 STRETCH_RE = re.compile(r"very good deal|more expensive|different parameters", re.I)
+ARV_PCT_RE = re.compile(
+    r"(?P<n>\d{1,3}(?:\.\d+)?)\s*%\s*(?:of\s+)?(?:arv|after[\s-]?repair(?:\s+value)?|market(?:\s+value)?)"
+    r"|(?:arv|after[\s-]?repair(?:\s+value)?|market(?:\s+value)?)\s*(?:of\s+|at\s+|is\s+)?"
+    r"(?P<n2>\d{1,3}(?:\.\d+)?)\s*%",
+    re.I,
+)
+TYPE_PATTERNS = (
+    (re.compile(r"\bcondos?\b|\bcondominiums?\b", re.I), "condo"),
+    (re.compile(r"\btown\s*-?houses?\b|\btownhomes?\b", re.I), "townhouse"),
+    (re.compile(r"\bmulti[\s-]?famil|\bmf\b", re.I), "multi_family"),
+    (re.compile(r"\bsingle[\s-]?famil|\bsfh\b|\bhouses?\b", re.I), "single_family"),
+)
 BOUND_BEFORE = re.compile(
     r"(?P<n>\$?\d{1,3}(?:,\d{3})+|\d{2,4})\s*(?P<k>k)?\s*(?P<kind>min(?:imum)?|max(?:imum)?)",
     re.I,
@@ -52,12 +65,16 @@ def parse_realtor_note(text: str) -> dict:
     buy_and_hold = bool(HOLD_RE.search(raw))
     if RENTAL_RE.search(raw) and ("long" in raw.lower() or buy_and_hold):
         buy_and_hold = True
+    property_types = _property_types(raw)
+    max_price_pct_of_arv = _arv_pct(raw)
     parsed = {
         "raw": raw,
         "min_price": min_price,
         "max_price": max_price,
         "buy_and_hold": buy_and_hold,
         "stretch_over_max": bool(STRETCH_RE.search(raw)),
+        "property_types": property_types,
+        "max_price_pct_of_arv": max_price_pct_of_arv,
         "opportunity_id": extract_opportunity_id(raw),
     }
     parsed["has_criteria"] = any(
@@ -66,6 +83,8 @@ def parse_realtor_note(text: str) -> dict:
             parsed["max_price"] is not None,
             parsed["buy_and_hold"],
             parsed["stretch_over_max"],
+            bool(parsed["property_types"]),
+            parsed["max_price_pct_of_arv"] is not None,
         ]
     )
     return parsed
@@ -79,6 +98,12 @@ def format_note_confirmation(applied: dict) -> str:
         lines.append(f"Primary: {money_label(min_price)} min / {money_label(max_price)} max.")
     if applied.get("buy_and_hold"):
         lines.append("Strategy: buy-and-hold rentals, not flips.")
+    types = applied.get("property_types") or []
+    if types:
+        lines.append("Property types: " + ", ".join(types) + ".")
+    pct = applied.get("max_price_pct_of_arv")
+    if pct is not None:
+        lines.append(f"Max purchase: {float(pct) * 100:.0f}% of ARV. ARV is not invented.")
     if applied.get("stretch"):
         stretch = applied["stretch"]
         pct = float(stretch.get("max_price_pct_of_arv") or 0) * 100
@@ -92,7 +117,49 @@ def format_note_confirmation(applied: dict) -> str:
     investor = applied.get("investor")
     if investor:
         lines.append(f"Investor: {investor}. Relays stay on.")
+    search = applied.get("search") or {}
+    if search:
+        types = applied.get("property_types") or []
+        kind = ", ".join(types) if types else "matching"
+        if not search.get("connected"):
+            lines.append(f"I'll search MLS for {kind} listings that pass this box.")
+            lines.append(
+                "Live MLS is not connected yet. No listing cards until IDX option 3 "
+                "(Trestle) is live. I will not scrape Matrix or invent ARV."
+            )
+        else:
+            matched = int(search.get("matched") or 0)
+            provider = search.get("provider") or "mls"
+            lines.append(
+                f"MLS search ({provider}, not Matrix): {matched} match"
+                f"{'' if matched == 1 else 'es'}."
+            )
+            if matched:
+                lines.append("Listing cards posted. Approve does not text investors.")
+            else:
+                lines.append("No listings in the current feed passed that box.")
     return "\n".join(lines)
+
+
+def _property_types(text: str) -> list[str]:
+    found: list[str] = []
+    for pattern, name in TYPE_PATTERNS:
+        if pattern.search(text) and name not in found:
+            found.append(name)
+    return found
+
+
+def _arv_pct(text: str) -> Decimal | None:
+    match = ARV_PCT_RE.search(text)
+    if not match:
+        return None
+    raw = match.group("n") or match.group("n2")
+    value = as_decimal(raw)
+    if value is None:
+        return None
+    if value > 1:
+        value = (value / Decimal("100")).quantize(Decimal("0.0001"))
+    return value
 
 
 def _to_price(number: str | None, thousand_suffix: str | None) -> Decimal | None:
