@@ -212,24 +212,31 @@ IMAP_WATCH_ADDRESS=jrupe7@gmail.com
 
 If `IMAP_PASSWORD` is missing, the same command still polls `cardanomint@gmail.com` with the SMTP App Password and applies Damian mail that lands there (for example a CC or forward).
 
-## Live Telegram (operator phone)
+## Live Telegram (operator + Damian group)
 
 Source: https://core.telegram.org/bots/api
 
-1. In Telegram, open `@BotFather`. Realtor acquisition uses **@PirateEye_bot** only. Never put the TrueHold Wellness token (`@THWellness_bot`) in this folder. Wellness is a different company and lives in `truehold-wellness/`.
-2. Put the token in `.env`:
+Realtor acquisition uses **@PirateEye_bot** only. Never put `@THWellness_bot` or `@Mr_North_bot` in this folder.
+
+1. Add `@PirateEye_bot` to the operator/Damian group (currently **MaximumMint & Agent Real**). Privacy mode can stay on; Approve/Reject buttons still work because they are on the bot’s own cards.
+2. Get the group id the same way as North (`ID Bot` → **My Group**). It is a negative number. Do **not** use the Mr North BLS group (`-1003939359929`).
+3. Put the token and group id in `.env`:
 
 ```
 TELEGRAM_MODE=live
 TELEGRAM_BOT_TOKEN=123456:ABC...
+TELEGRAM_OPERATOR_CHAT_ID=-5372586958
 ```
 
-3. Start polling on the machine that should receive button taps: `python -m app.cli telegram-poll`
-4. Open the bot, tap Start (`/start`). The Test Operator record stores your `chat_id`.
-5. In another terminal: `python -m app.cli alert`
-6. On the phone, tap APPROVE / REJECT / SNOOZE. APPROVE notifies the test investor channel (SMS relay + email copy). Do not approve live investor traffic yet.
+4. Confirm identity: `python -m app.cli telegram-whoami` must print `PirateEye_bot`.
+5. Start polling on the machine that should receive button taps: `python -m app.cli telegram-poll`
+6. Intro ping: `python -m app.cli telegram-hello`
+7. Mock listing cards: `python -m app.cli alert`
+8. Damian or the operator taps APPROVE / REJECT / SNOOZE in the group. APPROVE notifies the **test** investor channel (SMS relay + email copy). Relays stay on. Do not text Damian or live investors.
 
-Optional: set `TELEGRAM_OPERATOR_CHAT_ID` after `/start` so seed keeps the same chat.
+If Damian is added to the group, PirateEye records `@damianlasvegas` on the Damian realtor row and keeps Test Operator as the matcher/alert sender. Packet 1 still does not overwrite Test Operator.
+
+`/start` in a private chat still links Test Operator. In the group, `/start@PirateEye_bot` (or the env chat id) is enough because Bot API privacy may hide ordinary group text.
 
 Polling uses `getUpdates` and calls `deleteWebhook` first. Use the HTTPS webhook (`POST /api/v1/webhooks/telegram`) later if this process has a public URL and `TELEGRAM_WEBHOOK_SECRET`.
 

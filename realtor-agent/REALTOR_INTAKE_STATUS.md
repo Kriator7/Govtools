@@ -53,13 +53,14 @@ SMS and email **relays stay on**. Do not text Damian or investors from this envi
 | Email relay inbox | `cardanomint@gmail.com` | `EMAIL_RELAY_TO` |
 | Relay mode | on (all mail goes to the relay inbox) | `EMAIL_RELAY_MODE=true\|false` |
 | Live Gmail send | off until `EMAIL_PROVIDER=smtp` + App Password | `EMAIL_SMTP_PASSWORD` |
-| Telegram | mock until `TELEGRAM_MODE=live` | `TELEGRAM_BOT_TOKEN` + `python -m app.cli telegram-poll` |
+| Telegram | live @PirateEye_bot in **MaximumMint & Agent Real** (`TELEGRAM_OPERATOR_CHAT_ID`) | `TELEGRAM_MODE=live` + `python -m app.cli telegram-poll` |
 | Investor preferred channel | SMS (Damian’s stated preference) | test template only |
 | SMS relay | on; live Twilio blocked without `SMS_RELAY_TO` | `SMS_RELAY_TO` = your test phone |
 | Email copy of investor notices | on | `NOTIFY_EMAIL_COPY` |
 | Test investor template | Pirates IG LLC rules from the Numbers workbook | seed only |
 | Live realtor email | `binder@thehomefinderlv.com` | Packet 1 / `DAMIAN_EMAIL` |
 | Live realtor | created when Packet 1 arrives, or from `binder@thehomefinderlv.com` mail | inbox-poll |
+| Damian Telegram | `@damianlasvegas` in **MaximumMint & Agent Real**; alerts via @PirateEye_bot | `TELEGRAM_OPERATOR_CHAT_ID` + telegram-poll |
 
 Template matching rules (for tests, not production traffic):
 

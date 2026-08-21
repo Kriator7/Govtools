@@ -15,6 +15,7 @@ MOCK_SMS_NUMBER = "+15555550100"
 DAMIAN_NAME = "Damian Einbinder"
 DAMIAN_BROKERAGE = "Home Finder Realty"
 DAMIAN_EMAIL = "binder@thehomefinderlv.com"
+DAMIAN_TELEGRAM_USERNAMES = frozenset({"damianlasvegas"})
 
 
 def seed_realtor(db: Session) -> Realtor:
@@ -156,15 +157,65 @@ def seed_pirates_ig(db: Session, realtor: Realtor | None = None) -> Investor:
     return investor
 
 
-def upsert_damian_realtor(db: Session, fields: dict | None = None) -> Realtor:
-    """Create or update Damian from packet data only. Relays stay on."""
-    fields = fields or {}
-    realtor = (
+def find_damian_realtor(db: Session) -> Realtor | None:
+    return (
         db.query(Realtor)
         .filter(Realtor.name.ilike("%Einbinder%"))
         .order_by(Realtor.created_at.asc())
         .first()
     )
+
+
+def is_damian_telegram_user(user: dict | None) -> bool:
+    """Match Damian's public Telegram username only. Do not SMS this user."""
+    username = str((user or {}).get("username") or "").lstrip("@").lower()
+    return username in DAMIAN_TELEGRAM_USERNAMES
+
+
+def link_operator_group_chat(db: Session, chat_id: str | None = None) -> str | None:
+    """Point Test Operator (and Damian if present) at the PirateEye group.
+
+    Listing cards post to this chat. SMS/email relays stay on.
+    """
+    settings = get_settings()
+    chat_id = (chat_id or settings.telegram_operator_chat_id or "").strip() or None
+    if not chat_id:
+        return None
+    test = seed_realtor(db)
+    test.telegram_chat_id = chat_id
+    damian = find_damian_realtor(db)
+    if damian is not None:
+        damian.telegram_chat_id = chat_id
+    db.flush()
+    return chat_id
+
+
+def link_damian_telegram(db: Session, user: dict | None, chat_id: str | None = None) -> Realtor | None:
+    """Record Damian's Telegram user on his realtor row. Never overwrite Test Operator."""
+    if not is_damian_telegram_user(user):
+        return None
+    damian = find_damian_realtor(db)
+    if damian is None:
+        return None
+    user = user or {}
+    user_id = str(user.get("id") or "").strip()
+    username = str(user.get("username") or "").lstrip("@")
+    if user_id:
+        damian.telegram_user_id = user_id
+    settings = dict(damian.notification_settings or {})
+    if username:
+        settings["telegram_username"] = username
+        damian.notification_settings = settings
+    if chat_id:
+        damian.telegram_chat_id = str(chat_id)
+    db.flush()
+    return damian
+
+
+def upsert_damian_realtor(db: Session, fields: dict | None = None) -> Realtor:
+    """Create or update Damian from packet data only. Relays stay on."""
+    fields = fields or {}
+    realtor = find_damian_realtor(db)
     if realtor is None:
         realtor = (
             db.query(Realtor)
@@ -200,6 +251,8 @@ def _apply_damian_fields(realtor: Realtor, fields: dict) -> None:
         "phone": "phone",
         "email": "email",
         "timezone": "timezone",
+        "telegram_user_id": "telegram_user_id",
+        "telegram_chat_id": "telegram_chat_id",
     }
     for source, attr in mapping.items():
         value = fields.get(source)
@@ -217,3 +270,8 @@ def _apply_damian_fields(realtor: Realtor, fields: dict) -> None:
     realtor.license_state = realtor.license_state or "NV"
     if not realtor.email:
         realtor.email = DAMIAN_EMAIL
+    username = fields.get("telegram_username")
+    if username:
+        settings = dict(realtor.notification_settings or {})
+        settings["telegram_username"] = str(username).lstrip("@")
+        realtor.notification_settings = settings

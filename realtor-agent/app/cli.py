@@ -14,7 +14,7 @@ from app.services.demo import run_demo
 from app.services.matching.runner import OpportunityMatcher
 from app.services.mls.ingest import ListingIngestService
 from app.services.providers import get_email_provider, get_mls_provider, get_sms_provider, get_telegram_provider
-from app.services.seed import seed_pirates_ig, seed_realtor
+from app.services.seed import link_operator_group_chat, seed_pirates_ig, seed_realtor
 from app.services.sms.relay import resolve_sms_destination
 from app.services.telegram.inbound import process_telegram_update
 from app.services.telegram.realtor_agent import RealtorTelegramService
@@ -34,6 +34,11 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("send-test-sms", help="Send a ping to SMS_RELAY_TO (mock outbox unless Twilio is live)")
     poll = sub.add_parser("telegram-poll", help="Long-poll Telegram getUpdates for phone approve/reject/snooze")
     poll.add_argument("--once", action="store_true", help="Fetch one batch and exit")
+    sub.add_parser("telegram-whoami", help="Confirm the live token is @PirateEye_bot")
+    sub.add_parser(
+        "telegram-hello",
+        help="Send a group intro to TELEGRAM_OPERATOR_CHAT_ID (@PirateEye_bot only)",
+    )
     inbox = sub.add_parser(
         "inbox-poll",
         help="Watch Gmail for Damian packet replies and apply them to realtor packet data",
@@ -53,6 +58,8 @@ def main(argv: list[str] | None = None) -> int:
         return _send_test_email()
     if args.command == "send-test-sms":
         return _send_test_sms()
+    if args.command == "telegram-whoami":
+        return _telegram_whoami()
 
     init_db()
     db = get_session_factory()()
@@ -76,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
             return _inbox_apply(db, args)
         realtor = seed_realtor(db)
         seed_pirates_ig(db, realtor)
+        if args.command == "telegram-hello":
+            return _telegram_hello(db, realtor)
         if args.command == "ingest":
             result = ListingIngestService(db, get_mls_provider()).sync(realtor)
             db.commit()
@@ -87,6 +96,8 @@ def main(argv: list[str] | None = None) -> int:
             print({"created": [item.public_id for item in created]})
             return 0
         if args.command == "alert":
+            link_operator_group_chat(db)
+            db.refresh(realtor)
             ListingIngestService(db, get_mls_provider()).sync(realtor)
             created = OpportunityMatcher(db).match_all(realtor)
             telegram = RealtorTelegramService(db)
@@ -98,6 +109,9 @@ def main(argv: list[str] | None = None) -> int:
             print({"alerted": sent, "telegram_chat_id": realtor.telegram_chat_id})
             return 0
         if args.command == "telegram-poll":
+            link_operator_group_chat(db)
+            db.refresh(realtor)
+            db.commit()
             return _telegram_poll(db, realtor, once=args.once)
     finally:
         db.close()
@@ -136,6 +150,42 @@ def _send_test_sms() -> int:
     return 0
 
 
+def _telegram_whoami() -> int:
+    settings = get_settings()
+    if settings.telegram_mode != "live" or not settings.telegram_bot_token:
+        print({"ok": False, "error": "Set TELEGRAM_MODE=live and TELEGRAM_BOT_TOKEN first."})
+        return 1
+    telegram = get_telegram_provider(settings)
+    username = telegram.get_username() if hasattr(telegram, "get_username") else None
+    print(
+        {
+            "ok": True,
+            "username": username,
+            "mode": settings.telegram_mode,
+            "operator_chat_id": settings.telegram_operator_chat_id,
+        }
+    )
+    return 0
+
+
+def _telegram_hello(db, realtor) -> int:
+    settings = get_settings()
+    if settings.telegram_mode != "live":
+        print({"ok": False, "error": "Set TELEGRAM_MODE=live and TELEGRAM_BOT_TOKEN, then retry."})
+        return 1
+    chat_id = link_operator_group_chat(db) or realtor.telegram_chat_id
+    if not chat_id or chat_id == "mock-realtor":
+        print({"ok": False, "error": "Set TELEGRAM_OPERATOR_CHAT_ID to the PirateEye group id."})
+        return 1
+    from app.services.telegram.inbound import GROUP_INTRO
+
+    telegram = get_telegram_provider(settings)
+    result = telegram.send_message(str(chat_id), f"{GROUP_INTRO}chat_id={chat_id}")
+    db.commit()
+    print({"ok": True, "chat_id": str(chat_id), "result": {k: v for k, v in result.items() if k != "raw"}})
+    return 0
+
+
 def _telegram_poll(db, realtor, *, once: bool) -> int:
     settings = get_settings()
     if settings.telegram_mode != "live":
@@ -144,7 +194,15 @@ def _telegram_poll(db, realtor, *, once: bool) -> int:
     telegram = get_telegram_provider(settings)
     telegram.delete_webhook(drop_pending_updates=False)
     offset = _read_offset()
-    print({"ok": True, "polling": True, "offset": offset, "hint": "Open the bot and send /start"})
+    print(
+        {
+            "ok": True,
+            "polling": True,
+            "offset": offset,
+            "chat_id": realtor.telegram_chat_id,
+            "hint": "Alerts post in the PirateEye group. Tap APPROVE / REJECT on each card.",
+        }
+    )
     while True:
         updates = telegram.get_updates(offset=offset, timeout=25)
         for update in updates:
