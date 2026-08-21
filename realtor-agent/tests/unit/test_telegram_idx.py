@@ -140,3 +140,56 @@ def test_option_3_yes_thanks_damian_and_keeps_mls_id_241888(db, realtor, tmp_pat
     assert "241888" in reply
     assert "Still need" not in reply
     assert "will not scrape" in reply.lower()
+
+
+def test_option_3_yes_does_not_echo_purchase_agreement_text(db, realtor, tmp_path, monkeypatch):
+    monkeypatch.setenv("INBOX_STORAGE_PATH", str(tmp_path / "inbox"))
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    damian = upsert_damian_realtor(db, {"name": DAMIAN_NAME})
+    damian.mls_config_ref = "pending:las-vegas-realtors-idx-choice"
+    seed = RealtorPacket(
+        public_id=next_public_id(db, "PKT"),
+        realtor_id=damian.id,
+        packet_number=2,
+        message_id="<cat-yee-idx@test>",
+        payload={
+            **PACKET_2_FROM_CAT,
+            "mls_agent_id": "241888",
+            "coverage_area": "ESCROW: Opening of Escrow shall take place by the end of one business day.",
+            "listing_statuses": "TITLE INSURANCE: This Purchase Agreement is contingent upon marketable title.",
+        },
+        missing_fields=["chosen_idx_option"],
+        status="partial",
+    )
+    db.add(seed)
+    db.flush()
+    telegram = MockTelegramProvider(outbox_path=tmp_path / "tg.json")
+    result = process_telegram_update(
+        db,
+        realtor,
+        {
+            "message": {
+                "text": "Option 3 yes",
+                "chat": {"id": -5372586958, "type": "group"},
+                "from": {"id": 7592412078, "username": "damianlasvegas"},
+            }
+        },
+        telegram=telegram,
+    )
+    assert result["action"] == "idx_choice"
+    reply = telegram.sent[0]["text"]
+    assert reply.startswith("Thank you, Damian. Option 3 is recorded.")
+    assert "241888" in reply
+    assert "ESCROW" not in reply
+    assert "TITLE INSURANCE" not in reply
+    row = (
+        db.query(RealtorPacket)
+        .filter(RealtorPacket.realtor_id == damian.id, RealtorPacket.packet_number == 2)
+        .order_by(RealtorPacket.updated_at.desc())
+        .first()
+    )
+    assert row.payload["mls_agent_id"] == "241888"
+    assert "ESCROW" not in str(row.payload.get("coverage_area") or "")
+    assert "TITLE INSURANCE" not in str(row.payload.get("listing_statuses") or "")

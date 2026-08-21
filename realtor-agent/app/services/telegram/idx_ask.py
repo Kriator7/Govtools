@@ -63,6 +63,29 @@ AGENT_ID_RE = re.compile(
     re.I,
 )
 ASK_CONTEXT_RE = re.compile(r"packet\s*2|trestle|webapi|idx option|mls agent id", re.I)
+IDX_FIELD_KEYS = (
+    "mls_name",
+    "idx_contact_name",
+    "idx_contact_role",
+    "idx_contact_org",
+    "idx_option_1",
+    "idx_option_2",
+    "idx_option_3",
+    "idx_rule",
+    "chosen_idx_option",
+    "agent_usable_option",
+    "trestle_signup_url",
+    "api_vendor",
+    "mls_agent_id",
+    "coverage_area",
+    "listing_statuses",
+    "telegram_idx_reply",
+)
+CONTRACT_NOISE_RE = re.compile(
+    r"escrow|purchase agreement|title insurance|earnest money|close of escrow|"
+    r"fixtures and personal property|due diligence|transfer of title|1099",
+    re.I,
+)
 
 
 def parse_idx_reply(text: str, *, reply_to: str | None = None) -> dict:
@@ -113,7 +136,7 @@ def apply_idx_reply(
     if not parsed.get("has_idx"):
         return {"ok": False, "applied": False, "parsed": parsed}
     damian = find_damian_realtor(db) or upsert_damian_realtor(db, {"name": DAMIAN_NAME})
-    fields = _merge_packet2_fields(db, damian, parsed)
+    fields = _sanitize_idx_fields(_merge_packet2_fields(db, damian, parsed))
     intake = PacketIntakeService(db)
     apply_result = {"packet": 2, "mls": intake._apply_mls_notes(damian, fields)}
     missing = _missing_for_packet(2, fields, apply_result)
@@ -160,10 +183,10 @@ def format_idx_confirmation(parsed: dict, missing: list[str], fields: dict | Non
     if agent_id:
         lines.append(f"MLS agent ID: {agent_id}.")
     coverage = parsed.get("coverage_area") or fields.get("coverage_area")
-    if coverage:
+    if _looks_like_idx_coverage(coverage):
         lines.append(f"Coverage: {coverage}.")
     statuses = parsed.get("listing_statuses") or fields.get("listing_statuses")
-    if statuses:
+    if _looks_like_listing_status(statuses):
         lines.append(f"Statuses: {statuses}.")
     still = [item for item in missing if item in {"chosen_idx_option", "mls_agent_id"}]
     if still:
@@ -177,16 +200,46 @@ def format_idx_confirmation(parsed: dict, missing: list[str], fields: dict | Non
     return "\n".join(lines)
 
 
+def _looks_like_idx_coverage(value: str | None) -> bool:
+    raw = str(value or "").strip()
+    if not raw or len(raw) > 120 or CONTRACT_NOISE_RE.search(raw):
+        return False
+    return bool(re.search(r"henderson|north las vegas|\blv\b|las vegas", raw, re.I))
+
+
+def _looks_like_listing_status(value: str | None) -> bool:
+    raw = str(value or "").strip()
+    if not raw or len(raw) > 80 or CONTRACT_NOISE_RE.search(raw):
+        return False
+    return bool(re.search(r"\b(active|pending|sold|coming soon)\b", raw, re.I))
+
+
+def _sanitize_idx_fields(fields: dict) -> dict:
+    cleaned = {key: value for key, value in fields.items() if key in IDX_FIELD_KEYS and value}
+    if not _looks_like_idx_coverage(cleaned.get("coverage_area")):
+        cleaned.pop("coverage_area", None)
+    if not _looks_like_listing_status(cleaned.get("listing_statuses")):
+        cleaned.pop("listing_statuses", None)
+    mls_name = str(cleaned.get("mls_name") or "")
+    if not mls_name or len(mls_name) > 80 or CONTRACT_NOISE_RE.search(mls_name):
+        cleaned["mls_name"] = PACKET_2_FROM_CAT["mls_name"]
+    return cleaned
+
+
 def _merge_packet2_fields(db: Session, damian: Realtor, parsed: dict) -> dict:
     fields = dict(PACKET_2_FROM_CAT)
-    existing = (
+    rows = (
         db.query(RealtorPacket)
         .filter(RealtorPacket.realtor_id == damian.id, RealtorPacket.packet_number == 2)
-        .order_by(RealtorPacket.updated_at.desc())
-        .first()
+        .order_by(RealtorPacket.updated_at.asc())
+        .all()
     )
-    if existing and existing.payload:
-        fields.update({key: value for key, value in existing.payload.items() if value})
+    for row in rows:
+        payload = row.payload or {}
+        for key in IDX_FIELD_KEYS:
+            value = payload.get(key)
+            if value:
+                fields[key] = value
     if parsed.get("chosen_idx_option"):
         fields["chosen_idx_option"] = parsed["chosen_idx_option"]
         fields["api_vendor"] = "Trestle (Cotality)" if parsed["chosen_idx_option"] == "3" else fields.get("api_vendor")
@@ -244,9 +297,20 @@ def _upsert_telegram_packet2(
     )
     for item in latest:
         payload = dict(item.payload or {})
-        for key in ("chosen_idx_option", "mls_agent_id", "coverage_area", "listing_statuses", "api_vendor"):
+        for key in ("chosen_idx_option", "mls_agent_id", "api_vendor", "mls_name"):
             if fields.get(key):
                 payload[key] = fields[key]
+        if _looks_like_idx_coverage(fields.get("coverage_area")):
+            payload["coverage_area"] = fields["coverage_area"]
+        elif not _looks_like_idx_coverage(payload.get("coverage_area")):
+            payload.pop("coverage_area", None)
+        if _looks_like_listing_status(fields.get("listing_statuses")):
+            payload["listing_statuses"] = fields["listing_statuses"]
+        elif not _looks_like_listing_status(payload.get("listing_statuses")):
+            payload.pop("listing_statuses", None)
+        mls_name = str(payload.get("mls_name") or "")
+        if not mls_name or len(mls_name) > 80 or CONTRACT_NOISE_RE.search(mls_name):
+            payload["mls_name"] = fields.get("mls_name") or PACKET_2_FROM_CAT["mls_name"]
         item.payload = payload
         item.missing_fields = _missing_for_packet(2, payload, apply_result)
         if not item.missing_fields:
