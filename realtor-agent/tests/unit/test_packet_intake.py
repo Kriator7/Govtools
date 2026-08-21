@@ -6,7 +6,7 @@ from app.models.investor import Investor
 from app.models.realtor import Realtor
 from app.models.realtor_packet import RealtorPacket
 from app.services.inbox.apply import PacketIntakeService
-from app.services.inbox.classify import is_calendar_noise, is_damian_sender, is_packet_candidate
+from app.services.inbox.classify import classify_packets, is_calendar_noise, is_damian_sender, is_packet_candidate
 from app.services.inbox.message import parse_rfc822
 from app.services.inbox.redact import redact_text
 from app.services.seed import DAMIAN_EMAIL, DAMIAN_NAME, TEST_REALTOR_NAME, seed_realtor, upsert_damian_realtor
@@ -396,3 +396,29 @@ def test_packet_6_sets_manual_investor_notify(db, tmp_path, monkeypatch):
     assert damian.notification_settings["auto_notify_investors"] is False
     assert damian.notification_settings["twilio"] is False
     assert result["status"] == "applied"
+
+
+def test_transaction_checklist_xlsx_is_not_an_investor_sheet(db, tmp_path, monkeypatch):
+    monkeypatch.setenv("INBOX_STORAGE_PATH", str(tmp_path / "inbox"))
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    raw = _rfc822(
+        sender=f"Damian Einbinder <{DAMIAN_EMAIL}>",
+        to="jrupe7@gmail.com",
+        subject="Re: Packet 8",
+        body="1. Authentisign\n2. Broker does not require it\n3. 241888\n",
+        attachments=[
+            (
+                "Closed_Cash_Buyer_Transaction_Checklist.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                b"not-an-investor-sheet",
+            )
+        ],
+    )
+    inbound = parse_rfc822(raw, account="jrupe7@gmail.com", uid="12")
+    assert classify_packets(inbound) == [8]
+    result = PacketIntakeService(db).apply_message(inbound)
+    packets = {item["packet"] for item in result["packets"]}
+    assert 3 not in packets
+    assert 8 in packets

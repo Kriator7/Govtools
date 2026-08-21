@@ -52,13 +52,16 @@ QUOTED_SPLIT = re.compile(
 PACKET_PATTERNS = {
     1: re.compile(r"\bpacket\s*1\b|who you are|license number|brokerage legal name", re.I),
     2: re.compile(
-        r"\bpacket\s*2\b|\bmls\b|listing access|glvar|reso web api|\bidx\b|trestle|"
+        r"\bpacket\s*2\b|listing access|\bmls agent\b|glvar|reso web api|\bidx\b|trestle|"
         r"matrix|cotality|catalino|las vegas realtor",
         re.I,
     ),
     3: re.compile(r"\bpacket\s*3\b|investor list|investor clientele", re.I),
     4: re.compile(r"\bpacket\s*4\b|buy box|acquisition profile|investor criteria", re.I),
-    5: re.compile(r"\bpacket\s*5\b|telegram|alert hours|minimum match score", re.I),
+    5: re.compile(
+        r"\bpacket\s*5\b|telegram as the command center|alert hours|minimum match score",
+        re.I,
+    ),
     6: re.compile(r"\bpacket\s*6\b|twilio|tcpa|investor text|notify investors", re.I),
     7: re.compile(r"\bpacket\s*7\b|purchase agreement|addenda|disclosure form", re.I),
     8: re.compile(
@@ -128,12 +131,16 @@ def classify_packets(message: InboundMessage) -> list[int]:
     )
     found = [number for number, pattern in PACKET_PATTERNS.items() if pattern.search(haystack)]
     names = [item.filename.lower() for item in message.attachments]
-    if any(name.endswith((".csv", ".xlsx", ".xlsm", ".xls")) for name in names):
-        if 3 not in found:
+    tabular = [name for name in names if name.endswith((".csv", ".xlsx", ".xlsm", ".xls"))]
+    if tabular:
+        investor_sheet = any(
+            re.search(r"investor|clientele|buy.?box|criteria|profile", name, re.I) for name in tabular
+        ) or re.search(r"investor list|investor clientele|packet\s*3|packet\s*4", haystack, re.I)
+        if investor_sheet and 3 not in found:
             found.append(3)
         if 4 not in found and re.search(r"criteria|buy.?box|profile", haystack, re.I):
             found.append(4)
-        elif 4 not in found and re.search(
+        elif 4 not in found and investor_sheet and re.search(
             r"min(?:imum)? price|cities|zip|property type", haystack, re.I
         ):
             found.append(4)
