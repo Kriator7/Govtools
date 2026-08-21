@@ -58,11 +58,42 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub.add_parser(
         "hourly-loop",
-        help="Run the hourly BLS report forever (restart with mr_north/scripts/keep_hourly.sh)",
+        help=(
+            "Run forever: larger catalyst briefing, hourly BLS, and immediate "
+            "BTC watches. Restart with mr_north/scripts/keep_hourly.sh"
+        ),
     )
     sub.add_parser(
         "hourly-status",
         help="Show whether the last hourly BLS report was delivered",
+    )
+    watch = sub.add_parser(
+        "watch",
+        help="Check BTC and send immediately to both chats on a material change",
+    )
+    watch.add_argument(
+        "--webhook-url",
+        default=None,
+        help="Destination webhook. Defaults to ALERT_WEBHOOK_URL.",
+    )
+    watch.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Fetch BTC and decide, but do not send Telegram",
+    )
+    catalyst = sub.add_parser(
+        "catalyst",
+        help="Send the larger geopolitical / market briefing to both chats",
+    )
+    catalyst.add_argument(
+        "--webhook-url",
+        default=None,
+        help="Destination webhook. Defaults to ALERT_WEBHOOK_URL.",
+    )
+    catalyst.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Build the briefing but do not send Telegram",
     )
     sub.add_parser(
         "telegram-whoami",
@@ -148,9 +179,41 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         sys.stderr.write(f"sent: {result.get('destination')}\n")
         return 0
+    if args.command == "catalyst":
+        from mr_north.hourly import run_catalyst_report
+
+        result = run_catalyst_report(dry_run=args.dry_run, webhook_url=args.webhook_url)
+        sys.stdout.write(result["text"])
+        if not result.get("ok"):
+            sys.stderr.write(f"error: {result.get('reason')}\n")
+            return 1
+        if result.get("dry_run"):
+            sys.stderr.write("dry-run: larger catalyst briefing built; Telegram not called\n")
+            return 0
+        sys.stderr.write(f"sent: {result.get('destination')}\n")
+        return 0
+    if args.command == "watch":
+        from mr_north.watch import run_market_watch
+
+        result = run_market_watch(dry_run=args.dry_run, webhook_url=args.webhook_url)
+        if result.get("text"):
+            sys.stdout.write(result["text"])
+        else:
+            sys.stdout.write(json.dumps({k: v for k, v in result.items() if k != "text"}) + "\n")
+        if not result.get("ok"):
+            sys.stderr.write(f"error: {result.get('reason')}\n")
+            return 1
+        if result.get("reason") == "unchanged":
+            sys.stderr.write("watch: no material BTC change; Telegram not called\n")
+            return 0
+        if result.get("dry_run"):
+            sys.stderr.write("dry-run: BTC change detected; Telegram not called\n")
+            return 0
+        sys.stderr.write(f"sent: {result.get('destination')}\n")
+        return 0
     if args.command == "telegram-whoami":
         from mr_north.identity import WrongTelegramBotError
-        from mr_north.telegram import TelegramError, live_client
+        from mr_north.telegram import TelegramError, configured_chat_ids, live_client
 
         try:
             client = live_client()
@@ -158,7 +221,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         except (TelegramError, WrongTelegramBotError) as exc:
             sys.stderr.write(f"error: {exc}\n")
             return 1
-        sys.stdout.write(json.dumps({"ok": True, "bot": username, "agent": "mr-north"}) + "\n")
+        sys.stdout.write(
+            json.dumps(
+                {
+                    "ok": True,
+                    "bot": username,
+                    "chat_ids": configured_chat_ids(),
+                    "agent": "mr-north",
+                }
+            )
+            + "\n"
+        )
         return 0
     if args.command == "telegram-capture":
         from mr_north.identity import WrongTelegramBotError

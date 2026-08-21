@@ -12,9 +12,10 @@ from mr_north.identity import WrongTelegramBotError
 from mr_north.models import AGENT_ID, Alert
 from mr_north.telegram import (
     CHAT_ENV,
+    GROUP_ENV,
     TOKEN_ENV,
     TelegramError,
-    configured_chat_id,
+    configured_chat_ids,
     configured_token,
     live_client,
 )
@@ -81,10 +82,12 @@ def send_alert(
     telegram_opener: Callable[..., Any] | None = None,
 ) -> NotifyResult:
     """
-    Send an Mr North alert.
+    Send an Mr North alert to every configured Telegram chat.
 
     Primary: Telegram sendMessage on North's own bot
-    (`NORTH_TELEGRAM_BOT_TOKEN` + `NORTH_TELEGRAM_CHAT_ID`).
+    (`NORTH_TELEGRAM_BOT_TOKEN` + `NORTH_TELEGRAM_CHAT_ID` and
+    `NORTH_TELEGRAM_GROUP_CHAT_ID`). Hourly BLS, the larger catalyst
+    briefing, and immediate market watches all fan out to both locations.
     Optional extra: POST JSON to ALERT_WEBHOOK_URL.
 
     Never reads Wellness TELEGRAM_BOT_TOKEN or the realtor token.
@@ -93,11 +96,11 @@ def send_alert(
     text = payload["text"]
     webhook = webhook_url or os.environ.get("ALERT_WEBHOOK_URL")
     token = configured_token()
-    chat_id = configured_chat_id()
+    chat_ids = configured_chat_ids()
     if dry_run:
         dest = []
-        if token and chat_id:
-            dest.append(f"telegram:{chat_id}")
+        if token and chat_ids:
+            dest.append("telegram:" + ",".join(chat_ids))
         if webhook:
             dest.append(webhook)
         return NotifyResult(
@@ -109,20 +112,32 @@ def send_alert(
             status="dry_run",
         )
     destinations: list[str] = []
-    if token and chat_id:
+    if token and chat_ids:
         try:
             client = live_client(opener=telegram_opener)
             username = client.assert_identity()
-            client.send_report(chat_id, text)
         except (TelegramError, WrongTelegramBotError) as exc:
             raise NotifyError(str(exc)) from exc
-        destinations.append(f"telegram:@{username}")
+        sent: list[str] = []
+        errors: list[str] = []
+        for chat_id in chat_ids:
+            try:
+                client.send_report(chat_id, text)
+            except TelegramError as exc:
+                errors.append(f"{chat_id}: {exc}")
+                continue
+            sent.append(chat_id)
+        if sent:
+            destinations.append(f"telegram:@{username}:{','.join(sent)}")
+        elif errors:
+            raise NotifyError("Telegram delivery failed: " + "; ".join(errors))
     if webhook:
         _post_webhook(webhook, payload, opener=opener, timeout=timeout)
         destinations.append(webhook)
     if not destinations:
         raise NotifyError(
-            f"No Telegram destination. Set {TOKEN_ENV} and {CHAT_ENV} for @Mr_North_bot "
+            f"No Telegram destination. Set {TOKEN_ENV} plus {CHAT_ENV} and "
+            f"{GROUP_ENV} for @Mr_North_bot "
             "(not @THWellness_bot or @PirateEye_bot). Optional extra: ALERT_WEBHOOK_URL."
         )
     return NotifyResult(

@@ -19,6 +19,8 @@ from mr_north.models import AlertTrigger
 from mr_north.notify import NotifyError, send_alert
 
 HOUR_SECONDS = 60 * 60
+WATCH_SECONDS = 5 * 60
+CATALYST_SECONDS = 6 * 60 * 60
 STALE_AFTER_SECONDS = int(HOUR_SECONDS * 1.75)
 HEARTBEAT_NAME = "hourly.heartbeat.json"
 LAST_REPORT_NAME = "last_hourly.json"
@@ -149,36 +151,117 @@ def run_hourly(
     }
 
 
+def run_catalyst_report(
+    *,
+    dry_run: bool = False,
+    webhook_url: str | None = None,
+) -> dict[str, Any]:
+    """Send the larger geopolitical / market catalyst briefing to both chats."""
+    load_local_env()
+    alert = compose_alert(
+        AlertTrigger(
+            type="geopolitical_catalyst",
+            headline="geopolitical / market catalyst",
+            detail="",
+        )
+    )
+    text = format_alert(alert)
+    try:
+        result = send_alert(alert, webhook_url=webhook_url, dry_run=dry_run)
+    except NotifyError as exc:
+        return {
+            "ok": False,
+            "action": "catalyst",
+            "delivered": False,
+            "reason": str(exc),
+            "text": text,
+        }
+    return {
+        "ok": True,
+        "action": "catalyst",
+        "delivered": result.delivered,
+        "dry_run": result.dry_run,
+        "destination": result.destination,
+        "text": text,
+    }
+
+
+def _in_pytest() -> bool:
+    return bool(os.environ.get("PYTEST_CURRENT_TEST"))
+
+
 def hourly_loop(
     *,
     interval_seconds: int = HOUR_SECONDS,
     max_iterations: int | None = None,
     sleeper: Callable[[float], None] | None = None,
+    watch_seconds: int = WATCH_SECONDS,
+    include_watch: bool | None = None,
+    include_catalyst: bool | None = None,
 ) -> int:
-    """Run forever. Interval default 3600s. Restarts are the caller's job.
+    """Run forever. Hourly BLS plus immediate market watches between hours.
 
-    BLS fetch failures are recorded and the loop sleeps the full interval
-    instead of exiting (which would restart-spam the public API).
+    Restarts are the caller's job (`mr_north/scripts/keep_hourly.sh`).
+    BLS fetch failures are recorded and the loop continues instead of
+    exiting (which would restart-spam the public API).
     """
     sleep = sleeper or time.sleep
+    watch = (not _in_pytest()) if include_watch is None else include_watch
+    catalyst = (not _in_pytest()) if include_catalyst is None else include_catalyst
     last_ok = False
     n = 0
-    while True:
+    last_hourly_at = 0.0
+    last_catalyst_at = 0.0
+    poll = max(1, watch_seconds if watch else max(60, interval_seconds))
+
+    if catalyst:
         try:
-            result = run_hourly()
+            cat = run_catalyst_report()
         except Exception as exc:
-            result = {
-                "ok": False,
-                "action": "hourly-bls",
-                "delivered": False,
-                "reason": str(exc),
-                "pid": os.getpid(),
-            }
-            write_heartbeat(result)
-        last_ok = bool(result.get("ok"))
-        line = {k: v for k, v in result.items() if k != "text"}
-        print(json.dumps(line), flush=True)
-        n += 1
-        if max_iterations is not None and n >= max_iterations:
-            return 0 if last_ok else 1
-        sleep(max(60, interval_seconds))
+            cat = {"ok": False, "action": "catalyst", "delivered": False, "reason": str(exc)}
+        print(json.dumps({k: v for k, v in cat.items() if k != "text"}), flush=True)
+        last_catalyst_at = time.time()
+
+    while True:
+        now = time.time()
+        due_hourly = last_hourly_at <= 0 or (now - last_hourly_at) >= interval_seconds
+        if due_hourly:
+            try:
+                result = run_hourly()
+            except Exception as exc:
+                result = {
+                    "ok": False,
+                    "action": "hourly-bls",
+                    "delivered": False,
+                    "reason": str(exc),
+                    "pid": os.getpid(),
+                }
+                write_heartbeat(result)
+            last_ok = bool(result.get("ok"))
+            last_hourly_at = now
+            print(json.dumps({k: v for k, v in result.items() if k != "text"}), flush=True)
+            n += 1
+            if max_iterations is not None and n >= max_iterations:
+                return 0 if last_ok else 1
+        if watch:
+            try:
+                from mr_north.watch import run_market_watch
+
+                watched = run_market_watch()
+            except Exception as exc:
+                watched = {
+                    "ok": False,
+                    "action": "market-watch",
+                    "delivered": False,
+                    "reason": str(exc),
+                }
+            if watched.get("delivered") or watched.get("reason") not in ("unchanged",):
+                print(json.dumps({k: v for k, v in watched.items() if k != "text"}), flush=True)
+        if catalyst and last_catalyst_at and (now - last_catalyst_at) >= CATALYST_SECONDS:
+            try:
+                cat = run_catalyst_report()
+            except Exception as exc:
+                cat = {"ok": False, "action": "catalyst", "delivered": False, "reason": str(exc)}
+            print(json.dumps({k: v for k, v in cat.items() if k != "text"}), flush=True)
+            last_catalyst_at = now
+        sleep(poll)

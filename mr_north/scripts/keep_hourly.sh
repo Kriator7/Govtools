@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Outer keeper for Mr North hourly BLS reports.
+# Outer keeper for Mr North: larger catalyst, hourly BLS, immediate BTC watch.
 # If the Python loop exits, start it again. Only one copy should run.
 set -u
 cd "$(dirname "$0")/../.."

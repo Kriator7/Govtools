@@ -50,3 +50,11 @@ def test_send_without_destination_fails(capsys, monkeypatch):
 def test_cli_rejects_wellness_business_trigger():
     with pytest.raises(SystemExit):
         main(["compose", "--type", "business"])
+
+
+def test_catalyst_cli_dry_run(capsys):
+    assert main(["catalyst", "--dry-run"]) == 0
+    captured = capsys.readouterr()
+    assert "Alert — geopolitical / market catalyst" in captured.out
+    assert "Strait of Hormuz" in captured.out
+    assert "dry-run" in captured.err

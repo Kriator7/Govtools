@@ -29,22 +29,24 @@ python -m mr_north send --dry-run
 NORTH_TELEGRAM_BOT_TOKEN=... NORTH_TELEGRAM_CHAT_ID=... python -m mr_north send --type btc_threshold
 ```
 
-`send` drops the text on North's Telegram bot (`sendMessage`) and may also POST JSON to `ALERT_WEBHOOK_URL`.
+`send` drops the text on **@Mr_North_bot** to **both** configured Telegram chats (`NORTH_TELEGRAM_CHAT_ID` and `NORTH_TELEGRAM_GROUP_CHAT_ID`, default `-1003939359929`) and may also POST JSON to `ALERT_WEBHOOK_URL`. Do not use the PirateEye group.
 
-### Hourly Bureau of Labor Statistics breakdown
+### Hourly Bureau of Labor Statistics breakdown + immediate watch
 
-The hourly BLS print is **North's job**. He fetches official series and drops the breakdown in Telegram (not @THWellness_bot, not @PirateEye_bot).
+The hourly BLS print and the larger catalyst briefing are **North's job**. He fetches official series, watches BTC for $65K / ≥2% moves, and drops both report types in **both** North chats (not @THWellness_bot, not @PirateEye_bot).
 
 ```bash
 python -m mr_north hourly --dry-run
 python -m mr_north hourly
+python -m mr_north catalyst
+python -m mr_north watch
 python -m mr_north hourly-status
 python -m mr_north telegram-whoami
 python -m mr_north telegram-capture
 bash mr_north/scripts/keep_hourly.sh
 ```
 
-Soul / timer contract: [`mr_north/SOUL.md`](mr_north/SOUL.md). Durable cron is GitHub Action `.github/workflows/mr-north-hourly.yml` (`7 * * * *` UTC). GitHub only runs scheduled workflows on **main** after merge. Set repository secrets `NORTH_TELEGRAM_BOT_TOKEN` and `NORTH_TELEGRAM_CHAT_ID`. BLS API: https://www.bls.gov/developers/api_signature.htm — Telegram: https://core.telegram.org/bots/api#sendmessage
+Soul / timer contract: [`mr_north/SOUL.md`](mr_north/SOUL.md). Durable cron: `.github/workflows/mr-north-hourly.yml` (`7 * * * *` UTC) and `.github/workflows/mr-north-watch.yml` (`*/15 * * * *`). GitHub only runs scheduled workflows on **main** after merge. Set repository secrets `NORTH_TELEGRAM_BOT_TOKEN` and `NORTH_TELEGRAM_CHAT_ID` (second location). Group default is `-1003939359929`. BLS API: https://www.bls.gov/developers/api_signature.htm — Telegram: https://core.telegram.org/bots/api#sendmessage
 
 ## Realtor Property Acquisition (@PirateEye_bot)
 
