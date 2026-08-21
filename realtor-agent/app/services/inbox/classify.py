@@ -39,6 +39,16 @@ IGNORE_SENDER_NEEDLES = (
     "mail.house.gov",
 )
 
+CALENDAR_IGNORE = re.compile(
+    r"has accepted this invitation|invitation from google calendar|text/calendar|"
+    r"^accepted:",
+    re.I,
+)
+
+QUOTED_SPLIT = re.compile(
+    r"(?im)^On .+wrote:\s*$|^---------- Forwarded message",
+)
+
 PACKET_PATTERNS = {
     1: re.compile(r"\bpacket\s*1\b|who you are|license number|brokerage legal name", re.I),
     2: re.compile(
@@ -71,6 +81,18 @@ def is_ignored_sender(message: InboundMessage) -> bool:
     return any(needle in blob for needle in IGNORE_SENDER_NEEDLES)
 
 
+def is_calendar_noise(message: InboundMessage) -> bool:
+    haystack = f"{message.subject}\n{message.body_text[:800]}"
+    return bool(CALENDAR_IGNORE.search(haystack))
+
+
+def reply_body(text: str | None) -> str:
+    """Keep Damian's reply; drop Gmail quoted checklist and forwards."""
+    if not text:
+        return ""
+    return QUOTED_SPLIT.split(text, maxsplit=1)[0].strip()
+
+
 def is_damian_sender(message: InboundMessage) -> bool:
     blob = f"{message.from_header} {message.subject}".lower()
     return any(needle in blob for needle in DAMIAN_SENDER_NEEDLES)
@@ -88,6 +110,8 @@ def is_packet_candidate(
 ) -> bool:
     if is_ignored_sender(message):
         return False
+    if is_calendar_noise(message):
+        return False
     if is_damian_sender(message) or is_mls_association_sender(message):
         return True
     from_header = message.from_header.lower()
@@ -98,7 +122,7 @@ def classify_packets(message: InboundMessage) -> list[int]:
     haystack = "\n".join(
         [
             message.subject,
-            message.body_text,
+            reply_body(message.body_text),
             " ".join(item.filename for item in message.attachments),
         ]
     )
@@ -113,6 +137,6 @@ def classify_packets(message: InboundMessage) -> list[int]:
             r"min(?:imum)? price|cities|zip|property type", haystack, re.I
         ):
             found.append(4)
-    if IDENTITY_HINT.search(message.body_text) and 1 not in found:
+    if IDENTITY_HINT.search(reply_body(message.body_text)) and 1 not in found:
         found.append(1)
     return sorted(set(found))
