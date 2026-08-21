@@ -199,9 +199,9 @@ def test_apply_condo_arv_keeps_sfh_box_and_does_not_post_mock_cards(db, realtor,
     assert "Got it" in reply
     assert "condo" in reply.lower()
     assert "25%" in reply
-    assert "I'll search MLS" in reply
-    assert "not connected" in reply.lower()
-    assert "Trestle" in reply
+    assert "I'll check MLS" in reply
+    assert "No MLS data connection yet" in reply
+    assert "cannot pull listings" in reply
     assert not any("NEW INVESTOR MATCH" in (item.get("text") or "") for item in telegram.sent)
     pass_listing = Listing(
         public_id=next_public_id(db, "LST"),

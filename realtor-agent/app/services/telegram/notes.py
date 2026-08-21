@@ -122,11 +122,8 @@ def format_note_confirmation(applied: dict) -> str:
         types = applied.get("property_types") or []
         kind = ", ".join(types) if types else "matching"
         if not search.get("connected"):
-            lines.append(f"I'll search MLS for {kind} listings that pass this box.")
-            lines.append(
-                "Live MLS is not connected yet. No listing cards until IDX option 3 "
-                "(Trestle) is live. I will not scrape Matrix or invent ARV."
-            )
+            lines.append(f"I'll check MLS for {kind} listings that pass this box.")
+            lines.append("No MLS data connection yet — I cannot pull listings.")
         else:
             matched = int(search.get("matched") or 0)
             provider = search.get("provider") or "mls"

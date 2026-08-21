@@ -28,8 +28,7 @@ HELP_REPLY = (
     "I can post listing cards, take APPROVE / REJECT / SNOOZE / DETAILS, "
     "and update the buy box when Damian sends a price, property type "
     "(for example condos), ARV %, or buy-and-hold note.\n"
-    "I'll search MLS after a buy-box change once IDX option 3 (Trestle) is connected. "
-    "Live MLS is not connected yet. I will not scrape Matrix.\n"
+    "I want to check MLS after a buy-box change. No MLS data connection yet.\n"
     "Approve does not text Damian, Amos, or investors. Relays stay on.\n"
     "Say hello, /help, or tell me the next listing or buy-box change."
 )
