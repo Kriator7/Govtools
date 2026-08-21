@@ -248,9 +248,11 @@ class PacketIntakeService:
 
     def _apply_mls_notes(self, realtor: Realtor, fields: dict[str, str]) -> dict:
         safe = {key: value for key, value in fields.items() if "password" not in key.lower()}
-        if safe.get("chosen_idx_option") == "3" and not realtor.mls_config_ref:
+        current = (realtor.mls_config_ref or "").strip()
+        placeholder = (not current) or current.startswith("pending:")
+        if safe.get("chosen_idx_option") == "3" and placeholder:
             realtor.mls_config_ref = "secret:mls-trestle-pending"
-        elif safe.get("mls_name") and not realtor.mls_config_ref:
+        elif safe.get("mls_name") and not current:
             realtor.mls_config_ref = "pending:las-vegas-realtors-idx-choice"
         note = "Packet 2 MLS metadata (no passwords stored): " + json.dumps(safe, sort_keys=True)
         self._append_notes(realtor, 2, safe, None, extra=note)

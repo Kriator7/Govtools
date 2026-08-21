@@ -128,18 +128,21 @@ def apply_idx_reply(
         "packet_id": row.public_id,
         "missing_fields": missing,
         "mls_config_ref": damian.mls_config_ref,
-        "feeds_this_agent": parsed.get("chosen_idx_option") == "3",
-        "reply": format_idx_confirmation(parsed, missing),
+        "feeds_this_agent": fields.get("chosen_idx_option") == "3",
+        "reply": format_idx_confirmation(parsed, missing, fields),
     }
 
 
-def format_idx_confirmation(parsed: dict, missing: list[str]) -> str:
-    chosen = parsed.get("chosen_idx_option")
+def format_idx_confirmation(parsed: dict, missing: list[str], fields: dict | None = None) -> str:
+    fields = fields or {}
+    chosen = parsed.get("chosen_idx_option") or fields.get("chosen_idx_option")
     lines = ["Got it. Packet 2 updated from Telegram."]
+    if parsed.get("chosen_idx_option") == "3":
+        lines.insert(0, "Thank you, Damian. Option 3 is recorded.")
     if chosen == "3":
         lines.append(
             f"IDX choice: option 3 — {IDX_OPTIONS['3']['name']}. "
-            "That is the authorized feed for this agent."
+            "That is the authorized MLS API for this agent (not a Matrix login and not a website plugin)."
         )
         lines.append(f"Signup path (not done yet): {TRESTLE_SIGNUP_URL}")
         lines.append("Live MLS stays disconnected until Trestle credentials exist. I will not scrape Matrix.")
@@ -153,12 +156,15 @@ def format_idx_confirmation(parsed: dict, missing: list[str]) -> str:
             "IDX choice: option 1 — Matrix frame. That is website-only and does not feed this agent. "
             "Agent Real still needs option 3 (Trestle WebAPI)."
         )
-    if parsed.get("mls_agent_id"):
-        lines.append(f"MLS agent ID: {parsed['mls_agent_id']}.")
-    if parsed.get("coverage_area"):
-        lines.append(f"Coverage: {parsed['coverage_area']}.")
-    if parsed.get("listing_statuses"):
-        lines.append(f"Statuses: {parsed['listing_statuses']}.")
+    agent_id = parsed.get("mls_agent_id") or fields.get("mls_agent_id")
+    if agent_id:
+        lines.append(f"MLS agent ID: {agent_id}.")
+    coverage = parsed.get("coverage_area") or fields.get("coverage_area")
+    if coverage:
+        lines.append(f"Coverage: {coverage}.")
+    statuses = parsed.get("listing_statuses") or fields.get("listing_statuses")
+    if statuses:
+        lines.append(f"Statuses: {statuses}.")
     still = [item for item in missing if item in {"chosen_idx_option", "mls_agent_id"}]
     if still:
         need = []

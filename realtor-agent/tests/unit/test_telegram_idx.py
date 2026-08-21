@@ -84,7 +84,59 @@ def test_damian_telegram_option_3_updates_packet_2(db, realtor, tmp_path, monkey
     assert row.payload["mls_agent_id"] == "778899"
     assert "chosen_idx_option" not in (row.missing_fields or [])
     reply = telegram.sent[0]["text"]
+    assert reply.startswith("Thank you, Damian. Option 3 is recorded.")
     assert "option 3" in reply.lower()
     assert "778899" in reply
     assert "will not scrape" in reply.lower()
     assert realtor.name != DAMIAN_NAME
+
+
+def test_option_3_yes_thanks_damian_and_keeps_mls_id_241888(db, realtor, tmp_path, monkeypatch):
+    monkeypatch.setenv("INBOX_STORAGE_PATH", str(tmp_path / "inbox"))
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    damian = upsert_damian_realtor(db, {"name": DAMIAN_NAME})
+    damian.mls_config_ref = "pending:las-vegas-realtors-idx-choice"
+    seed = RealtorPacket(
+        public_id=next_public_id(db, "PKT"),
+        realtor_id=damian.id,
+        packet_number=2,
+        message_id="<cat-yee-idx@test>",
+        payload={**PACKET_2_FROM_CAT, "mls_agent_id": "241888"},
+        missing_fields=["chosen_idx_option"],
+        status="partial",
+    )
+    db.add(seed)
+    db.flush()
+    telegram = MockTelegramProvider(outbox_path=tmp_path / "tg.json")
+    result = process_telegram_update(
+        db,
+        realtor,
+        {
+            "message": {
+                "text": "Option 3 yes",
+                "chat": {"id": -5372586958, "type": "group"},
+                "from": {"id": 7592412078, "username": "damianlasvegas"},
+            }
+        },
+        telegram=telegram,
+    )
+    assert result["action"] == "idx_choice"
+    db.refresh(damian)
+    assert damian.mls_config_ref == "secret:mls-trestle-pending"
+    row = (
+        db.query(RealtorPacket)
+        .filter(RealtorPacket.realtor_id == damian.id, RealtorPacket.packet_number == 2)
+        .order_by(RealtorPacket.updated_at.desc())
+        .first()
+    )
+    assert row.payload["chosen_idx_option"] == "3"
+    assert row.payload["mls_agent_id"] == "241888"
+    assert "chosen_idx_option" not in (row.missing_fields or [])
+    assert "mls_agent_id" not in (row.missing_fields or [])
+    reply = telegram.sent[0]["text"]
+    assert reply.startswith("Thank you, Damian. Option 3 is recorded.")
+    assert "241888" in reply
+    assert "Still need" not in reply
+    assert "will not scrape" in reply.lower()
