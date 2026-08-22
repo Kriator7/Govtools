@@ -5,6 +5,7 @@ import pytest
 from mr_north.compose import compose_alert
 from mr_north.models import AlertTrigger
 from mr_north.notify import NotifyError, alert_payload, send_alert
+from mr_north.telegram import TelegramError
 
 
 class _FakeResponse:
@@ -187,3 +188,23 @@ def test_send_skips_pirateeye_group(monkeypatch):
     result = send_alert(_btc_alert())
     assert captured["chats"] == ["-1003939359929"]
     assert "-5372586958" not in (result.destination or "")
+
+
+def test_send_fails_if_maximummint_north_group_is_missed(monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "1150046483")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-1003939359929")
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def send_report(self, chat_id, text):
+            if chat_id == "-1003939359929":
+                raise TelegramError("bot is not a member")
+            return ["1"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    with pytest.raises(NotifyError, match="MaximumMint & North"):
+        send_alert(_btc_alert())

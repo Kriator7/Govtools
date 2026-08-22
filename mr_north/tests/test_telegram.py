@@ -6,9 +6,12 @@ import pytest
 from mr_north.identity import WrongTelegramBotError, assert_north_telegram_username
 from mr_north.telegram import (
     DEFAULT_GROUP_CHAT_ID,
+    DEFAULT_OPERATOR_CHAT_ID,
+    NORTH_GROUP_TITLE,
     NorthTelegram,
     TelegramError,
     configured_chat_ids,
+    destination_map,
     split_telegram_text,
 )
 
@@ -113,3 +116,25 @@ def test_configured_chat_ids_accepts_comma_list(monkeypatch):
     monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "111,-1003939359929")
     monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "")
     assert configured_chat_ids() == ["111", "-1003939359929"]
+
+
+def test_production_defaults_are_operator_and_maximummint_north(monkeypatch):
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_ID", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_GROUP_CHAT_ID", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_IDS", raising=False)
+    monkeypatch.delenv("NORTH_TELEGRAM_CHAT_PATH", raising=False)
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    assert configured_chat_ids() == [DEFAULT_OPERATOR_CHAT_ID, DEFAULT_GROUP_CHAT_ID]
+    payload = destination_map()
+    assert payload["group_title"] == NORTH_GROUP_TITLE
+    assert payload["forbidden_chat_ids"] == ["-5372586958"]
+
+
+def test_pirateeye_group_env_falls_back_to_maximummint_north(monkeypatch):
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", DEFAULT_OPERATOR_CHAT_ID)
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-5372586958")
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    ids = configured_chat_ids()
+    assert DEFAULT_OPERATOR_CHAT_ID in ids
+    assert DEFAULT_GROUP_CHAT_ID in ids
+    assert "-5372586958" not in ids

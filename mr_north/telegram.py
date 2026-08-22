@@ -25,10 +25,16 @@ CHAT_ENV = "NORTH_TELEGRAM_CHAT_ID"
 GROUP_ENV = "NORTH_TELEGRAM_GROUP_CHAT_ID"
 CHATS_ENV = "NORTH_TELEGRAM_CHAT_IDS"
 CHAT_FILE_NAME = "telegram_chat.json"
-# Documented Mr North BLS / TrueHold crypto group. Never the PirateEye realtor group.
-# realtor-agent/README.md on the Damian-group branch: do not use -1003939359929 for PirateEye.
+# Personal operator chat (economics / trading reports to James).
+# Overridable with NORTH_TELEGRAM_CHAT_ID.
+DEFAULT_OPERATOR_CHAT_ID = "1150046483"
+# MaximumMint & North — economics / trading group for @Mr_North_bot.
+# Overridable with NORTH_TELEGRAM_GROUP_CHAT_ID.
+NORTH_GROUP_TITLE = "MaximumMint & North"
 DEFAULT_GROUP_CHAT_ID = "-1003939359929"
-FORBIDDEN_CHAT_IDS = frozenset({"-5372586958"})
+# MaximumMint & Agent Real — PirateEye realtor. Never send North reports here.
+PIRATEEYE_GROUP_CHAT_ID = "-5372586958"
+FORBIDDEN_CHAT_IDS = frozenset({PIRATEEYE_GROUP_CHAT_ID})
 # sendMessage text limit: https://core.telegram.org/bots/api#sendmessage
 MAX_MESSAGE_CHARS = 4096
 DEFAULT_TIMEOUT_SECONDS = 15
@@ -59,17 +65,46 @@ def _parse_chat_ids(raw: str) -> list[str]:
     return ids
 
 
-def _default_group_chat_id() -> str:
-    """Production default is the North BLS group. Tests must opt in via GROUP_ENV."""
-    in_pytest = bool(os.environ.get("PYTEST_CURRENT_TEST"))
-    if GROUP_ENV in os.environ:
-        value = (os.environ.get(GROUP_ENV) or "").strip()
-        if value:
-            return value
-        return "" if in_pytest else DEFAULT_GROUP_CHAT_ID
-    if in_pytest:
+def _in_pytest() -> bool:
+    return bool(os.environ.get("PYTEST_CURRENT_TEST"))
+
+
+def operator_chat_id() -> str:
+    """Personal destination. Production default is James's Telegram user id."""
+    ids = _parse_chat_ids(os.environ.get(CHAT_ENV) or "")
+    if ids:
+        return ids[0]
+    if _in_pytest():
+        return ""
+    return DEFAULT_OPERATOR_CHAT_ID
+
+
+def north_group_chat_id() -> str:
+    """MaximumMint & North. PirateEye's MaximumMint & Agent Real is never used."""
+    ids = _parse_chat_ids(os.environ.get(GROUP_ENV) or "")
+    if ids:
+        return ids[0]
+    if _in_pytest():
         return ""
     return DEFAULT_GROUP_CHAT_ID
+
+
+def _default_operator_raw() -> str:
+    env = (os.environ.get(CHAT_ENV) or "").strip()
+    if env:
+        return env
+    return "" if _in_pytest() else DEFAULT_OPERATOR_CHAT_ID
+
+
+def _default_group_raw() -> str:
+    env = (os.environ.get(GROUP_ENV) or "").strip()
+    parsed = _parse_chat_ids(env)
+    if parsed:
+        return env
+    if env and not parsed:
+        # Env was set to a forbidden id (PirateEye). Fall back to North group.
+        return "" if _in_pytest() else DEFAULT_GROUP_CHAT_ID
+    return "" if _in_pytest() else DEFAULT_GROUP_CHAT_ID
 
 
 def _chat_ids_from_file() -> list[str]:
@@ -91,11 +126,11 @@ def _chat_ids_from_file() -> list[str]:
 
 
 def configured_chat_ids() -> list[str]:
-    """Unique Telegram destinations for every North report (hourly + catalyst + watch)."""
+    """Operator + MaximumMint & North. Never the PirateEye realtor group."""
     ids: list[str] = []
     for raw in (
-        os.environ.get(CHAT_ENV) or "",
-        _default_group_chat_id(),
+        _default_operator_raw(),
+        _default_group_raw(),
         os.environ.get(CHATS_ENV) or "",
     ):
         for chat_id in _parse_chat_ids(raw):
@@ -104,7 +139,19 @@ def configured_chat_ids() -> list[str]:
     for chat_id in _chat_ids_from_file():
         if chat_id not in ids:
             ids.append(chat_id)
-    return ids
+    return [chat_id for chat_id in ids if chat_id not in FORBIDDEN_CHAT_IDS]
+
+
+def destination_map() -> dict[str, object]:
+    return {
+        "agent": "mr-north",
+        "bot": "Mr_North_bot",
+        "operator_chat_id": operator_chat_id(),
+        "group_title": NORTH_GROUP_TITLE,
+        "group_chat_id": north_group_chat_id(),
+        "chat_ids": configured_chat_ids(),
+        "forbidden_chat_ids": sorted(FORBIDDEN_CHAT_IDS),
+    }
 
 
 def configured_chat_id() -> str:
@@ -117,6 +164,11 @@ def save_chat_id(chat_id: str, *, username: str = "") -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     existing = _chat_ids_from_file()
     ids = _parse_chat_ids(chat_id)
+    if not ids:
+        raise TelegramError(
+            "Refusing to bind a non-North chat. North reports go to the operator "
+            f"and {NORTH_GROUP_TITLE} only."
+        )
     for item in existing:
         if item not in ids:
             ids.append(item)

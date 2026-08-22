@@ -13,11 +13,13 @@ from mr_north.models import AGENT_ID, Alert
 from mr_north.telegram import (
     CHAT_ENV,
     GROUP_ENV,
+    NORTH_GROUP_TITLE,
     TOKEN_ENV,
     TelegramError,
     configured_chat_ids,
     configured_token,
     live_client,
+    north_group_chat_id,
 )
 
 DEFAULT_TIMEOUT_SECONDS = 15
@@ -127,6 +129,12 @@ def send_alert(
                 errors.append(f"{chat_id}: {exc}")
                 continue
             sent.append(chat_id)
+        required_group = north_group_chat_id()
+        if required_group and required_group in chat_ids and required_group not in sent:
+            detail = "; ".join(errors) or "no sendMessage response"
+            raise NotifyError(
+                f"{NORTH_GROUP_TITLE} ({required_group}) did not receive the report. {detail}"
+            )
         if sent:
             destinations.append(f"telegram:@{username}:{','.join(sent)}")
         elif errors:

@@ -10,7 +10,16 @@ North watches official and public market sources and delivers reports as soon as
 2. Hourly Bureau of Labor Statistics breakdown (API v1: https://www.bls.gov/developers/api_signature.htm).
 3. The larger geopolitical / market catalyst briefing, attached to every alert and also sent on its own.
 
-Live `getMe` must return `Mr_North_bot`. Token env: `NORTH_TELEGRAM_BOT_TOKEN`. Chat env: `NORTH_TELEGRAM_CHAT_ID` and `NORTH_TELEGRAM_GROUP_CHAT_ID` (default `-1003939359929`). Telegram sendMessage: https://core.telegram.org/bots/api#sendmessage
+Live `getMe` must return `Mr_North_bot`. Token env: `NORTH_TELEGRAM_BOT_TOKEN`.
+
+Destinations (economics / trading only):
+
+1. James personally — `NORTH_TELEGRAM_CHAT_ID` (default `1150046483`)
+2. **MaximumMint & North** — `NORTH_TELEGRAM_GROUP_CHAT_ID` (default `-1003939359929`)
+
+Never the PirateEye realtor group (`-5372586958`). Telegram sendMessage: https://core.telegram.org/bots/api#sendmessage
+
+`python -m mr_north destinations` prints the live chat ids.
 
 ## Local
 

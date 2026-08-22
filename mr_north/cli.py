@@ -100,6 +100,10 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Call Telegram getMe and refuse Wellness/realtor bots",
     )
     sub.add_parser(
+        "destinations",
+        help="Print operator + MaximumMint & North chat ids (never PirateEye)",
+    )
+    sub.add_parser(
         "telegram-capture",
         help="One-shot: wait for a Start message and save NORTH chat id",
     )
@@ -233,6 +237,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             + "\n"
         )
         return 0
+    if args.command == "destinations":
+        from mr_north.telegram import destination_map
+
+        payload = destination_map()
+        sys.stdout.write(json.dumps({"ok": True, **payload}) + "\n")
+        return 0 if payload.get("chat_ids") else 1
     if args.command == "telegram-capture":
         from mr_north.identity import WrongTelegramBotError
         from mr_north.telegram import TelegramError, live_client, save_chat_id

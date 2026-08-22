@@ -45,7 +45,10 @@ jobs:
           NORTH_TELEGRAM_USERNAME: Mr_North_bot
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
         run: |
-          if [ -z "$NORTH_TELEGRAM_GROUP_CHAT_ID" ]; then
+          if [ -z "$NORTH_TELEGRAM_CHAT_ID" ] || [ "$NORTH_TELEGRAM_CHAT_ID" = "-5372586958" ]; then
+            export NORTH_TELEGRAM_CHAT_ID="1150046483"
+          fi
+          if [ -z "$NORTH_TELEGRAM_GROUP_CHAT_ID" ] || [ "$NORTH_TELEGRAM_GROUP_CHAT_ID" = "-5372586958" ]; then
             export NORTH_TELEGRAM_GROUP_CHAT_ID="-1003939359929"
           fi
           python -m mr_north watch
