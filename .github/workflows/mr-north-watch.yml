@@ -1,20 +1,19 @@
-name: mr-north-hourly
+name: mr-north-watch
 
-# Durable timer for the BLS breakdown and the larger catalyst briefing.
-# In-process loops die when the cloud VM sleeps.
-# GitHub only runs `schedule` on the default branch (main).
+# Durable BTC watch so a sleeping cloud VM does not miss a move.
+# Immediate in-process polls still run from hourly-loop every 5 minutes.
 # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
 on:
   schedule:
-    - cron: "7 * * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 concurrency:
-  group: mr-north-hourly
+  group: mr-north-watch
   cancel-in-progress: true
 
 jobs:
-  hourly-bls:
+  market-watch:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -29,11 +28,14 @@ jobs:
         run: |
           if [ -z "$NORTH_TELEGRAM_BOT_TOKEN" ]; then
             echo "Set repository secret NORTH_TELEGRAM_BOT_TOKEN for @Mr_North_bot." >&2
-            echo "Do not use @THWellness_bot or @PirateEye_bot." >&2
             exit 1
           fi
       - name: Install Mr North
         run: python -m pip install -e ./mr_north
+      - uses: actions/cache@v4
+        with:
+          path: mr_north/data/last_market.json
+          key: mr-north-last-market
       - uses: actions/cache@v4
         with:
           path: mr_north/data/telegram_chat.json
@@ -53,7 +55,7 @@ jobs:
             export NORTH_TELEGRAM_GROUP_CHAT_ID="-1003939359929"
           fi
           python -m mr_north telegram-whoami
-      - name: Send larger catalyst briefing to both chats
+      - name: Watch BTC and alert both chats on a change
         env:
           NORTH_TELEGRAM_BOT_TOKEN: ${{ secrets.NORTH_TELEGRAM_BOT_TOKEN }}
           NORTH_TELEGRAM_CHAT_ID: ${{ secrets.NORTH_TELEGRAM_CHAT_ID }}
@@ -68,20 +70,4 @@ jobs:
           if [ -z "$NORTH_TELEGRAM_GROUP_CHAT_ID" ] || [ "$NORTH_TELEGRAM_GROUP_CHAT_ID" = "-5372586958" ]; then
             export NORTH_TELEGRAM_GROUP_CHAT_ID="-1003939359929"
           fi
-          python -m mr_north catalyst
-      - name: Send hourly BLS breakdown to both chats
-        env:
-          NORTH_TELEGRAM_BOT_TOKEN: ${{ secrets.NORTH_TELEGRAM_BOT_TOKEN }}
-          NORTH_TELEGRAM_CHAT_ID: ${{ secrets.NORTH_TELEGRAM_CHAT_ID }}
-          NORTH_TELEGRAM_GROUP_CHAT_ID: ${{ secrets.NORTH_TELEGRAM_GROUP_CHAT_ID }}
-          NORTH_TELEGRAM_CHAT_IDS: ${{ secrets.NORTH_TELEGRAM_CHAT_IDS }}
-          NORTH_TELEGRAM_USERNAME: Mr_North_bot
-          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
-        run: |
-          if [ -z "$NORTH_TELEGRAM_CHAT_ID" ] || [ "$NORTH_TELEGRAM_CHAT_ID" = "-5372586958" ]; then
-            export NORTH_TELEGRAM_CHAT_ID="1150046483"
-          fi
-          if [ -z "$NORTH_TELEGRAM_GROUP_CHAT_ID" ] || [ "$NORTH_TELEGRAM_GROUP_CHAT_ID" = "-5372586958" ]; then
-            export NORTH_TELEGRAM_GROUP_CHAT_ID="-1003939359929"
-          fi
-          python -m mr_north hourly
+          python -m mr_north watch

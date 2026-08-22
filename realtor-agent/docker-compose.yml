@@ -49,6 +49,29 @@ services:
       - ./templates:/app/templates
       - ./mappings:/app/mappings
 
+  telegram:
+    build: .
+    container_name: pirateeye-telegram
+    command: python -m app.cli telegram-poll
+    env_file:
+      - .env
+    environment:
+      ENVIRONMENT: local
+      DATABASE_URL: postgresql+psycopg://realtor:realtor@postgres:5432/realtor_agent
+      REDIS_URL: redis://redis:6379/0
+      AUTO_CREATE_TABLES: "true"
+      MLS_PROVIDER: mock
+      TELEGRAM_MODE: live
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./data:/app/data
+      - ./templates:/app/templates
+      - ./mappings:/app/mappings
+
   worker:
     build: .
     command: celery -A app.workers.celery_app.celery_app worker --loglevel=info

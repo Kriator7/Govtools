@@ -1,8 +1,15 @@
-# Mr North hourly BLS reporter
+# Mr North reporter
 
-Job: TrueHold **crypto / macro** only. Not Wellness. Not realtor.
+Job: TrueHold **economics / trading** only.
 
-The hourly Bureau of Labor Statistics breakdown is North's responsibility.
+North delivers every report to **two** Telegram locations:
+
+1. James personally (`NORTH_TELEGRAM_CHAT_ID`, default `1150046483`).
+2. **MaximumMint & North** (`NORTH_TELEGRAM_GROUP_CHAT_ID`). North binds this
+   group by title, including when @Mr_North_bot is added (`my_chat_member`).
+   A hardcoded fallback id is used only until that bind succeeds.
+
+Never the PirateEye realtor group (`-5372586958`, MaximumMint & Agent Real).
 
 Every hour:
 
@@ -10,17 +17,21 @@ Every hour:
    https://www.bls.gov/developers/api_signature.htm
 2. Write a breakdown of the latest unemployment, payrolls, hourly earnings, and CPI prints.
 3. Attach the current geopolitical / market catalyst briefing.
-4. Drop the report in Telegram via `sendMessage` on **@Mr_North_bot**  
-   (`NORTH_TELEGRAM_BOT_TOKEN` + `NORTH_TELEGRAM_CHAT_ID`).  
+4. `sendMessage` on **@Mr_North_bot** to both destinations above.  
    https://core.telegram.org/bots/api#sendmessage
 5. Optional extra: POST JSON to `ALERT_WEBHOOK_URL` (`agent=mr-north`).
 
+Between hours:
+
+- Poll BTC about every 5 minutes (CoinGecko simple price).
+- Alert both destinations immediately on a $65K watch-level cross or a ≥2% move.
+
+If MaximumMint & North does not receive the message, delivery is a failure even if the personal chat succeeded. North will retry once from Telegram membership updates if the saved group id is stale.
+
 Timer:
 
-- Durable cron (survives VM sleep): GitHub Actions `.github/workflows/mr-north-hourly.yml` (`7 * * * *` UTC). Runs only after this workflow is on **main**.
+- Durable cron (survives VM sleep): GitHub Actions `.github/workflows/mr-north-hourly.yml` (`7 * * * *` UTC) and `.github/workflows/mr-north-watch.yml` (`*/15 * * * *`). Runs only after these workflows are on **main**.
 - In-process loop: `python -m mr_north hourly-loop`
 - Keeper: `bash mr_north/scripts/keep_hourly.sh`
 
-If Telegram is not configured, the report is still written to `mr_north/data/last_hourly.json` and `hourly-status` reports `not-delivered`. Compose without deliver is the failure mode that stopped the old Cursor automation (`TrueHold alert data`, no live scheduler, no destination).
-
-Do not send this report on @THWellness_bot or @PirateEye_bot. Live `getMe` must return `Mr_North_bot`.
+Live `getMe` must return `Mr_North_bot`.

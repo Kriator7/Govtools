@@ -1,16 +1,10 @@
-# TrueHold Wellness — business inbox + @THWellness_bot
+# TrueHold Wellness — orders, inventory, and client tracking
 
-Self-contained **TrueHold Wellness** agent restored from the original inbox-snapshot design (orders, payments, fulfillment, shipping, cancellations, peptides). Copy `truehold-wellness/` to move it.
+Telegram: **@THWellness_bot** only (`t.me/THWellness_bot`).
 
-Full original spec: [`ORIGINAL_SPEC.md`](ORIGINAL_SPEC.md) (from commit `cf24ec1` / cloud agent that first wrote Wellness in this repo).
+This folder is the entire agent. Copy `truehold-wellness/` to run it in its own Docker container. Nothing outside this directory is required.
 
-It does **not** import `realtor-agent/` or `mr_north/`. Telegram is **@THWellness_bot** only (`t.me/THWellness_bot`). `@Npeppers_bot` was deleted in BotFather and cannot be undeleted ([Telegram `/deletebot`](https://core.telegram.org/bots/features)). This folder is protected business infrastructure; see [`PROTECTED_AGENTS.md`](../PROTECTED_AGENTS.md).
-
-| This package | Not this package |
-| --- | --- |
-| TrueHold Wellness inbox / orders | Realtor property acquisition |
-| **@THWellness_bot** | **@PirateEye_bot** |
-| `WELLNESS_ALERT_WEBHOOK_URL` | `ALERT_WEBHOOK_URL` (Mr North) |
+Full spec: [`ORIGINAL_SPEC.md`](ORIGINAL_SPEC.md). `@Npeppers_bot` was deleted in BotFather and cannot be undeleted ([Telegram `/deletebot`](https://core.telegram.org/bots/features)). Live `getMe` must return `THWellness_bot`.
 
 ## Workflow (as before)
 
@@ -29,7 +23,7 @@ python -m wellness_agent send --dry-run --type order
 python -m pytest
 ```
 
-`send` POSTs JSON with `agent=truehold-wellness-agent` to `WELLNESS_ALERT_WEBHOOK_URL` (never Mr North’s `ALERT_WEBHOOK_URL`). If `TELEGRAM_MODE=live` and staff is allowlisted, the same message is delivered on **@THWellness_bot**.
+`send` POSTs JSON with `agent=truehold-wellness-agent` to `WELLNESS_ALERT_WEBHOOK_URL`. If `TELEGRAM_MODE=live` and staff is allowlisted, the same message is delivered on **@THWellness_bot**.
 
 Customer `/order` and the picture-menu confirm still use the original protocol for **staff**: full inbox snapshot (orders, payments, fulfillment, shipping, cancellations, peptides, other_actionable). The customer only sees a short confirmation — never the staff inbox.
 
@@ -44,7 +38,7 @@ python -m thw ingest
 
 Source: https://core.telegram.org/bots/api
 
-Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_bot`.
+Live mode calls `getMe` and refuses any username that is not `THWellness_bot`.
 
 ### Customer picture menu
 
@@ -130,8 +124,13 @@ python -m wellness_agent.inventory.build_pdfs
 
 If `ingest-files` overwrites PDFs with Finder copies, rebuild with `build_pdfs` to restore the vial-specific sheets.
 
-## Isolation
+## Docker
 
-- Separate folder, package (`wellness_agent`), webhook env, Telegram bot, tests, and CI job
-- Crypto/Hormuz content is rejected
-- Realtor MLS/matching code is not used
+Image: https://hub.docker.com/_/python  
+Dockerfile reference: https://docs.docker.com/reference/dockerfile/  
+Compose: https://docs.docker.com/compose/  
+getUpdates: https://core.telegram.org/bots/api#getupdates
+
+1. Copy `.env.example` to `.env` and set `TELEGRAM_MODE=live`, `TELEGRAM_BOT_TOKEN`, and staff ids.
+2. From this folder: `docker compose up --build`
+3. The container runs `python -u -m wellness_agent telegram-poll`. Only one getUpdates client may use this token.

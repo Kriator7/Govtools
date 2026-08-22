@@ -1,10 +1,10 @@
-# Realtor Property Acquisition Automation
+# PirateEye — realtor MLS matching
 
-Self-contained automation platform for **one Nevada realtor**, **one authorized MLS/API connection**, and the realtor’s existing investor clientele.
+Telegram: **@PirateEye_bot** only.
 
-Telegram for this folder is **@PirateEye_bot** only. TrueHold Wellness order emails use **@THWellness_bot** in `truehold-wellness/` — a different company, different files, different architecture. This folder is protected business infrastructure; see [`PROTECTED_AGENTS.md`](../PROTECTED_AGENTS.md).
+Self-contained automation for **one Nevada realtor**, **one authorized MLS/API connection**, and the realtor’s existing investor clientele. MLS live access is not finished; `MLS_PROVIDER=mock` until the API key is applied.
 
-This folder is the entire agent. Copy `realtor-agent/` to move the project. Nothing outside this directory is required to run, test, or deploy the service.
+This folder is the entire agent. Copy `realtor-agent/` to run it in its own Docker container. Nothing outside this directory is required to run, test, or deploy the service.
 
 The system **never** autonomously executes a real-estate transaction, signs documents, or submits contractual paperwork. Realtor approval is required before investor notification and before any document leaves `DRAFT`.
 
@@ -216,7 +216,7 @@ If `IMAP_PASSWORD` is missing, the same command still polls `cardanomint@gmail.c
 
 Source: https://core.telegram.org/bots/api
 
-1. In Telegram, open `@BotFather`. Realtor acquisition uses **@PirateEye_bot** only. Never put the TrueHold Wellness token (`@THWellness_bot`) in this folder. Wellness is a different company and lives in `truehold-wellness/`.
+1. In Telegram, open `@BotFather`. This package uses **@PirateEye_bot** only.
 2. Put the token in `.env`:
 
 ```
@@ -245,3 +245,15 @@ Damian asked for investor contact by text. The test investor template now prefer
 6. `NOTIFY_EMAIL_COPY=true` also puts a copy in `cardanomint@gmail.com` so you can see the investor notice without a phone.
 
 Do not set `SMS_RELAY_MODE=false` until testing is confirmed and each investor has SMS permission.
+
+## Docker
+
+Image: https://hub.docker.com/_/python  
+Postgres: https://hub.docker.com/_/postgres  
+Redis: https://hub.docker.com/_/redis  
+Compose: https://docs.docker.com/compose/
+
+1. Copy `.env.example` to `.env`. Keep `MLS_PROVIDER=mock` until the MLS API key is applied.
+2. From this folder: `docker compose up --build`
+3. API is `http://localhost:8080`. Telegram poller is the `telegram` service (`python -m app.cli telegram-poll`).
+

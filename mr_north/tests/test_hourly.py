@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from mr_north.bls import BlsSnapshot, SeriesPrint
 from mr_north.cli import main
 from mr_north.envfile import PACKAGE_ROOT
-from mr_north.hourly import hourly_loop, run_hourly
+from mr_north.hourly import hourly_loop, run_catalyst_report, run_hourly
 
 
 def _snapshot() -> BlsSnapshot:
@@ -77,7 +77,7 @@ def test_hourly_delivers_to_north_telegram(tmp_path, monkeypatch):
     result = run_hourly(fetch=_snapshot)
     assert result["ok"] is True
     assert result["delivered"] is True
-    assert result["destination"] == "telegram:@Mr_North_bot"
+    assert result["destination"] == "telegram:@Mr_North_bot:99"
     assert captured["chat_id"] == "99"
     assert "Unemployment rate" in captured["text"]
     assert "TrueHold Wellness" not in captured["text"]
@@ -112,3 +112,55 @@ def test_hourly_cli_dry_run(tmp_path, monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "Bureau of Labor Statistics" in captured.out
     assert "dry-run" in captured.err
+
+
+def test_hourly_fans_out_to_both_chats(tmp_path, monkeypatch):
+    monkeypatch.setenv("NORTH_HOURLY_HEARTBEAT_PATH", str(tmp_path / "hb.json"))
+    monkeypatch.setenv("NORTH_HOURLY_LAST_PATH", str(tmp_path / "last.json"))
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "111")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-1003939359929")
+    captured = {"chats": []}
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def send_report(self, chat_id, text):
+            captured["chats"].append(chat_id)
+            captured["text"] = text
+            return ["7"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    result = run_hourly(fetch=_snapshot)
+    assert result["ok"] is True
+    assert captured["chats"] == ["111", "-1003939359929"]
+    assert "Unemployment rate" in captured["text"]
+    assert "Strait of Hormuz" in captured["text"]
+
+
+def test_catalyst_report_is_the_larger_briefing(monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "111")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-1003939359929")
+    captured = {"chats": []}
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def send_report(self, chat_id, text):
+            captured["chats"].append(chat_id)
+            captured["text"] = text
+            return ["3"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    result = run_catalyst_report()
+    assert result["ok"] is True
+    assert result["action"] == "catalyst"
+    assert captured["chats"] == ["111", "-1003939359929"]
+    assert result["text"].startswith("Alert — geopolitical / market catalyst")
+    assert "Strait of Hormuz" in result["text"]
+    assert "TrueHold Wellness" not in result["text"]

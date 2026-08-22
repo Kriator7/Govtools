@@ -1,4 +1,4 @@
-"""Load truehold-wellness/.env without python-dotenv. Never read realtor-agent/.env."""
+"""Load truehold-wellness/.env without python-dotenv."""
 
 from __future__ import annotations
 

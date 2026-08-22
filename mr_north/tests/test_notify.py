@@ -5,6 +5,7 @@ import pytest
 from mr_north.compose import compose_alert
 from mr_north.models import AlertTrigger
 from mr_north.notify import NotifyError, alert_payload, send_alert
+from mr_north.telegram import TelegramError
 
 
 class _FakeResponse:
@@ -138,7 +139,131 @@ def test_send_drops_report_on_north_telegram(monkeypatch):
     monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
     result = send_alert(_btc_alert())
     assert result.delivered is True
-    assert result.destination == "telegram:@Mr_North_bot"
+    assert result.destination == "telegram:@Mr_North_bot:42"
     assert captured["chat_id"] == "42"
     assert "Strait of Hormuz" in captured["text"]
     assert "TrueHold Wellness" not in captured["text"]
+
+
+def test_send_fans_out_to_both_north_chats(monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "111")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-1003939359929")
+    captured = {"chats": []}
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def send_report(self, chat_id, text):
+            captured["chats"].append(chat_id)
+            captured["text"] = text
+            return ["1"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    result = send_alert(_btc_alert())
+    assert result.delivered is True
+    assert result.destination == "telegram:@Mr_North_bot:111,-1003939359929"
+    assert captured["chats"] == ["111", "-1003939359929"]
+    assert "Strait of Hormuz" in captured["text"]
+
+
+def test_send_skips_pirateeye_group(monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "-5372586958")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-1003939359929")
+    captured = {"chats": []}
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def send_report(self, chat_id, text):
+            captured["chats"].append(chat_id)
+            return ["1"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    result = send_alert(_btc_alert())
+    assert captured["chats"] == ["-1003939359929"]
+    assert "-5372586958" not in (result.destination or "")
+
+
+def test_send_fails_if_maximummint_north_group_is_missed(monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "1150046483")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-1003939359929")
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def send_report(self, chat_id, text):
+            if chat_id == "-1003939359929":
+                raise TelegramError("bot is not a member")
+            return ["1"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    with pytest.raises(NotifyError, match="MaximumMint & North"):
+        send_alert(_btc_alert())
+
+
+def test_send_retries_discovered_maximummint_north_group(tmp_path, monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "1150046483")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-1003939359929")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_PATH", str(tmp_path / "telegram_chat.json"))
+    captured = {"chats": []}
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def send_report(self, chat_id, text):
+            if chat_id == "-1003939359929":
+                raise TelegramError("chat not found")
+            captured["chats"].append(chat_id)
+            return ["1"]
+
+        def discover_north_group(self, timeout=0):
+            return "-5777888999"
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    result = send_alert(_btc_alert())
+    assert result.delivered is True
+    assert captured["chats"] == ["1150046483", "-5777888999"]
+    assert "telegram:@Mr_North_bot:1150046483,-5777888999" == result.destination
+
+
+def test_send_does_not_post_to_wrong_titled_group(monkeypatch):
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.setenv("NORTH_TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_ID", "1150046483")
+    monkeypatch.setenv("NORTH_TELEGRAM_GROUP_CHAT_ID", "-1003939359929")
+    captured = {"chats": []}
+
+    class _FakeNorth:
+        def assert_identity(self):
+            return "Mr_North_bot"
+
+        def resolve_group_chat_id(self, configured=""):
+            return ""
+
+        def group_id_is_wrong_title(self, chat_id):
+            return chat_id == "-1003939359929"
+
+        def discover_north_group(self, timeout=0):
+            return ""
+
+        def send_report(self, chat_id, text):
+            captured["chats"].append(chat_id)
+            return ["1"]
+
+    monkeypatch.setattr("mr_north.notify.live_client", lambda opener=None: _FakeNorth())
+    with pytest.raises(NotifyError, match="MaximumMint & North"):
+        send_alert(_btc_alert())
+    assert captured["chats"] == ["1150046483"]
+    assert "-1003939359929" not in captured["chats"]

@@ -1,0 +1,11 @@
+# TrueHold Wellness — own container. Do not compose with other agents.
+# Compose: https://docs.docker.com/compose/
+# getUpdates: https://core.telegram.org/bots/api#getupdates
+services:
+  wellness:
+    build: .
+    container_name: truehold-wellness
+    env_file:
+      - .env
+    restart: unless-stopped
+    command: ["python", "-u", "-m", "wellness_agent", "telegram-poll"]
