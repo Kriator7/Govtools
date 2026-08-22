@@ -138,3 +138,123 @@ def test_pirateeye_group_env_falls_back_to_maximummint_north(monkeypatch):
     assert DEFAULT_OPERATOR_CHAT_ID in ids
     assert DEFAULT_GROUP_CHAT_ID in ids
     assert "-5372586958" not in ids
+
+
+def test_north_group_title_rejects_agent_real():
+    from mr_north.telegram import is_forbidden_group_title, is_north_group_title
+
+    assert is_north_group_title("MaximumMint & North")
+    assert is_north_group_title("maximummint and north")
+    assert not is_north_group_title("MaximumMint & Agent Real")
+    assert is_forbidden_group_title("MaximumMint & Agent Real")
+    assert not is_north_group_title("Mr North BLS group")
+
+
+def test_north_group_id_from_my_chat_member():
+    from mr_north.telegram import north_group_id_from_updates
+
+    updates = [
+        {
+            "update_id": 1,
+            "message": {
+                "chat": {"id": 1150046483, "type": "private", "first_name": "James"}
+            },
+        },
+        {
+            "update_id": 2,
+            "my_chat_member": {
+                "chat": {
+                    "id": -5123456789,
+                    "type": "group",
+                    "title": "MaximumMint & North",
+                },
+                "new_chat_member": {"status": "member"},
+            },
+        },
+        {
+            "update_id": 3,
+            "my_chat_member": {
+                "chat": {
+                    "id": -5372586958,
+                    "type": "group",
+                    "title": "MaximumMint & Agent Real",
+                }
+            },
+        },
+    ]
+    assert north_group_id_from_updates(updates) == "-5123456789"
+
+
+def test_capture_prefers_maximummint_north_membership():
+    def opener(request, timeout=15):
+        return _FakeResponse(
+            {
+                "ok": True,
+                "result": [
+                    {
+                        "update_id": 9,
+                        "my_chat_member": {
+                            "chat": {
+                                "id": -5987654321,
+                                "type": "supergroup",
+                                "title": "MaximumMint & North",
+                            }
+                        },
+                    }
+                ],
+            }
+        )
+
+    client = NorthTelegram("123:abc", opener=opener)
+    bound = client.capture_destinations(timeout=0)
+    assert bound["group_chat_id"] == "-5987654321"
+    assert client.capture_chat_id(timeout=0) == "-5987654321"
+
+
+def test_file_group_id_overrides_stale_default(tmp_path, monkeypatch):
+    from mr_north.telegram import north_group_chat_id, save_group_chat_id
+
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_PATH", str(tmp_path / "telegram_chat.json"))
+    monkeypatch.delenv("NORTH_TELEGRAM_GROUP_CHAT_ID", raising=False)
+    save_group_chat_id("-5444000111")
+    assert north_group_chat_id() == "-5444000111"
+
+
+def test_resolve_group_chat_id_discovers_when_default_is_wrong_group(tmp_path, monkeypatch):
+    monkeypatch.setenv("NORTH_TELEGRAM_CHAT_PATH", str(tmp_path / "telegram_chat.json"))
+
+    def opener(request, timeout=15):
+        if request.full_url.endswith("/getChat"):
+            return _FakeResponse(
+                {
+                    "ok": True,
+                    "result": {
+                        "id": -1003939359929,
+                        "type": "supergroup",
+                        "title": "Mr North BLS group",
+                    },
+                }
+            )
+        if request.full_url.endswith("/getUpdates"):
+            return _FakeResponse(
+                {
+                    "ok": True,
+                    "result": [
+                        {
+                            "update_id": 4,
+                            "my_chat_member": {
+                                "chat": {
+                                    "id": -5111222333,
+                                    "type": "group",
+                                    "title": "MaximumMint & North",
+                                }
+                            },
+                        }
+                    ],
+                }
+            )
+        return _FakeResponse({"ok": True, "result": {}})
+
+    client = NorthTelegram("123:abc", opener=opener)
+    assert client.resolve_group_chat_id("-1003939359929") == "-5111222333"
+    assert (tmp_path / "telegram_chat.json").is_file()

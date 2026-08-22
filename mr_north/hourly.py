@@ -214,6 +214,22 @@ def hourly_loop(
     last_catalyst_at = 0.0
     poll = max(1, watch_seconds if watch else max(60, interval_seconds))
 
+    if not _in_pytest():
+        try:
+            from mr_north.telegram import destination_map, live_client, north_group_chat_id
+
+            client = live_client()
+            client.assert_identity()
+            group_id = client.resolve_group_chat_id(north_group_chat_id())
+            dest = destination_map()
+            dest["group_chat_id"] = group_id or dest.get("group_chat_id")
+            print(json.dumps({"ok": True, "action": "destinations", **dest}), flush=True)
+        except Exception as exc:
+            print(
+                json.dumps({"ok": False, "action": "destinations", "reason": str(exc)}),
+                flush=True,
+            )
+
     if catalyst:
         try:
             cat = run_catalyst_report()

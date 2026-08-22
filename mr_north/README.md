@@ -15,9 +15,11 @@ Live `getMe` must return `Mr_North_bot`. Token env: `NORTH_TELEGRAM_BOT_TOKEN`.
 Destinations (economics / trading only):
 
 1. James personally — `NORTH_TELEGRAM_CHAT_ID` (default `1150046483`)
-2. **MaximumMint & North** — `NORTH_TELEGRAM_GROUP_CHAT_ID` (default `-1003939359929`)
+2. **MaximumMint & North** — `NORTH_TELEGRAM_GROUP_CHAT_ID` (bound by group title; fallback `-1003939359929`)
 
 Never the PirateEye realtor group (`-5372586958`). Telegram sendMessage: https://core.telegram.org/bots/api#sendmessage
+
+Bind the group: add **@Mr_North_bot** to MaximumMint & North (not MaximumMint & Agent Real), send any message in that group, then `python -m mr_north telegram-capture` or `python -m mr_north telegram-whoami`.
 
 `python -m mr_north destinations` prints the live chat ids.
 

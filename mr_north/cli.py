@@ -105,7 +105,10 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub.add_parser(
         "telegram-capture",
-        help="One-shot: wait for a Start message and save NORTH chat id",
+        help=(
+            "One-shot: bind James and/or MaximumMint & North from Telegram "
+            "(includes bot-added-to-group events)"
+        ),
     )
     return parser
 
@@ -217,11 +220,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "telegram-whoami":
         from mr_north.identity import WrongTelegramBotError
-        from mr_north.telegram import TelegramError, configured_chat_ids, live_client
+        from mr_north.telegram import (
+            NORTH_GROUP_TITLE,
+            TelegramError,
+            configured_chat_ids,
+            live_client,
+            north_group_chat_id,
+        )
 
         try:
             client = live_client()
             username = client.assert_identity()
+            group_id = client.resolve_group_chat_id(north_group_chat_id())
         except (TelegramError, WrongTelegramBotError) as exc:
             sys.stderr.write(f"error: {exc}\n")
             return 1
@@ -231,6 +241,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "ok": True,
                     "bot": username,
                     "chat_ids": configured_chat_ids(),
+                    "group_title": NORTH_GROUP_TITLE,
+                    "group_chat_id": group_id or north_group_chat_id(),
                     "agent": "mr-north",
                 }
             )
@@ -245,19 +257,36 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0 if payload.get("chat_ids") else 1
     if args.command == "telegram-capture":
         from mr_north.identity import WrongTelegramBotError
-        from mr_north.telegram import TelegramError, live_client, save_chat_id
+        from mr_north.telegram import (
+            TelegramError,
+            live_client,
+            save_chat_id,
+            save_group_chat_id,
+        )
 
         try:
             client = live_client()
             username = client.assert_identity()
-            chat_id = client.capture_chat_id()
-            path = save_chat_id(chat_id, username=username)
+            bound = client.capture_destinations()
+            path = None
+            if bound.get("group_chat_id"):
+                path = save_group_chat_id(bound["group_chat_id"], username=username)
+            if bound.get("operator_chat_id"):
+                path = save_chat_id(bound["operator_chat_id"], username=username)
         except (TelegramError, WrongTelegramBotError) as exc:
             sys.stderr.write(f"error: {exc}\n")
             return 1
         sys.stdout.write(
             json.dumps(
-                {"ok": True, "bot": username, "chat_id": chat_id, "saved": str(path), "agent": "mr-north"}
+                {
+                    "ok": True,
+                    "bot": username,
+                    "chat_id": bound.get("operator_chat_id") or bound.get("group_chat_id"),
+                    "group_chat_id": bound.get("group_chat_id"),
+                    "group_title": bound.get("group_title"),
+                    "saved": str(path) if path else "",
+                    "agent": "mr-north",
+                }
             )
             + "\n"
         )

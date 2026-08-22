@@ -12,6 +12,7 @@ from mr_north.identity import WrongTelegramBotError
 from mr_north.models import AGENT_ID, Alert
 from mr_north.telegram import (
     CHAT_ENV,
+    FORBIDDEN_CHAT_IDS,
     GROUP_ENV,
     NORTH_GROUP_TITLE,
     TOKEN_ENV,
@@ -20,6 +21,7 @@ from mr_north.telegram import (
     configured_token,
     live_client,
     north_group_chat_id,
+    save_group_chat_id,
 )
 
 DEFAULT_TIMEOUT_SECONDS = 15
@@ -99,6 +101,7 @@ def send_alert(
     webhook = webhook_url or os.environ.get("ALERT_WEBHOOK_URL")
     token = configured_token()
     chat_ids = configured_chat_ids()
+    required_group = north_group_chat_id()
     if dry_run:
         dest = []
         if token and chat_ids:
@@ -122,6 +125,21 @@ def send_alert(
             raise NotifyError(str(exc)) from exc
         sent: list[str] = []
         errors: list[str] = []
+        resolver = getattr(client, "resolve_group_chat_id", None)
+        if callable(resolver):
+            try:
+                resolved = str(resolver(required_group) or "").strip()
+            except TelegramError:
+                resolved = ""
+            if resolved and resolved not in FORBIDDEN_CHAT_IDS:
+                chat_ids = [item for item in chat_ids if item != required_group]
+                if resolved not in chat_ids:
+                    chat_ids.append(resolved)
+                required_group = resolved
+            elif required_group:
+                wrong_title = getattr(client, "group_id_is_wrong_title", None)
+                if callable(wrong_title) and wrong_title(required_group):
+                    chat_ids = [item for item in chat_ids if item != required_group]
         for chat_id in chat_ids:
             try:
                 client.send_report(chat_id, text)
@@ -129,12 +147,27 @@ def send_alert(
                 errors.append(f"{chat_id}: {exc}")
                 continue
             sent.append(chat_id)
-        required_group = north_group_chat_id()
-        if required_group and required_group in chat_ids and required_group not in sent:
-            detail = "; ".join(errors) or "no sendMessage response"
-            raise NotifyError(
-                f"{NORTH_GROUP_TITLE} ({required_group}) did not receive the report. {detail}"
-            )
+        if required_group and required_group not in sent:
+            discover = getattr(client, "discover_north_group", None)
+            recovered = ""
+            if callable(discover):
+                try:
+                    recovered = str(discover(timeout=0) or "").strip()
+                except TelegramError:
+                    recovered = ""
+            if recovered and recovered not in FORBIDDEN_CHAT_IDS and recovered not in sent:
+                try:
+                    client.send_report(recovered, text)
+                    sent.append(recovered)
+                    save_group_chat_id(recovered)
+                    required_group = recovered
+                except TelegramError as exc:
+                    errors.append(f"{recovered}: {exc}")
+            if required_group not in sent:
+                detail = "; ".join(errors) or "no sendMessage response"
+                raise NotifyError(
+                    f"{NORTH_GROUP_TITLE} ({required_group}) did not receive the report. {detail}"
+                )
         if sent:
             destinations.append(f"telegram:@{username}:{','.join(sent)}")
         elif errors:

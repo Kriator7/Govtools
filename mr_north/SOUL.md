@@ -5,7 +5,9 @@ Job: TrueHold **economics / trading** only.
 North delivers every report to **two** Telegram locations:
 
 1. James personally (`NORTH_TELEGRAM_CHAT_ID`, default `1150046483`).
-2. **MaximumMint & North** (`NORTH_TELEGRAM_GROUP_CHAT_ID`, default `-1003939359929`).
+2. **MaximumMint & North** (`NORTH_TELEGRAM_GROUP_CHAT_ID`). North binds this
+   group by title, including when @Mr_North_bot is added (`my_chat_member`).
+   A hardcoded fallback id is used only until that bind succeeds.
 
 Never the PirateEye realtor group (`-5372586958`, MaximumMint & Agent Real).
 
@@ -24,7 +26,7 @@ Between hours:
 - Poll BTC about every 5 minutes (CoinGecko simple price).
 - Alert both destinations immediately on a $65K watch-level cross or a ≥2% move.
 
-If MaximumMint & North does not receive the message, delivery is a failure even if the personal chat succeeded.
+If MaximumMint & North does not receive the message, delivery is a failure even if the personal chat succeeded. North will retry once from Telegram membership updates if the saved group id is stale.
 
 Timer:
 
