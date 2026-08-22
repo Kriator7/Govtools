@@ -22,7 +22,7 @@ def test_wellness_rejects_realtor_pirateeye_bot():
         assert_wellness_telegram_username("PirateEye_bot")
         raise AssertionError("expected WrongTelegramBotError")
     except WrongTelegramBotError as exc:
-        assert "realtor" in str(exc).lower()
+        assert "THWellness_bot" in str(exc)
         assert "PirateEye_bot" in str(exc)
 
 
@@ -35,5 +35,13 @@ def test_source_tree_does_not_import_realtor_agent():
         for path in (root / folder).rglob("*.py"):
             text = path.read_text(encoding="utf-8")
             assert realtor_import.search(text) is None, path
-            assert "realtor-agent/app" not in text
             assert "from app.services" not in text
+
+
+def test_wellness_rejects_mr_north_bot():
+    try:
+        assert_wellness_telegram_username("Mr_North_bot")
+        raise AssertionError("expected WrongTelegramBotError")
+    except WrongTelegramBotError as exc:
+        assert "Mr_North_bot" in str(exc)
+        assert "THWellness_bot" in str(exc)

@@ -33,4 +33,4 @@ Timer:
 
 If Telegram is not configured, the report is still written to `mr_north/data/last_hourly.json` and `hourly-status` reports `not-delivered`. Compose without deliver is the failure mode that stopped the old Cursor automation (`TrueHold alert data`, no live scheduler, no destination).
 
-Do not send this report on @THWellness_bot or @PirateEye_bot. Live `getMe` must return `Mr_North_bot`.
+Do not send this report on any other Telegram bot. Live `getMe` must return `Mr_North_bot`.

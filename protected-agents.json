@@ -17,7 +17,10 @@
         "mr_north/identity.py",
         "mr_north/telegram.py",
         "mr_north/SOUL.md",
-        "mr_north/data/current_catalyst.json"
+        "mr_north/data/current_catalyst.json",
+        "mr_north/Dockerfile",
+        "mr_north/docker-compose.yml",
+        "mr_north/pyproject.toml"
       ]
     },
     {
@@ -28,7 +31,9 @@
       "required_files": [
         "realtor-agent/app/main.py",
         "realtor-agent/app/cli.py",
-        "realtor-agent/app/integrations/telegram/identity.py"
+        "realtor-agent/app/integrations/telegram/identity.py",
+        "realtor-agent/Dockerfile",
+        "realtor-agent/docker-compose.yml"
       ]
     },
     {
@@ -43,7 +48,9 @@
         "truehold-wellness/wellness_agent/data/current_inbox.json",
         "truehold-wellness/wellness_agent/identity.py",
         "truehold-wellness/ORIGINAL_SPEC.md",
-        "truehold-wellness/wellness_agent/inventory/catalog.json"
+        "truehold-wellness/wellness_agent/inventory/catalog.json",
+        "truehold-wellness/Dockerfile",
+        "truehold-wellness/docker-compose.yml"
       ]
     }
   ]

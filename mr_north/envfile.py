@@ -1,4 +1,4 @@
-"""Load mr_north/.env without python-dotenv. Never read Wellness or realtor env files."""
+"""Load mr_north/.env without python-dotenv."""
 
 from __future__ import annotations
 

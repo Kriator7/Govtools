@@ -2,8 +2,6 @@
 
 Live Telegram for this package is @Mr_North_bot only.
 https://core.telegram.org/bots/api#getme
-
-@THWellness_bot and @PirateEye_bot are different products.
 """
 
 from __future__ import annotations
@@ -21,7 +19,7 @@ FORBIDDEN_USERNAMES = frozenset(
 
 
 class WrongTelegramBotError(RuntimeError):
-    """Raised when a live token is Wellness, realtor, or otherwise not @Mr_North_bot."""
+    """Raised when a live token is not @Mr_North_bot."""
 
 
 def assert_north_telegram_username(username: str | None) -> str:
@@ -32,8 +30,7 @@ def assert_north_telegram_username(username: str | None) -> str:
         )
     if name in FORBIDDEN_USERNAMES:
         raise WrongTelegramBotError(
-            f"Mr North cannot use @{name}. That bot belongs to Wellness or realtor-agent. "
-            "North live Telegram is @Mr_North_bot."
+            f"Mr North cannot use @{name}. Live Telegram is @Mr_North_bot."
         )
     if name != REQUIRED_USERNAME:
         raise WrongTelegramBotError(

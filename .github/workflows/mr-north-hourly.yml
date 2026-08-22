@@ -33,7 +33,7 @@ jobs:
             exit 1
           fi
       - name: Install Mr North
-        run: python -m pip install -e .
+        run: python -m pip install -e ./mr_north
       - name: Send larger catalyst briefing to both chats
         env:
           NORTH_TELEGRAM_BOT_TOKEN: ${{ secrets.NORTH_TELEGRAM_BOT_TOKEN }}

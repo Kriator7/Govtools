@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mr-north"
 version = "0.1.0"
-description = "Mr North — TrueHold crypto agent. Sends crypto/macro alerts with the current geopolitical/market catalyst briefing. TrueHold Wellness is a separate agent."
+description = "Agent North — TrueHold market watcher. Speedy Telegram reports when source data changes."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
@@ -16,8 +16,13 @@ dev = ["pytest>=8.0"]
 [project.scripts]
 mr-north = "mr_north.cli:main"
 
-[tool.setuptools.packages.find]
-include = ["mr_north*"]
+# This folder is both the Docker build context and the Python package tree.
+# pip install from mr_north/ maps package name mr_north onto this directory.
+[tool.setuptools]
+packages = ["mr_north"]
+
+[tool.setuptools.package-dir]
+"mr_north" = "."
 
 [tool.setuptools.package-data]
 "mr_north" = ["data/*.json"]
@@ -25,3 +30,4 @@ include = ["mr_north*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+pythonpath = ["."]

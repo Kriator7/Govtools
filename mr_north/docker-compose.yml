@@ -1,0 +1,11 @@
+# Agent North — own container. Do not compose with other agents.
+# Compose: https://docs.docker.com/compose/
+# Python image: https://hub.docker.com/_/python
+services:
+  north:
+    build: .
+    container_name: agent-north
+    env_file:
+      - .env
+    restart: unless-stopped
+    command: ["python", "-u", "-m", "mr_north", "hourly-loop"]

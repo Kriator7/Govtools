@@ -2,12 +2,11 @@
 
 This package talks only to @THWellness_bot, the BotFather replacement for the
 deleted @Npeppers_bot (https://core.telegram.org/bots/features — /deletebot
-cannot be undone). Realtor acquisition (@PirateEye_bot) is a different company
-and lives in realtor-agent/.
+cannot be undone).
 """
 
 REQUIRED_USERNAME = REQUIRED_TELEGRAM_USERNAME = "THWellness_bot"
-FORBIDDEN_USERNAMES = frozenset({"PirateEye_bot"})
+FORBIDDEN_USERNAMES = frozenset({"PirateEye_bot", "Mr_North_bot"})
 PREDECESSOR_USERNAMES = frozenset({"Npeppers_bot", "Npepeers_bot", "Npeppert_bot"})
 
 
@@ -24,13 +23,12 @@ def assert_wellness_telegram_username(username: str | None) -> str:
         )
     if name in FORBIDDEN_USERNAMES:
         raise WrongTelegramBotError(
-            "TrueHold Wellness cannot use the realtor bot. "
-            "Use @THWellness_bot only. Realtor acquisition lives in realtor-agent/ as @PirateEye_bot."
+            f"TrueHold Wellness cannot use @{name}. Live Telegram is @THWellness_bot."
         )
     if name in PREDECESSOR_USERNAMES:
         raise WrongTelegramBotError(
             f"@{name} was deleted and cannot be restored. "
-            "Use @THWellness_bot only. Realtor acquisition lives in realtor-agent/ as @PirateEye_bot."
+            "TrueHold Wellness live Telegram is @THWellness_bot."
         )
     if name != REQUIRED_USERNAME:
         raise WrongTelegramBotError(
