@@ -60,6 +60,7 @@ from wellness_agent.telegram_copy import (
 MENU_INTRO = (
     "<b>Menu</b>\n"
     "Tap a name — one picture, short buttons.\n"
+    "Tap Crew for the class photo of the floor team.\n"
     "We care that you get well. Your body, your call.\n"
     "Las Vegas · dry vials only"
 )

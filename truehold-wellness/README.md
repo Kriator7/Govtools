@@ -59,7 +59,7 @@ Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_
 9. **Prep and local delivery are for Las Vegas residents only.** Shipping is **dry (lyophilized) vials only** — not reconstituted product.
 10. Staff are notified with the number (or a note that it is missing) plus the inventory adjustment. The customer gets a short confirmation plus the PDF in Telegram.
 
-Public BotFather commands are only `/start` `/menu` `/schedule` `/help`. `/inbox` is not in the customer menu.
+Public BotFather commands are `/start` `/menu` `/crew` `/schedule` `/help`. `/inbox` is not in the customer menu.
 
 ### Staff access (fail-closed)
 

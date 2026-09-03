@@ -100,9 +100,25 @@ def test_customer_copy_uses_documentation_not_waivers():
     assert "how it works" in INTRODUCTION.lower()
     assert "welcome to truehold wellness" in INTRODUCTION.lower()
     assert "ownership" in INTRODUCTION.lower() or "nature" in INTRODUCTION.lower()
+    assert "crew" in INTRODUCTION.lower()
+    assert "tap a name" in INTRODUCTION.lower()
+    assert "sheet or order" in INTRODUCTION.lower()
     assert "adpilv2026" in blob
     assert "10%" in blob
     assert len(INTRODUCTION) <= 1024
+
+
+def test_bot_profile_news_mentions_crew_and_keeps_orders():
+    from wellness_agent.telegram_api import BOT_DESCRIPTION, BOT_SHORT_DESCRIPTION
+
+    assert len(BOT_DESCRIPTION) <= 512
+    assert len(BOT_SHORT_DESCRIPTION) <= 120
+    assert "crew" in BOT_DESCRIPTION.lower()
+    assert "class photo" in BOT_DESCRIPTION.lower()
+    assert "order" in BOT_DESCRIPTION.lower()
+    assert "dry vials" in BOT_DESCRIPTION.lower()
+    assert "crew" in BOT_SHORT_DESCRIPTION.lower()
+    assert "las vegas" in BOT_SHORT_DESCRIPTION.lower()
 
 
 def test_start_plays_welcome_with_logo_and_does_not_grant_staff():

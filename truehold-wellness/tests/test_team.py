@@ -42,6 +42,29 @@ class _FakeTelegram:
         )
         return {"ok": True}
 
+    def edit_message_caption(self, chat_id, message_id, caption, reply_markup=None, parse_mode=None):
+        self.sent.append(
+            {
+                "chat_id": chat_id,
+                "message_id": str(message_id),
+                "caption": caption,
+                "reply_markup": reply_markup,
+                "edited": True,
+            }
+        )
+        return {"ok": True}
+
+    def edit_message_reply_markup(self, chat_id, message_id, reply_markup=None):
+        self.sent.append(
+            {
+                "chat_id": chat_id,
+                "message_id": str(message_id),
+                "reply_markup": reply_markup,
+                "cleared": not (reply_markup or {}).get("inline_keyboard"),
+            }
+        )
+        return {"ok": True}
+
     def answer_callback_query(self, callback_query_id, text=None):
         self.callbacks.append(callback_query_id)
         return {"ok": True}
@@ -312,3 +335,82 @@ def test_lets_see_the_crew_sends_the_class_photo():
         tg,
     )
     assert tap["action"] == "crew"
+
+
+def test_order_still_works_after_crew_photo():
+    from wellness_agent.clients import save_client_phone
+    from wellness_agent.menu import BUY_ORDER, BUY_PREP
+    from wellness_agent.snapshot import load_current_inbox
+
+    save_client_phone("31", "7025550100", source="typed", user_id="31")
+    tg = _FakeTelegram()
+    crew = handle_telegram_update(
+        {
+            "message": {
+                "text": "lets see the crew",
+                "chat": {"id": 31, "type": "private"},
+                "from": {"id": 31},
+            }
+        },
+        tg,
+    )
+    assert crew["action"] == "crew"
+    pick = handle_telegram_update(
+        {
+            "callback_query": {
+                "id": "after-crew-tile",
+                "data": "w:tile:klow",
+                "from": {"id": 31},
+                "message": {"chat": {"id": 31, "type": "private"}, "message_id": 40},
+            }
+        },
+        tg,
+    )
+    assert pick["action"] == "tile"
+    assert pick["product"] == "klow"
+    qty = handle_menu_callback(
+        {
+            "id": "after-crew-qty",
+            "data": "w:qty:klow",
+            "from": {"id": 31},
+            "message": {"chat": {"id": 31, "type": "private"}, "message_id": 40},
+        },
+        tg,
+    )
+    assert qty["action"] == "qty"
+    ask = handle_menu_callback(
+        {
+            "id": "after-crew-ask",
+            "data": "w:ask:klow:2",
+            "from": {"id": 31},
+            "message": {"chat": {"id": 31, "type": "private"}, "message_id": 40},
+        },
+        tg,
+    )
+    assert ask["action"] == "ask"
+    confirm = handle_telegram_update(
+        {
+            "callback_query": {
+                "id": "after-crew-go",
+                "data": "w:go:klow:2:prep",
+                "from": {"id": 31},
+                "message": {"chat": {"id": 31, "type": "private"}, "message_id": 40},
+            }
+        },
+        tg,
+    )
+    assert confirm["action"] == "order-confirm"
+    assert confirm["product"] == "klow"
+    inbox = load_current_inbox()
+    assert inbox.orders.new is True
+    assert "klow" in inbox.orders.detail.lower()
+    texts = [item.get("text") or item.get("caption") or "" for item in tg.sent]
+    assert any("You're in" in text for text in texts)
+    labels = [
+        btn["text"]
+        for item in tg.sent
+        for row in (item.get("reply_markup") or {}).get("inline_keyboard") or []
+        for btn in row
+    ]
+    assert BUY_PREP in labels
+    assert BUY_ORDER in labels

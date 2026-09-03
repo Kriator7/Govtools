@@ -48,7 +48,7 @@ INTRODUCTION = (
     "\n"
     "Nature and God already packed the tools. Science opened the door again. We'll treat them with care.\n"
     "Prep and local delivery: Las Vegas residents only.\n"
-    "Need a person? tap Team\n"
+    "Need a person? tap Team. Meet the floor crew? tap Crew.\n"
     "\n"
     f"{COLLEGE_HELP}"
 )
