@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.opportunity import Opportunity
 from app.models.realtor import Realtor
+from app.services.open_leads.hunt import OpenLeadHuntService
 from app.services.providers import get_telegram_provider
 from app.services.sms.investor_notify import InvestorNotificationService
 from app.services.telegram.realtor_agent import RealtorTelegramService
@@ -33,6 +34,7 @@ def process_telegram_update(
                 (
                     "Linked as Test Operator.\n"
                     "You will get listing alerts here.\n"
+                    "MLS is still mock — send /hunt for public obituaries, FSBO, HUD, and probate notices.\n"
                     "Approve / Reject / Snooze on each card.\n"
                     "Investor SMS is relayed to SMS_RELAY_TO when set; "
                     "email copies go to cardanomint@gmail.com while relay mode is on.\n"
@@ -40,6 +42,11 @@ def process_telegram_update(
                 ),
             )
             return {"ok": True, "action": "linked", "chat_id": chat_id}
+
+    if text:
+        hunt = _maybe_hunt_command(db, realtor, telegram, text, str(chat.get("id") or realtor.telegram_chat_id or ""))
+        if hunt is not None:
+            return hunt
 
     callback = payload.get("callback_query") or {}
     data = callback.get("data")
@@ -50,13 +57,19 @@ def process_telegram_update(
     if callback_id:
         telegram.answer_callback_query(str(callback_id), text="Working…")
 
-    service = RealtorTelegramService(db)
-    result = service.handle_callback(realtor, data)
     chat_id = str(
         ((callback.get("message") or {}).get("chat") or {}).get("id")
         or realtor.telegram_chat_id
         or ""
     )
+    if str(data).startswith("lead:"):
+        result = _handle_lead_callback(db, realtor, str(data))
+        if chat_id:
+            telegram.send_message(chat_id, result.get("text") or "Done.")
+        return result
+
+    service = RealtorTelegramService(db)
+    result = service.handle_callback(realtor, data)
     if result.get("action") == "approve" and result.get("ok"):
         public_id = data.split(":", 1)[1]
         opportunity = (
@@ -70,6 +83,76 @@ def process_telegram_update(
     if chat_id:
         telegram.send_message(chat_id, _reply_text(result))
     return result
+
+
+def _maybe_hunt_command(db: Session, realtor: Realtor, telegram, text: str, chat_id: str) -> dict | None:
+    from app.services.telegram.open_leads import (
+        HELP_TEXT,
+        MLS_STATUS_TEXT,
+        empty_leads_text,
+        hunt_source_for_text,
+        lead_card,
+        summary_text,
+    )
+
+    kind = hunt_source_for_text(text)
+    if kind == "unknown":
+        return None
+    if not chat_id:
+        return {"ok": False, "action": "hunt", "error": "no chat id"}
+    if kind == "help":
+        telegram.send_message(chat_id, HELP_TEXT)
+        return {"ok": True, "action": "help"}
+    if kind == "mls":
+        telegram.send_message(chat_id, MLS_STATUS_TEXT)
+        return {"ok": True, "action": "mls-status"}
+    hunt = OpenLeadHuntService(db)
+    if kind == "leads":
+        leads = hunt.recent(realtor)
+        if not leads:
+            telegram.send_message(chat_id, empty_leads_text(None))
+            return {"ok": True, "action": "leads", "count": 0}
+        telegram.send_message(chat_id, f"{len(leads)} stored public lead(s). Newest first.")
+        for lead in leads[:8]:
+            body, buttons = lead_card(lead)
+            telegram.send_message(chat_id, body, buttons)
+        return {"ok": True, "action": "leads", "count": len(leads)}
+    source = kind  # None means all sources
+    result = hunt.hunt(realtor, source=source)
+    db.commit()
+    telegram.send_message(chat_id, summary_text(result, source=source))
+    posted = 0
+    for public_id in result.get("lead_ids") or []:
+        lead = hunt.get(realtor, public_id)
+        if lead is None:
+            continue
+        body, buttons = lead_card(lead)
+        telegram.send_message(chat_id, body, buttons)
+        posted += 1
+        if posted >= 8:
+            break
+    return {"ok": True, "action": "hunt", "source": source, **result}
+
+
+def _handle_lead_callback(db: Session, realtor: Realtor, data: str) -> dict:
+    parts = data.split(":")
+    if len(parts) < 3:
+        return {"ok": False, "action": "lead", "error": "bad callback"}
+    _, verb, public_id = parts[0], parts[1], parts[2]
+    hunt = OpenLeadHuntService(db)
+    if verb == "keep":
+        lead = hunt.set_status(realtor, public_id, "kept")
+        if lead is None:
+            return {"ok": False, "action": "lead-keep", "error": "unknown lead"}
+        db.commit()
+        return {"ok": True, "action": "lead-keep", "lead_id": public_id, "text": f"Kept {public_id} for follow-up. Assessor is still public-search only."}
+    if verb == "dismiss":
+        lead = hunt.set_status(realtor, public_id, "dismissed")
+        if lead is None:
+            return {"ok": False, "action": "lead-dismiss", "error": "unknown lead"}
+        db.commit()
+        return {"ok": True, "action": "lead-dismiss", "lead_id": public_id, "text": f"Dismissed {public_id}."}
+    return {"ok": False, "action": "lead", "error": verb}
 
 
 def _reply_text(result: dict) -> str:

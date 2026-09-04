@@ -5,6 +5,7 @@ def test_health_endpoints(client):
     assert client.get("/health/telegram").json()["status"] == "ok"
     assert client.get("/health/twilio").json()["status"] == "ok"
     assert client.get("/health/email").json()["status"] == "ok"
+    assert client.get("/health/open-leads").json()["status"] == "ok"
 
 
 def test_realtor_crud(client):

@@ -12,6 +12,7 @@ from app.models.listing import Listing
 from app.models.opportunity import Opportunity
 from app.models.realtor import Realtor
 from app.models.realtor_packet import RealtorPacket
+from app.models.seller_lead import SellerLead
 from app.models.transaction import Transaction
 
 __all__ = [
@@ -27,5 +28,6 @@ __all__ = [
     "Opportunity",
     "Realtor",
     "RealtorPacket",
+    "SellerLead",
     "Transaction",
 ]

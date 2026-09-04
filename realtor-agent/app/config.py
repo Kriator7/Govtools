@@ -85,6 +85,9 @@ class Settings(BaseSettings):
     twilio_from_number: str | None = None
     mls_api_base_url: str | None = None
     mls_api_key_secret_name: str | None = None
+    # live = public RSS; fixture = sample_open_leads.json (tests / demo without network)
+    open_leads_mode: str = "live"
+    open_leads_market: str = "las-vegas"
     ai_api_key: str | None = None
     esign_api_key: str | None = None
     gcs_bucket: str | None = None

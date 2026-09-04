@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from app.dependencies import ActiveRealtor, DbSession, require_internal_key
 from app.services.matching.runner import OpportunityMatcher
 from app.services.mls.ingest import ListingIngestService
+from app.services.open_leads.hunt import OpenLeadHuntService
 from app.services.providers import get_mls_provider
 from app.services.telegram.realtor_agent import RealtorTelegramService
 
@@ -24,3 +25,10 @@ def job_match(db: DbSession, realtor: ActiveRealtor) -> dict:
         telegram.alert_opportunity(realtor, opportunity)
     db.commit()
     return {"created": len(created), "ids": [item.public_id for item in created]}
+
+
+@router.post("/hunt-open-leads")
+def job_hunt_open_leads(db: DbSession, realtor: ActiveRealtor, source: str | None = None) -> dict:
+    result = OpenLeadHuntService(db).hunt(realtor, source=source)
+    db.commit()
+    return result
