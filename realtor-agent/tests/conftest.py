@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("AUTO_CREATE_TABLES", "true")
 os.environ.setdefault("MLS_PROVIDER", "mock")
+os.environ.setdefault("OPEN_LEADS_MODE", "fixture")
 os.environ.setdefault("TELEGRAM_MODE", "mock")
 os.environ.setdefault("SMS_PROVIDER", "mock")
 os.environ.setdefault("EMAIL_PROVIDER", "mock")

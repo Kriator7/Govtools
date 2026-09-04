@@ -1,0 +1,17 @@
+<rss version="2.0">
+  <channel>
+    <title>Obituaries</title>
+    <item>
+      <title>John Alan Pike Obituary - Henderson, NV</title>
+      <link>https://example.invalid/obituary/john-alan-pike</link>
+      <description>John Alan Pike, 82, of Henderson, died Saturday.</description>
+      <pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Owner 3br $199000 8801 Rainbow Blvd Las Vegas</title>
+      <link>https://example.invalid/fsbo/rainbow</link>
+      <description>FSBO 3 bed. $199,000. 8801 Rainbow Blvd, Las Vegas.</description>
+      <pubDate>Wed, 02 Sep 2026 13:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

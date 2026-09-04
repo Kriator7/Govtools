@@ -1,0 +1,47 @@
+[
+  {
+    "source": "obituary",
+    "title": "Maria Elena Cruz Obituary - Las Vegas, NV",
+    "summary": "Maria Elena Cruz, 79, of Las Vegas, passed away. Services pending.",
+    "url": "https://example.invalid/obituary/maria-elena-cruz",
+    "city": "Las Vegas",
+    "state": "NV",
+    "person_name": "Maria Elena Cruz",
+    "review_only": true,
+    "published_at": "2026-09-01T15:00:00+00:00"
+  },
+  {
+    "source": "fsbo",
+    "title": "$285000 / 3br - 4120 Desert Bloom Ave, Henderson NV",
+    "summary": "Owner selling 3 bed 2 bath. $285,000. No agents.",
+    "url": "https://lasvegas.craigslist.org/reo/d/henderson-owner/example.html",
+    "city": "Henderson",
+    "state": "NV",
+    "zip_code": "89052",
+    "street_address": "4120 Desert Bloom Ave",
+    "asking_price": "285000",
+    "review_only": false,
+    "published_at": "2026-09-02T18:00:00+00:00"
+  },
+  {
+    "source": "hud",
+    "title": "HUD home listed in North Las Vegas — 3 bed near 89031",
+    "summary": "Government-owned home mentioned for sale in North Las Vegas.",
+    "url": "https://example.invalid/hud/north-las-vegas",
+    "city": "North Las Vegas",
+    "state": "NV",
+    "zip_code": "89031",
+    "review_only": false,
+    "published_at": "2026-09-03T12:00:00+00:00"
+  },
+  {
+    "source": "probate",
+    "title": "Notice of trustee sale, Clark County — Las Vegas estate",
+    "summary": "Public trustee-sale notice. Confirm the parcel on the Clark County Assessor before any outreach.",
+    "url": "https://example.invalid/notice/trustee-sale",
+    "city": "Las Vegas",
+    "state": "NV",
+    "review_only": true,
+    "published_at": "2026-09-03T16:00:00+00:00"
+  }
+]

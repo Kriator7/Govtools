@@ -13,6 +13,7 @@ from app.db import get_session_factory, init_db
 from app.services.demo import run_demo
 from app.services.matching.runner import OpportunityMatcher
 from app.services.mls.ingest import ListingIngestService
+from app.services.open_leads.hunt import OpenLeadHuntService
 from app.services.providers import get_email_provider, get_mls_provider, get_sms_provider, get_telegram_provider
 from app.services.seed import seed_pirates_ig, seed_realtor
 from app.services.sms.relay import resolve_sms_destination
@@ -39,6 +40,15 @@ def main(argv: list[str] | None = None) -> int:
         help="Watch Gmail for Damian packet replies and apply them to realtor packet data",
     )
     inbox.add_argument("--once", action="store_true", help="Poll once and exit")
+    hunt = sub.add_parser(
+        "hunt",
+        help="Search public obituaries, FSBO, HUD/REO, and probate notices (no MLS scrape)",
+    )
+    hunt.add_argument(
+        "--source",
+        choices=["obituary", "fsbo", "hud", "probate"],
+        help="One public source; default is all",
+    )
     apply_mail = sub.add_parser(
         "inbox-apply",
         help="Apply a pasted packet email (file) to realtor packet data",
@@ -74,6 +84,8 @@ def main(argv: list[str] | None = None) -> int:
             return poll_forever(db, once=args.once)
         if args.command == "inbox-apply":
             return _inbox_apply(db, args)
+        if args.command == "hunt":
+            return _hunt_open_leads(db, source=args.source)
         realtor = seed_realtor(db)
         seed_pirates_ig(db, realtor)
         if args.command == "ingest":
@@ -196,6 +208,30 @@ def _inbox_apply(db, args) -> int:
     result["snapshot"] = str(snapshot)
     print(json.dumps(result, default=str))
     return 0 if result.get("status") != "ignored" else 1
+
+
+def _hunt_open_leads(db, *, source: str | None) -> int:
+    realtor = seed_realtor(db)
+    seed_pirates_ig(db, realtor)
+    hunt = OpenLeadHuntService(db)
+    result = hunt.hunt(realtor, source=source)
+    db.commit()
+    chat_id = realtor.telegram_chat_id
+    settings = get_settings()
+    if settings.telegram_mode == "live" and chat_id and chat_id not in {"", "mock-realtor"}:
+        from app.services.telegram.open_leads import lead_card, summary_text
+
+        telegram = get_telegram_provider(settings)
+        telegram.send_message(chat_id, summary_text(result, source=source))
+        for public_id in (result.get("lead_ids") or [])[:8]:
+            lead = hunt.get(realtor, public_id)
+            if lead is None:
+                continue
+            body, buttons = lead_card(lead)
+            telegram.send_message(chat_id, body, buttons)
+        result["telegram"] = chat_id
+    print(json.dumps(result, default=str))
+    return 0 if result.get("ok") else 1
 
 
 if __name__ == "__main__":

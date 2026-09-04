@@ -7,6 +7,7 @@ from app.config import get_settings
 from app.db import get_session_factory
 from app.schemas.common import HealthComponent, HealthResponse
 from app.services.providers import get_email_provider, get_mls_provider, get_sms_provider, get_telegram_provider
+from app.integrations.open_leads.catalog import providers_for
 
 router = APIRouter(tags=["health"])
 
@@ -63,6 +64,17 @@ def health_email() -> HealthResponse:
         return _provider_health("email", get_email_provider().health())
     except Exception as exc:  # noqa: BLE001
         return _provider_health("email", ("error", str(exc)))
+
+
+@router.get("/health/open-leads", response_model=HealthResponse)
+def health_open_leads() -> HealthResponse:
+    settings = get_settings()
+    try:
+        rows = providers_for(mode=settings.open_leads_mode)
+        detail = f"mode={settings.open_leads_mode} providers={len(rows)}"
+        return _provider_health("open-leads", ("ok", detail))
+    except Exception as exc:  # noqa: BLE001
+        return _provider_health("open-leads", ("error", str(exc)))
 
 
 def _provider_health(name: str, result: tuple[str, str]) -> HealthResponse:

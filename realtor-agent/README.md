@@ -11,11 +11,18 @@ The system **never** autonomously executes a real-estate transaction, signs docu
 ## Workflow
 
 ```
-MLS/API → ingest → normalize → match → score → Telegram review
-  → approve/reject/snooze → investor notify → investor response
-  → Transaction (spine) → document prep → realtor review
-  → e-sign / transaction platform → closing tracking
+Public RSS (obituaries, FSBO, HUD/REO, probate notices)
+  → seller leads → Telegram review (KEEP / DISMISS)
+  → FSBO/HUD with address+price become listings
+  → match → score → Telegram APPROVE
+MLS/API (when authorized) → ingest → same match path
 ```
+
+MLS is still `mock` until Damian or the broker enables an authorized feed. PirateEye hunts **public** sources in the meantime. It does not scrape Matrix, Zillow, or Gmail listing mail.
+
+On Telegram after `/start`: `/hunt`, `/obits`, `/fsbo`, `/hud`, `/leads`. CLI: `python -m app.cli hunt`. Skill: [`.agents/skills/pirateeye-open-leads/SKILL.md`](.agents/skills/pirateeye-open-leads/SKILL.md).
+
+Obituaries are **estate-watch, review only**. The bot never auto-contacts next of kin. Damian opens the public notice and searches the [Clark County Assessor](https://www.clarkcountynv.gov/government/departments/assessor/).
 
 Every meaningful action is tied to an opportunity ID and, after interest, a transaction ID such as `TX-2026-000123`.
 
@@ -58,6 +65,7 @@ API (after `uvicorn app.main:app --reload --app-dir .` from this folder):
 - `GET /health/telegram`
 - `GET /health/twilio`
 - `GET /health/email`
+- `GET /health/open-leads`
 
 ## Stack
 
@@ -226,8 +234,8 @@ TELEGRAM_BOT_TOKEN=123456:ABC...
 
 3. Start polling on the machine that should receive button taps: `python -m app.cli telegram-poll`
 4. Open the bot, tap Start (`/start`). The Test Operator record stores your `chat_id`.
-5. In another terminal: `python -m app.cli alert`
-6. On the phone, tap APPROVE / REJECT / SNOOZE. APPROVE notifies the test investor channel (SMS relay + email copy). Do not approve live investor traffic yet.
+5. In another terminal: `python -m app.cli alert` (mock MLS) or `python -m app.cli hunt` (public leads)
+6. On the phone, send `/hunt` or `/obits`. Tap KEEP / DISMISS on lead cards. APPROVE / REJECT / SNOOZE still apply to investor-match cards. APPROVE notifies the test investor channel (SMS relay + email copy). Do not approve live investor traffic yet.
 
 Optional: set `TELEGRAM_OPERATOR_CHAT_ID` after `/start` so seed keeps the same chat.
 
