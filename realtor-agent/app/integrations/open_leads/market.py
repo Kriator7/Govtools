@@ -46,9 +46,14 @@ def probate_rss_url() -> str:
     )
 
 
-def craigslist_fsbo_rss_url() -> str:
-    # Craigslist RSS is a public search export. reo = real estate by owner.
-    return "https://lasvegas.craigslist.org/search/reo?format=rss"
+HUD_HOMESTORE = "https://www.hudhomestore.gov/Home/Index.aspx"
+
+
+def fsbo_rss_url() -> str:
+    # Craigslist RSS is blocked from datacenters. Reuse Google News RSS (same as obituaries).
+    return google_news_rss(
+        '("for sale by owner" OR FSBO) (Las Vegas OR Henderson OR "Clark County") (home OR house)'
+    )
 
 
 def assessor_search_url(person_or_address: str) -> str:

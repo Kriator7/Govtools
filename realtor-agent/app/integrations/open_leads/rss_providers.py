@@ -10,7 +10,7 @@ from app.integrations.open_leads.base import OpenLeadDraft, OpenLeadProvider
 from app.integrations.open_leads.market import (
     assessor_search_url,
     city_from_text,
-    craigslist_fsbo_rss_url,
+    fsbo_rss_url,
     hud_rss_url,
     obituary_rss_url,
     probate_rss_url,
@@ -96,7 +96,7 @@ def obituary_provider(**kwargs: Any) -> RssOpenLeadProvider:
 
 def fsbo_provider(**kwargs: Any) -> RssOpenLeadProvider:
     return RssOpenLeadProvider(
-        feed_url=craigslist_fsbo_rss_url(),
+        feed_url=fsbo_rss_url(),
         source="fsbo",
         review_only=False,
         **kwargs,

@@ -19,6 +19,7 @@ HELP_TEXT = (
     "\n"
     "Obituaries are review-only. Do not auto-contact family. "
     "Open the notice, then search the public Clark County Assessor. "
+    "HUD inventory: hudhomestore.gov (Nevada map). Bids need a HUD NAID broker. "
     "Investor SMS still needs your APPROVE."
 )
 
