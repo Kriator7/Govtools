@@ -233,6 +233,18 @@ def _llm_reply(message: str, hits: list[dict[str, Any]], host: dict[str, Any]) -
     return TalkReply(text=_signed(host, content.strip()), pose=pose, source="llm")
 
 
+# Chat default: SpaceXSI models page, "Chat: Grok 4.7"
+# https://docs.x.ai/developers/models
+# Model card: https://docs.x.ai/developers/models/grok-4.7
+# Retired slug grok-4-1-fast* redirects to grok-4.3 after 2026-05-15:
+# https://docs.x.ai/developers/migration/may-15-retirement
+DEFAULT_LLM_MODEL = "grok-4.7"
+
+
+def configured_llm_model() -> str:
+    return (os.environ.get("WELLNESS_LLM_MODEL") or DEFAULT_LLM_MODEL).strip() or DEFAULT_LLM_MODEL
+
+
 def _chat(system: str, user: str) -> str:
     """OpenAI-compatible chat. Default host is xAI.
 
@@ -240,7 +252,7 @@ def _chat(system: str, user: str) -> str:
     """
     key = os.environ.get("WELLNESS_LLM_API_KEY") or os.environ.get("XAI_API_KEY") or ""
     base = os.environ.get("WELLNESS_LLM_BASE_URL") or "https://api.x.ai/v1"
-    model = os.environ.get("WELLNESS_LLM_MODEL") or "grok-4-1-fast"
+    model = configured_llm_model()
     with httpx.Client(timeout=20) as client:
         response = client.post(
             f"{base.rstrip('/')}/chat/completions",
