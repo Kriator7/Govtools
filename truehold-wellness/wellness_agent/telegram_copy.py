@@ -82,7 +82,7 @@ CUSTOMER_HELP = (
 STAFF_HELP = (
     f"Staff mode on @{REQUIRED_USERNAME}. Customers do not see these commands.\n"
     "/inbox — full business inbox snapshot\n"
-    "/stock — on-hand inventory\n"
+    "/stock — on-hand inventory, lots, and COAs\n"
     "/promo — list promotion drafts (sales never auto-run)\n"
     "/promo draft Headline | body — submit for approval\n"
     "/promo approve <id> or /promo reject <id>\n"

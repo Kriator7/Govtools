@@ -1,0 +1,137 @@
+from wellness_agent.cli import main
+from wellness_agent.inventory.lots import (
+    KLOW_VIALS_PER_KIT,
+    find_coa,
+    find_lot,
+    format_lots,
+    load_packaged_lots,
+    lot_id_for,
+    receive_lot,
+)
+from wellness_agent.stock import load_stock, receive_stock, set_on_hand
+
+
+def test_klow_five_kits_are_fifty_vials():
+    assert 5 * KLOW_VIALS_PER_KIT == 50
+
+
+def test_packaged_klow_receipt_keeps_coa():
+    data = load_packaged_lots()
+    lots = [row for row in data["lots"] if row.get("sku_id") == "klow"]
+    assert lots
+    lot = lots[0]
+    assert lot["kits_received"] == 5
+    assert lot["vials_received"] == 50
+    assert lot["label_code"] == "LUMI593-A62"
+    assert lot["label_lot"] == "LOT-Z51-Z12"
+    assert lot["coa_lot"] == "CPC260728KLOW"
+    coa = next(row for row in data["coas"] if row.get("coa_id") == "CPC260728KLOW")
+    assert coa["accession"] == "2607300355"
+    assert coa["purity_percent"] == 99.88
+    assert lot["lot_id"] in coa["associated_lot_ids"]
+    from pathlib import Path
+    from wellness_agent.inventory.lots import COA_DIR
+
+    assert (COA_DIR / "CPC260728KLOW-Freedom-Diagnostics.jpg").is_file()
+    assert (COA_DIR / "CPC260728KLOW-kits.jpg").is_file()
+    tracker = data.get("tracker") or {}
+    assert "drive.google.com/drive/folders/" in tracker.get("drive_folder", "")
+    assert "docs.google.com/spreadsheets/" in tracker.get("lots_sheet", "")
+    assert "docs.google.com/spreadsheets/" in tracker.get("coa_sheet", "")
+
+
+def test_receive_lot_records_kits_lots_and_coa(tmp_path):
+    result = receive_lot(
+        "klow",
+        kits=5,
+        vials=50,
+        label_code="LUMI593-A62",
+        label_lot="LOT-Z51-Z12",
+        coa_lot="CPC260728KLOW",
+        received_at="2026-11-04",
+        notes="associate this COA with the five kits",
+        coa={
+            "coa_id": "CPC260728KLOW",
+            "lab": "Freedom Diagnostics",
+            "accession": "2607300355",
+            "purity_percent": 99.88,
+            "file": "wellness_agent/inventory/coa/CPC260728KLOW-Freedom-Diagnostics.jpg",
+        },
+    )
+    assert result["ok"] is True
+    assert result["duplicate"] is False
+    lot = result["lot"]
+    assert lot["kits_received"] == 5
+    assert lot["vials_per_kit"] == 10
+    assert lot["vials_received"] == 50
+    assert lot["vials_on_hand"] == 50
+    assert lot["label_code"] == "LUMI593-A62"
+    assert lot["label_lot"] == "LOT-Z51-Z12"
+    assert lot["coa_lot"] == "CPC260728KLOW"
+    assert lot["coa_id"] == "CPC260728KLOW"
+    assert load_stock()["products"]["klow"]["on_hand"] == 50
+    stored = find_lot(lot["lot_id"])
+    assert stored is not None
+    coa = find_coa("CPC260728KLOW")
+    assert coa is not None
+    assert stored["lot_id"] in coa["associated_lot_ids"]
+    assert "CPC260728KLOW" in format_lots()
+    assert "LOT-Z51-Z12" in format_lots()
+
+
+def test_receive_lot_is_idempotent():
+    first = receive_lot("klow", kits=5, coa_lot="CPC260728KLOW", label_lot="LOT-Z51-Z12")
+    second = receive_lot("klow", kits=5, coa_lot="CPC260728KLOW", label_lot="LOT-Z51-Z12")
+    assert first["duplicate"] is False
+    assert second["duplicate"] is True
+    assert load_stock()["products"]["klow"]["on_hand"] == 50
+
+
+def test_receive_lot_rejects_kit_vial_mismatch():
+    try:
+        receive_lot("klow", kits=5, vials=40, coa_lot="CPC260728KLOW")
+    except ValueError as exc:
+        assert "not 40" in str(exc)
+    else:
+        raise AssertionError("expected kit/vial mismatch")
+
+
+def test_receive_stock_starts_unset_at_zero():
+    entry = receive_stock("semax", 3, reason="lot-receipt", detail="test")
+    assert entry["previous"] is None
+    assert entry["on_hand"] == 3
+    set_on_hand("semax", 3)
+    again = receive_stock("semax", 2, reason="lot-receipt", detail="more")
+    assert again["previous"] == 3
+    assert again["on_hand"] == 5
+
+
+def test_receive_stock_cli(capsys):
+    assert (
+        main(
+            [
+                "receive-stock",
+                "--sku",
+                "klow",
+                "--kits",
+                "5",
+                "--label-code",
+                "LUMI593-A62",
+                "--label-lot",
+                "LOT-Z51-Z12",
+                "--coa-lot",
+                "CPC260728KLOW",
+                "--received-at",
+                "2026-11-04",
+            ]
+        )
+        == 0
+    )
+    out = capsys.readouterr().out
+    assert "5 kits" in out
+    assert "50 vials" in out
+    assert main(["lots"]) == 0
+    lots_out = capsys.readouterr().out
+    assert "KLOW" in lots_out
+    assert "CPC260728KLOW" in lots_out
+    assert lot_id_for(sku_id="klow", coa_lot="CPC260728KLOW", label_lot="LOT-Z51-Z12") in lots_out

@@ -297,9 +297,9 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
             telegram.send_message(chat_id, format_alert(alert))
             return {"ok": True, "action": "inbox", "chat_id": chat_id, "staff": True}
         if command == "stock" and staff:
-            from wellness_agent.stock import format_stock
+            from wellness_agent.inventory.lots import format_stock_with_lots
 
-            telegram.send_message(chat_id, format_stock())
+            telegram.send_message(chat_id, format_stock_with_lots())
             return {"ok": True, "action": "stock", "chat_id": chat_id, "staff": True}
         if command == "promo" and staff:
             return _handle_promo(telegram, chat_id, user_id, _rest(text))

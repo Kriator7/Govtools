@@ -173,6 +173,8 @@ def test_orders_workbook_covers_all_skus_and_inbox_columns():
     assert path.is_file()
     wb = load_workbook(path)
     assert "Inventory" in wb.sheetnames
+    assert "Lots" in wb.sheetnames
+    assert "COAs" in wb.sheetnames
     assert "Orders" in wb.sheetnames
     assert "Payments" in wb.sheetnames
     assert "Fulfillment" in wb.sheetnames

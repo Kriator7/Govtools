@@ -60,7 +60,28 @@ def _build_parser() -> argparse.ArgumentParser:
         help=f"Set @{REQUIRED_USERNAME} name, description, and command menu",
     )
     sub.add_parser("catalog", help="Print the live TrueHold Wellness shop inventory")
-    sub.add_parser("stock", help="Print on-hand inventory counts and recent adjustments")
+    sub.add_parser("stock", help="Print on-hand inventory counts, lots, and COAs")
+    sub.add_parser("lots", help="Print lot-level inventory and associated COAs")
+    receive = sub.add_parser(
+        "receive-stock",
+        help="Record a kit/vial receipt, store lot numbers, and associate a COA",
+    )
+    receive.add_argument("--sku", required=True, help="Catalog id or alias, for example klow")
+    receive.add_argument("--kits", type=int, default=None, help="Number of kits received")
+    receive.add_argument("--vials", type=int, default=None, help="Number of vials received")
+    receive.add_argument(
+        "--vials-per-kit",
+        type=int,
+        default=None,
+        help="Vials in each kit (KLOW defaults to 10)",
+    )
+    receive.add_argument("--label-code", default="", help="Supplier code printed on the kit, e.g. LUMI593-A62")
+    receive.add_argument("--label-lot", default="", help="Lot printed on the kit, e.g. LOT-Z51-Z12")
+    receive.add_argument("--coa-lot", required=True, help="Lot on the Certificate of Analysis")
+    receive.add_argument("--coa-file", default="", help="Path to the stored COA image or PDF")
+    receive.add_argument("--received-at", default=None, help="Receipt date YYYY-MM-DD")
+    receive.add_argument("--notes", default="")
+    receive.add_argument("--json", action="store_true")
     product = sub.add_parser("product", help="Resolve a SKU and print its locked-sheet path")
     product.add_argument("query", help="Product name or alias, for example klow or tirzepatide")
     ingest = sub.add_parser(
@@ -158,9 +179,45 @@ def main(argv: Sequence[str] | None = None) -> int:
         sys.stdout.write(format_catalog())
         return 0
     if args.command == "stock":
-        from wellness_agent.stock import format_stock
+        from wellness_agent.inventory.lots import format_stock_with_lots
 
-        sys.stdout.write(format_stock())
+        sys.stdout.write(format_stock_with_lots())
+        return 0
+    if args.command == "lots":
+        from wellness_agent.inventory.lots import format_lots
+
+        sys.stdout.write(format_lots())
+        return 0
+    if args.command == "receive-stock":
+        from wellness_agent.catalog import UnknownProductError
+        from wellness_agent.inventory.lots import receive_lot
+
+        coa = {"file": args.coa_file} if args.coa_file else None
+        try:
+            result = receive_lot(
+                args.sku,
+                kits=args.kits,
+                vials=args.vials,
+                vials_per_kit=args.vials_per_kit,
+                label_code=args.label_code,
+                label_lot=args.label_lot,
+                coa_lot=args.coa_lot,
+                received_at=args.received_at,
+                notes=args.notes,
+                coa=coa,
+            )
+        except (UnknownProductError, ValueError, KeyError) as exc:
+            sys.stderr.write(f"error: {exc}\n")
+            return 1
+        if args.json:
+            sys.stdout.write(json.dumps(result, indent=2) + "\n")
+        else:
+            lot = result["lot"]
+            status = "already recorded" if result.get("duplicate") else "recorded"
+            sys.stdout.write(
+                f"{status}: {lot['lot_id']} — {lot['kits_received']} kits / "
+                f"{lot['vials_received']} vials ({lot['name']})\n"
+            )
         return 0
     if args.command == "product":
         from wellness_agent.catalog import (

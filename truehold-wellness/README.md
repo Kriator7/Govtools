@@ -117,10 +117,23 @@ Matching PDFs overwrite `inventory/pdfs/`. The xlsx is stored as the live ledger
 ```bash
 python -m wellness_agent catalog
 python -m wellness_agent stock
+python -m wellness_agent lots
 python -m wellness_agent product klow
 python -m wellness_agent.inventory.build_pdfs
 python -m wellness_agent.inventory.build_workbook
 ```
+
+Lot-level receipts (kits, label lots, lab lots, stored COAs) live in `wellness_agent/inventory/lots.json`. COA images are in `wellness_agent/inventory/coa/`. Record a receipt:
+
+```bash
+python -m wellness_agent receive-stock \
+  --sku klow --kits 5 --vials-per-kit 10 \
+  --label-code LUMI593-A62 --label-lot LOT-Z51-Z12 \
+  --coa-lot CPC260728KLOW \
+  --coa-file wellness_agent/inventory/coa/CPC260728KLOW-Freedom-Diagnostics.jpg
+```
+
+KLOW kits are 10 vials. Five kits = 50 vials. `/stock` prints SKU on-hand plus lots and COAs.
 
 Telegram: `/menu` then **View PDF in Telegram** sends the sheet. Every PDF is written for the milligram vial in stock (molecule, testing data, risks, FDA status, reconstitution, and U-100 / 0.5 mL syringe marks). Mix math is checked in `wellness_agent/inventory/protocol.py` before a sheet is built. The bot still does not dose in chat.
 

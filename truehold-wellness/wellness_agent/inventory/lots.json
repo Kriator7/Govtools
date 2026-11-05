@@ -1,0 +1,59 @@
+{
+  "tracker": {
+    "drive_folder": "https://drive.google.com/drive/folders/1aX9HPNuM66H_fFsBPw99oIrFz_Z_w0BC",
+    "lots_sheet": "https://docs.google.com/spreadsheets/d/1tYJT_-DKGpkZSJy0c-JJwh6VYFi2fKKMa3QzoCK9OII/edit",
+    "coa_sheet": "https://docs.google.com/spreadsheets/d/1yHIt1AVUeundzL0y7TLipX4ZlL95ZVfvY3Vy_MUImkM/edit"
+  },
+  "lots": [
+    {
+      "lot_id": "KLOW-CPC260728KLOW-LOT-Z51-Z12",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "klow",
+      "name": "KLOW",
+      "strength": "80 mg lyophilized vial",
+      "kits_received": 5,
+      "vials_per_kit": 10,
+      "vials_received": 50,
+      "vials_on_hand": 50,
+      "label_code": "LUMI593-A62",
+      "label_lot": "LOT-Z51-Z12",
+      "coa_lot": "CPC260728KLOW",
+      "coa_id": "CPC260728KLOW",
+      "status": "in_stock",
+      "notes": "New receipt: 5 kits of 10 vials. Box labels print LUMI593-A62 and LOT-Z51-Z12 on every kit. James associated Freedom Diagnostics COA CPC260728KLOW with this entire group. Label lot and COA lot are different strings; keep both."
+    }
+  ],
+  "coas": [
+    {
+      "coa_id": "CPC260728KLOW",
+      "lot": "CPC260728KLOW",
+      "sku_id": "klow",
+      "lab": "Freedom Diagnostics",
+      "lab_url": "https://freedomdiagnosticstesting.com",
+      "lab_email": "Admin@FreedomDiagnostics.net",
+      "client": "Cellipep/Cardonix Labs",
+      "accession": "2607300355",
+      "search_code": "Cell2607300355",
+      "received": "2026-07-30",
+      "reported": "2026-08-04",
+      "product": "KLOW 80mg",
+      "identity": "Confirmed",
+      "appearance": "Blue Lyophilized Powder",
+      "purity_percent": 99.88,
+      "net_content_mg": {
+        "GHK-Cu": 44.6,
+        "KPV": 9.11,
+        "TB-500": 9.33,
+        "BPC-157": 9.87
+      },
+      "method": "HPLC with UV detection coupled with mass spectrometry (LC-MS)",
+      "principal_chemist": "Alex Johnson",
+      "file": "wellness_agent/inventory/coa/CPC260728KLOW-Freedom-Diagnostics.jpg",
+      "kit_photo": "wellness_agent/inventory/coa/CPC260728KLOW-kits.jpg",
+      "associated_lot_ids": [
+        "KLOW-CPC260728KLOW-LOT-Z51-Z12"
+      ]
+    }
+  ]
+}
