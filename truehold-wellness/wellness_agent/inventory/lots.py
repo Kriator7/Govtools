@@ -91,13 +91,17 @@ def save_lots(state: dict[str, Any]) -> None:
     path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
 
-def lot_id_for(*, sku_id: str, coa_lot: str, label_lot: str = "") -> str:
+def lot_id_for(*, sku_id: str, coa_lot: str, label_lot: str = "", kit_code: str = "") -> str:
     sku = sku_id.strip().upper()
     coa = (coa_lot or "").strip() or "NO-COA"
     label = (label_lot or "").strip()
+    kit = (kit_code or "").strip().upper()
+    parts = [sku, coa]
     if label and label != coa:
-        return f"{sku}-{coa}-{label}"
-    return f"{sku}-{coa}"
+        parts.append(label)
+    if kit and kit not in {part.upper() for part in parts}:
+        parts.append(kit)
+    return "-".join(parts)
 
 
 def find_lot(lot_id: str) -> dict[str, Any] | None:
@@ -168,7 +172,13 @@ def receive_lot(
         raise ValueError("coa_lot is required")
     label_lot_text = str(label_lot or "").strip()
     label_code_text = str(label_code or "").strip()
-    lot_id = lot_id_for(sku_id=item["id"], coa_lot=coa_lot_text, label_lot=label_lot_text)
+    kit_code_text = str(kit_code or "").strip()
+    lot_id = lot_id_for(
+        sku_id=item["id"],
+        coa_lot=coa_lot_text,
+        label_lot=label_lot_text,
+        kit_code=kit_code_text,
+    )
     existing = find_lot(lot_id)
     if existing is not None:
         return {"ok": True, "duplicate": True, "lot": existing}
@@ -207,7 +217,7 @@ def receive_lot(
         "sku_id": item["id"],
         "name": item["name"],
         "strength": (strength or item.get("vial") or "").strip(),
-        "kit_code": str(kit_code or "").strip(),
+        "kit_code": kit_code_text,
         "kits_received": kit_count,
         "vials_per_kit": per_kit,
         "vials_received": vial_count,
@@ -236,17 +246,23 @@ def receive_lot(
     return {"ok": True, "duplicate": False, "lot": lot_row, "on_hand": on_hand}
 
 
-def vials_on_hand_from_lots(sku: str) -> int | None:
-    total = 0
-    found = False
+def lots_on_hand_by_strength(sku: str) -> dict[str, int]:
+    totals: dict[str, int] = {}
     for row in load_lots()["lots"]:
         if not isinstance(row, dict) or row.get("sku_id") != sku:
             continue
         if row.get("status") not in (None, "", "in_stock"):
             continue
-        found = True
-        total += int(row.get("vials_on_hand") or 0)
-    return total if found else None
+        strength = str(row.get("strength") or "").strip() or "unspecified"
+        totals[strength] = totals.get(strength, 0) + int(row.get("vials_on_hand") or 0)
+    return totals
+
+
+def vials_on_hand_from_lots(sku: str) -> int | None:
+    totals = lots_on_hand_by_strength(sku)
+    if not totals:
+        return None
+    return sum(totals.values())
 
 
 def format_lots() -> str:

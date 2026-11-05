@@ -158,16 +158,29 @@ def format_stock() -> str:
     state = load_stock()
     lines = ["TrueHold Wellness on-hand inventory", ""]
     for item in products():
+        from wellness_agent.inventory.lots import lots_on_hand_by_strength
+
+        breakdown = lots_on_hand_by_strength(item["id"])
+        if len(breakdown) > 1:
+            parts = " + ".join(f"{count} × {strength}" for strength, count in breakdown.items())
+            total = sum(breakdown.values())
+            lines.append(f"• {item['name']} — {total} vials ({parts})")
+            continue
         row = state["products"].get(item["id"]) or {}
         on_hand = row.get("on_hand")
-        if on_hand is None:
+        vial = item["vial"]
+        if len(breakdown) == 1:
+            vial, derived = next(iter(breakdown.items()))
+            if on_hand is None:
+                on_hand = derived
+        elif on_hand is None:
             from wellness_agent.inventory.lots import vials_on_hand_from_lots
 
             derived = vials_on_hand_from_lots(item["id"])
             if derived is not None:
                 on_hand = derived
         shown = "not set" if on_hand is None else str(on_hand)
-        lines.append(f"• {item['name']} — {shown} on hand ({item['vial']})")
+        lines.append(f"• {item['name']} — {shown} on hand ({vial})")
     return "\n".join(lines) + "\n"
 
 

@@ -42,6 +42,25 @@
       "coa_id": "COA-2026-ZFHGR0",
       "status": "in_stock",
       "notes": "New receipt: 1 kit of 10 vials. Kit label prints RT30, 30mg*10vials, LUMI593-A20. James associated ILS Labs COA-2026-ZFHGR0 (batch LOT-Z51-Z12) with this kit. Physical vials are 30 mg; the shop listing is still 20 mg. LOT-Z51-Z12 also appears on KLOW kit labels as a different SKU — do not merge."
+    },
+    {
+      "lot_id": "RETATRUTIDE-Z51-Z12-RT20",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "retatrutide",
+      "name": "Retatrutide",
+      "strength": "20 mg lyophilized vial",
+      "kit_code": "RT20",
+      "kits_received": 1,
+      "vials_per_kit": 10,
+      "vials_received": 10,
+      "vials_on_hand": 10,
+      "label_code": "LUMI593-A19",
+      "label_lot": "",
+      "coa_lot": "Z51-Z12",
+      "coa_id": "2609049012",
+      "status": "in_stock",
+      "notes": "New receipt: 1 kit of 10 vials. Kit label prints RT20, 20mg*10vials, LUMI593-A19. James associated Freedom Diagnostics accession 2609049012 (lot Z51-Z12) with this kit. Keep separate from RT30 / ILS COA-2026-ZFHGR0 (LOT-Z51-Z12) and from KLOW kit labels that also print LOT-Z51-Z12."
     }
   ],
   "coas": [
@@ -106,6 +125,36 @@
       "kit_photo": "wellness_agent/inventory/coa/COA-2026-ZFHGR0-kits.jpg",
       "associated_lot_ids": [
         "RETATRUTIDE-LOT-Z51-Z12"
+      ]
+    },
+    {
+      "coa_id": "2609049012",
+      "lot": "Z51-Z12",
+      "sku_id": "retatrutide",
+      "lab": "Freedom Diagnostics",
+      "lab_url": "https://freedomdiagnosticstesting.com",
+      "lab_email": "Admin@FreedomDiagnostics.net",
+      "client": "Zyphera Labs",
+      "accession": "2609049012",
+      "search_code": "Zyph2609049012",
+      "received": "2026-09-04",
+      "reported": "2026-09-05",
+      "product": "Retatrutide 20mg",
+      "labeled_content": "20mg",
+      "identity": "Confirmed",
+      "identity_lcms": "GLP RT",
+      "appearance": "White Lyophilized Powder",
+      "purity_percent": 99.91,
+      "mass_mg": 21.38,
+      "net_content_mg": {
+        "Retatrutide": 21.38
+      },
+      "method": "HPLC with UV detection coupled with mass spectrometry (LC-MS)",
+      "principal_chemist": "Alex Johnson",
+      "file": "wellness_agent/inventory/coa/2609049012-Freedom-Diagnostics.jpg",
+      "kit_photo": "wellness_agent/inventory/coa/2609049012-kits.jpg",
+      "associated_lot_ids": [
+        "RETATRUTIDE-Z51-Z12-RT20"
       ]
     }
   ]

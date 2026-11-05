@@ -49,7 +49,7 @@ def test_packaged_retatrutide_receipt_keeps_coa():
     data = load_packaged_lots()
     lots = [row for row in data["lots"] if row.get("sku_id") == "retatrutide"]
     assert lots
-    lot = lots[0]
+    lot = next(row for row in lots if row.get("kit_code") == "RT30")
     assert lot["kits_received"] == 1
     assert lot["vials_received"] == 10
     assert lot["vials_per_kit"] == 10
@@ -59,7 +59,6 @@ def test_packaged_retatrutide_receipt_keeps_coa():
     assert lot["coa_lot"] == "LOT-Z51-Z12"
     assert lot["coa_id"] == "COA-2026-ZFHGR0"
     klow = next(row for row in data["lots"] if row.get("sku_id") == "klow")
-    assert klow["coa_lot"] != lot["coa_lot"] or klow["sku_id"] != lot["sku_id"]
     assert klow["lot_id"] != lot["lot_id"]
     coa = next(row for row in data["coas"] if row.get("coa_id") == "COA-2026-ZFHGR0")
     assert coa["lab"] == "ILS Labs"
@@ -71,6 +70,31 @@ def test_packaged_retatrutide_receipt_keeps_coa():
 
     assert (COA_DIR / "COA-2026-ZFHGR0-ILS-Labs.jpg").is_file()
     assert (COA_DIR / "COA-2026-ZFHGR0-kits.jpg").is_file()
+
+
+def test_packaged_retatrutide_20mg_receipt_keeps_coa():
+    data = load_packaged_lots()
+    lots = [row for row in data["lots"] if row.get("sku_id") == "retatrutide"]
+    rt20 = next(row for row in lots if row.get("kit_code") == "RT20")
+    rt30 = next(row for row in lots if row.get("kit_code") == "RT30")
+    assert rt20["lot_id"] != rt30["lot_id"]
+    assert rt20["kits_received"] == 1
+    assert rt20["vials_received"] == 10
+    assert rt20["strength"] == "20 mg lyophilized vial"
+    assert rt20["label_code"] == "LUMI593-A19"
+    assert rt20["coa_lot"] == "Z51-Z12"
+    assert rt20["coa_id"] == "2609049012"
+    coa = next(row for row in data["coas"] if row.get("coa_id") == "2609049012")
+    assert coa["lab"] == "Freedom Diagnostics"
+    assert coa["client"] == "Zyphera Labs"
+    assert coa["purity_percent"] == 99.91
+    assert coa["mass_mg"] == 21.38
+    assert coa["search_code"] == "Zyph2609049012"
+    assert rt20["lot_id"] in coa["associated_lot_ids"]
+    from wellness_agent.inventory.lots import COA_DIR
+
+    assert (COA_DIR / "2609049012-Freedom-Diagnostics.jpg").is_file()
+    assert (COA_DIR / "2609049012-kits.jpg").is_file()
 
 
 def test_receive_lot_records_kits_lots_and_coa(tmp_path):
@@ -136,8 +160,41 @@ def test_receive_lot_retatrutide_defaults_to_ten_vial_kits():
     assert lot["kit_code"] == "RT30"
     assert lot["coa_id"] == "COA-2026-ZFHGR0"
     assert load_stock()["products"]["retatrutide"]["on_hand"] == 10
+    assert lot["lot_id"] == lot_id_for(
+        sku_id="retatrutide", coa_lot="LOT-Z51-Z12", kit_code="RT30"
+    )
     assert "RT30" in format_lots()
     assert "30 mg lyophilized vial" in format_lots()
+
+
+def test_format_stock_splits_mixed_retatrutide_strengths():
+    from wellness_agent.stock import format_stock
+
+    thirty = receive_lot(
+        "retatrutide",
+        kits=1,
+        kit_code="RT30",
+        strength="30 mg lyophilized vial",
+        coa_lot="LOT-Z51-Z12",
+        coa={"coa_id": "COA-2026-ZFHGR0"},
+    )
+    twenty = receive_lot(
+        "retatrutide",
+        kits=1,
+        kit_code="RT20",
+        strength="20 mg lyophilized vial",
+        label_code="LUMI593-A19",
+        coa_lot="Z51-Z12",
+        coa={"coa_id": "2609049012"},
+    )
+    assert thirty["lot"]["lot_id"] != twenty["lot"]["lot_id"]
+    text = format_stock()
+    assert "20 mg lyophilized vial" in text
+    assert "30 mg lyophilized vial" in text
+    assert "20 on hand (20 mg lyophilized vial)" not in text
+    lots_text = format_lots()
+    assert "RT20" in lots_text
+    assert "RT30" in lots_text
 
 
 def test_receive_lot_is_idempotent():
