@@ -2,6 +2,7 @@ from wellness_agent.cli import main
 from wellness_agent.inventory.lots import (
     KLOW_VIALS_PER_KIT,
     RETATRUTIDE_VIALS_PER_KIT,
+    TIRZEPATIDE_VIALS_PER_KIT,
     find_coa,
     find_lot,
     format_lots,
@@ -18,6 +19,10 @@ def test_klow_five_kits_are_fifty_vials():
 
 def test_retatrutide_one_kit_is_ten_vials():
     assert 1 * RETATRUTIDE_VIALS_PER_KIT == 10
+
+
+def test_tirzepatide_five_kits_are_fifty_vials():
+    assert 5 * TIRZEPATIDE_VIALS_PER_KIT == 50
 
 
 def test_packaged_klow_receipt_keeps_coa():
@@ -97,6 +102,33 @@ def test_packaged_retatrutide_20mg_receipt_keeps_coa():
     assert (COA_DIR / "2609049012-kits.jpg").is_file()
 
 
+def test_packaged_tirzepatide_receipt_keeps_coa():
+    data = load_packaged_lots()
+    lots = [row for row in data["lots"] if row.get("sku_id") == "tirzepatide"]
+    assert lots
+    lot = lots[0]
+    assert lot["kits_received"] == 5
+    assert lot["vials_received"] == 50
+    assert lot["vials_per_kit"] == 10
+    assert lot["kit_code"] == "TR20"
+    assert lot["label_code"] == "LUMI593-A09"
+    assert lot["strength"] == "20 mg lyophilized vial"
+    assert lot["coa_lot"] == "CORV593-A09"
+    assert lot["coa_id"] == "2609030237"
+    assert lot["lot_id"] == "TIRZEPATIDE-CORV593-A09-TR20"
+    coa = next(row for row in data["coas"] if row.get("coa_id") == "2609030237")
+    assert coa["lab"] == "Freedom Diagnostics"
+    assert coa["client"] == "Corvinus Research"
+    assert coa["purity_percent"] == 99.96
+    assert coa["search_code"] == "Corv2609030237"
+    assert coa["fentanyl_free"] is True
+    assert lot["lot_id"] in coa["associated_lot_ids"]
+    from wellness_agent.inventory.lots import COA_DIR
+
+    assert (COA_DIR / "2609030237-Freedom-Diagnostics.jpg").is_file()
+    assert (COA_DIR / "2609030237-kits.jpg").is_file()
+
+
 def test_receive_lot_records_kits_lots_and_coa(tmp_path):
     result = receive_lot(
         "klow",
@@ -165,6 +197,34 @@ def test_receive_lot_retatrutide_defaults_to_ten_vial_kits():
     )
     assert "RT30" in format_lots()
     assert "30 mg lyophilized vial" in format_lots()
+
+
+def test_receive_lot_tirzepatide_five_kits_are_fifty_vials():
+    result = receive_lot(
+        "tirzepatide",
+        kits=5,
+        kit_code="TR20",
+        strength="20 mg lyophilized vial",
+        label_code="LUMI593-A09",
+        coa_lot="CORV593-A09",
+        received_at="2026-11-04",
+        coa={
+            "coa_id": "2609030237",
+            "lab": "Freedom Diagnostics",
+            "accession": "2609030237",
+            "purity_percent": 99.96,
+        },
+    )
+    lot = result["lot"]
+    assert lot["kits_received"] == 5
+    assert lot["vials_received"] == 50
+    assert lot["vials_per_kit"] == 10
+    assert lot["kit_code"] == "TR20"
+    assert lot["coa_id"] == "2609030237"
+    assert load_stock()["products"]["tirzepatide"]["on_hand"] == 50
+    assert lot["lot_id"] == lot_id_for(
+        sku_id="tirzepatide", coa_lot="CORV593-A09", kit_code="TR20"
+    )
 
 
 def test_format_stock_splits_mixed_retatrutide_strengths():
