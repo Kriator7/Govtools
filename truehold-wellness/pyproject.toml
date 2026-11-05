@@ -34,6 +34,7 @@ include = ["wellness_agent*", "thw*"]
 "wellness_agent" = [
     "data/*.json",
     "inventory/*.json",
+    "inventory/coa/*",
     "inventory/pdfs/*.pdf",
     "inventory/assets/*",
     "inventory/assets/agent/*",

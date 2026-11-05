@@ -25,6 +25,8 @@ def isolate_wellness_runtime_state(tmp_path, monkeypatch):
     monkeypatch.setenv("WELLNESS_SESSION_PATH", str(tmp_path / "sessions.json"))
     monkeypatch.setenv("WELLNESS_CLIENTS_PATH", str(tmp_path / "clients.json"))
     monkeypatch.setenv("WELLNESS_STOCK_PATH", str(tmp_path / "stock.json"))
+    monkeypatch.setenv("WELLNESS_LOTS_PATH", str(tmp_path / "inventory_lots.json"))
+    monkeypatch.setenv("WELLNESS_COA_DIR", str(tmp_path / "coa"))
     monkeypatch.setenv("WELLNESS_ORDERS_XLSX_PATH", str(tmp_path / "trueholdwellness-orders.xlsx"))
     monkeypatch.setenv("WELLNESS_KNOWLEDGE_PATH", str(tmp_path / "knowledge.sqlite"))
     monkeypatch.setenv("WELLNESS_SHEET_MESSAGES_PATH", str(tmp_path / "sheet_messages.json"))

@@ -15,6 +15,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
 from wellness_agent.catalog import products
+from wellness_agent.inventory.lots import load_packaged_lots
 
 ROOT = Path(__file__).resolve().parent
 WORKBOOK_DIR = ROOT / "workbooks"
@@ -76,6 +77,8 @@ def build_workbook(dest: Path | None = None) -> Path:
         "Fill Inventory.on_hand with live vial counts, then ingest-files.",
         "Telegram interest orders decrement on-hand the same way as before.",
         "Leave on_hand blank until you have a real count — do not invent stock.",
+        "Lots and COAs tabs store kit receipts, label lots, lab lots, and COA files.",
+        "CLI: python -m wellness_agent receive-stock  and  python -m wellness_agent lots",
     ]
     for idx, line in enumerate(lines, start=2):
         cover[f"A{idx}"] = line
@@ -161,6 +164,97 @@ def build_workbook(dest: Path | None = None) -> Path:
         "Peptides",
         ["received_at", "source", "sku_id", "summary", "action"],
         [],
+    )
+    lot_rows = []
+    packaged_lots = load_packaged_lots()
+    for row in packaged_lots.get("lots") or []:
+        if not isinstance(row, dict):
+            continue
+        lot_rows.append(
+            [
+                row.get("lot_id"),
+                row.get("received_at"),
+                row.get("sku_id"),
+                row.get("name"),
+                row.get("strength"),
+                row.get("kit_code"),
+                row.get("kits_received"),
+                row.get("vials_per_kit"),
+                row.get("vials_received"),
+                row.get("vials_on_hand"),
+                row.get("label_code"),
+                row.get("label_lot"),
+                row.get("coa_lot"),
+                row.get("coa_id"),
+                row.get("status"),
+                row.get("notes"),
+            ]
+        )
+    _sheet(
+        wb,
+        "Lots",
+        [
+            "lot_id",
+            "received_at",
+            "sku_id",
+            "name",
+            "strength",
+            "kit_code",
+            "kits_received",
+            "vials_per_kit",
+            "vials_received",
+            "vials_on_hand",
+            "label_code",
+            "label_lot",
+            "coa_lot",
+            "coa_id",
+            "status",
+            "notes",
+        ],
+        lot_rows,
+    )
+    coa_rows = []
+    for row in packaged_lots.get("coas") or []:
+        if not isinstance(row, dict):
+            continue
+        net = row.get("net_content_mg") or {}
+        net_text = ", ".join(f"{name} {mg} mg" for name, mg in net.items()) if isinstance(net, dict) else ""
+        coa_rows.append(
+            [
+                row.get("coa_id"),
+                row.get("lot"),
+                row.get("sku_id"),
+                row.get("lab"),
+                row.get("accession"),
+                row.get("search_code"),
+                row.get("received"),
+                row.get("reported"),
+                row.get("purity_percent"),
+                net_text,
+                row.get("file"),
+                row.get("kit_photo"),
+                ", ".join(row.get("associated_lot_ids") or []),
+            ]
+        )
+    _sheet(
+        wb,
+        "COAs",
+        [
+            "coa_id",
+            "lot",
+            "sku_id",
+            "lab",
+            "accession",
+            "search_code",
+            "received",
+            "reported",
+            "purity_percent",
+            "net_content_mg",
+            "file",
+            "kit_photo",
+            "associated_lot_ids",
+        ],
+        coa_rows,
     )
     _sheet(
         wb,
