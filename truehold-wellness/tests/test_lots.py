@@ -2,9 +2,11 @@ from wellness_agent.cli import main
 from wellness_agent.inventory.lots import (
     GHK_CU_VIALS_PER_KIT,
     KLOW_VIALS_PER_KIT,
+    MOTS_C_VIALS_PER_KIT,
     NAD_VIALS_PER_KIT,
     RETATRUTIDE_VIALS_PER_KIT,
     SEMAX_VIALS_PER_KIT,
+    SS_31_VIALS_PER_KIT,
     TIRZEPATIDE_VIALS_PER_KIT,
     find_coa,
     find_lot,
@@ -40,20 +42,30 @@ def test_ghk_cu_kit_is_ten_vials():
     assert GHK_CU_VIALS_PER_KIT == 10
 
 
+def test_mots_c_and_ss_31_kits_are_ten_vials():
+    assert MOTS_C_VIALS_PER_KIT == 10
+    assert SS_31_VIALS_PER_KIT == 10
+
+
 def test_packaged_klow_receipt_keeps_coa():
     data = load_packaged_lots()
     lots = [row for row in data["lots"] if row.get("sku_id") == "klow"]
     assert lots
-    lot = lots[0]
+    lot = next(row for row in lots if row.get("lot_id") == "KLOW-CPC260728KLOW-LOT-Z51-Z12")
     assert lot["kits_received"] == 5
     assert lot["vials_received"] == 50
     assert lot["label_code"] == "LUMI593-A62"
     assert lot["label_lot"] == "LOT-Z51-Z12"
     assert lot["coa_lot"] == "CPC260728KLOW"
+    existing = next(row for row in lots if row.get("lot_id") == "KLOW-CPC260728KLOW-LOT-Z51-Z12-EXISTING")
+    assert existing["vials_on_hand"] == 7
+    assert existing["coa_id"] == "CPC260728KLOW"
+    assert sum(int(row.get("vials_on_hand") or 0) for row in lots) == 57
     coa = next(row for row in data["coas"] if row.get("coa_id") == "CPC260728KLOW")
     assert coa["accession"] == "2607300355"
     assert coa["purity_percent"] == 99.88
     assert lot["lot_id"] in coa["associated_lot_ids"]
+    assert existing["lot_id"] in coa["associated_lot_ids"]
     from pathlib import Path
     from wellness_agent.inventory.lots import COA_DIR
 
@@ -95,8 +107,9 @@ def test_packaged_retatrutide_receipt_keeps_coa():
 def test_packaged_retatrutide_20mg_receipt_keeps_coa():
     data = load_packaged_lots()
     lots = [row for row in data["lots"] if row.get("sku_id") == "retatrutide"]
-    rt20 = next(row for row in lots if row.get("kit_code") == "RT20")
+    rt20 = next(row for row in lots if row.get("lot_id") == "RETATRUTIDE-Z51-Z12-RT20")
     rt30 = next(row for row in lots if row.get("kit_code") == "RT30")
+    existing = next(row for row in lots if row.get("lot_id") == "RETATRUTIDE-Z51-Z12-RT20-EXISTING")
     assert rt20["lot_id"] != rt30["lot_id"]
     assert rt20["kits_received"] == 1
     assert rt20["vials_received"] == 10
@@ -104,6 +117,10 @@ def test_packaged_retatrutide_20mg_receipt_keeps_coa():
     assert rt20["label_code"] == "LUMI593-A19"
     assert rt20["coa_lot"] == "Z51-Z12"
     assert rt20["coa_id"] == "2609049012"
+    assert existing["vials_on_hand"] == 16
+    assert existing["coa_id"] == "2609049012"
+    assert existing["strength"] == "20 mg lyophilized vial"
+    assert sum(int(row.get("vials_on_hand") or 0) for row in lots if row.get("strength") == "20 mg lyophilized vial") == 26
     coa = next(row for row in data["coas"] if row.get("coa_id") == "2609049012")
     assert coa["lab"] == "Freedom Diagnostics"
     assert coa["client"] == "Zyphera Labs"
@@ -111,6 +128,7 @@ def test_packaged_retatrutide_20mg_receipt_keeps_coa():
     assert coa["mass_mg"] == 21.38
     assert coa["search_code"] == "Zyph2609049012"
     assert rt20["lot_id"] in coa["associated_lot_ids"]
+    assert existing["lot_id"] in coa["associated_lot_ids"]
     from wellness_agent.inventory.lots import COA_DIR
 
     assert (COA_DIR / "2609049012-Freedom-Diagnostics.jpg").is_file()
@@ -132,9 +150,10 @@ def test_packaged_tirzepatide_receipt_keeps_coa():
     assert lot["coa_lot"] == "CORV593-A09"
     assert lot["coa_id"] == "2609030237"
     existing = next(row for row in lots if row.get("lot_id") == "TIRZEPATIDE-CORV593-A09-TR20-EXISTING")
-    assert existing["vials_on_hand"] == 16
+    assert existing["vials_on_hand"] == 15
     assert existing["vials_received"] == 16
     assert existing["coa_id"] == "2609030237"
+    assert sum(int(row.get("vials_on_hand") or 0) for row in lots) == 65
     assert existing["label_lot"] == "LOT-Z51-Z12"
     coa = next(row for row in data["coas"] if row.get("coa_id") == "2609030237")
     assert coa["lab"] == "Freedom Diagnostics"
@@ -190,7 +209,7 @@ def test_packaged_nad_receipt_keeps_coa():
     data = load_packaged_lots()
     lots = [row for row in data["lots"] if row.get("sku_id") == "nad"]
     assert lots
-    lot = lots[0]
+    lot = next(row for row in lots if row.get("lot_id") == "NAD-LOT-2026-02-LOT-Z51-Z12")
     assert lot["kits_received"] == 5
     assert lot["vials_received"] == 50
     assert lot["vials_per_kit"] == 10
@@ -199,7 +218,10 @@ def test_packaged_nad_receipt_keeps_coa():
     assert lot["strength"] == "1000 mg lyophilized vial"
     assert lot["coa_lot"] == "LOT-2026-02"
     assert lot["coa_id"] == "COA-2026-CUWB60"
-    assert lot["lot_id"] == "NAD-LOT-2026-02-LOT-Z51-Z12"
+    existing = next(row for row in lots if row.get("lot_id") == "NAD-LOT-2026-02-LOT-Z51-Z12-EXISTING")
+    assert existing["vials_on_hand"] == 19
+    assert existing["coa_id"] == "COA-2026-CUWB60"
+    assert sum(int(row.get("vials_on_hand") or 0) for row in lots) == 69
     semax = next(row for row in data["lots"] if row.get("sku_id") == "semax")
     assert semax["coa_lot"] == "LOT-2026-02"
     assert semax["lot_id"] != lot["lot_id"]
@@ -210,10 +232,24 @@ def test_packaged_nad_receipt_keeps_coa():
     assert coa["mass_mg"] == 1035.05
     assert coa["search_code"] == "WHRDFFPN"
     assert lot["lot_id"] in coa["associated_lot_ids"]
+    assert existing["lot_id"] in coa["associated_lot_ids"]
     from wellness_agent.inventory.lots import COA_DIR
 
     assert (COA_DIR / "COA-2026-CUWB60-ILS-Labs.jpg").is_file()
     assert (COA_DIR / "COA-2026-CUWB60-kits.jpg").is_file()
+
+
+def test_packaged_mots_c_and_ss_31_physical_counts_have_no_coa():
+    data = load_packaged_lots()
+    mots = next(row for row in data["lots"] if row.get("lot_id") == "MOTS-C-PHYSICAL-COUNT")
+    ss31 = next(row for row in data["lots"] if row.get("lot_id") == "SS-31-PHYSICAL-COUNT")
+    assert mots["vials_on_hand"] == 8
+    assert mots["strength"] == "20 mg lyophilized vial"
+    assert not mots.get("coa_id")
+    assert ss31["vials_on_hand"] == 5
+    assert ss31["strength"] == "10 mg lyophilized vial"
+    assert not ss31.get("coa_id")
+    assert not any(row.get("sku_id") in {"mots-c", "ss-31"} for row in data["coas"])
 
 
 def test_packaged_ghk_cu_existing_inventory_keeps_coa():

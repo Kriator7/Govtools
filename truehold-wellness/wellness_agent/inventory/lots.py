@@ -26,6 +26,8 @@ VIALS_PER_KIT = {
     "semax": 10,
     "nad": 10,
     "ghk-cu": 10,
+    "mots-c": 10,
+    "ss-31": 10,
 }
 KLOW_VIALS_PER_KIT = VIALS_PER_KIT["klow"]
 RETATRUTIDE_VIALS_PER_KIT = VIALS_PER_KIT["retatrutide"]
@@ -33,6 +35,8 @@ TIRZEPATIDE_VIALS_PER_KIT = VIALS_PER_KIT["tirzepatide"]
 SEMAX_VIALS_PER_KIT = VIALS_PER_KIT["semax"]
 NAD_VIALS_PER_KIT = VIALS_PER_KIT["nad"]
 GHK_CU_VIALS_PER_KIT = VIALS_PER_KIT["ghk-cu"]
+MOTS_C_VIALS_PER_KIT = VIALS_PER_KIT["mots-c"]
+SS_31_VIALS_PER_KIT = VIALS_PER_KIT["ss-31"]
 
 
 def lots_path() -> Path:

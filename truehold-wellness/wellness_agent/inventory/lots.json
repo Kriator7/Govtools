@@ -25,6 +25,25 @@
       "notes": "New receipt: 5 kits of 10 vials. Box labels print LUMI593-A62 and LOT-Z51-Z12 on every kit. James associated Freedom Diagnostics COA CPC260728KLOW with this entire group. Label lot and COA lot are different strings; keep both."
     },
     {
+      "lot_id": "KLOW-CPC260728KLOW-LOT-Z51-Z12-EXISTING",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "klow",
+      "name": "KLOW",
+      "strength": "80 mg lyophilized vial",
+      "kit_code": "",
+      "kits_received": 1,
+      "vials_per_kit": 10,
+      "vials_received": 7,
+      "vials_on_hand": 7,
+      "label_code": "LUMI593-A62",
+      "label_lot": "LOT-Z51-Z12",
+      "coa_lot": "CPC260728KLOW",
+      "coa_id": "CPC260728KLOW",
+      "status": "in_stock",
+      "notes": "Physical count 2026-11-04: 7 additional vials on the same COA as the 5 sealed kits. Sealed receipt stays 50. Total KLOW 57. Tray count not provided."
+    },
+    {
       "lot_id": "RETATRUTIDE-LOT-Z51-Z12",
       "received_at": "2026-11-04",
       "timezone": "America/Los_Angeles",
@@ -63,6 +82,25 @@
       "notes": "New receipt: 1 kit of 10 vials. Kit label prints RT20, 20mg*10vials, LUMI593-A19. James associated Freedom Diagnostics accession 2609049012 (lot Z51-Z12) with this kit. Keep separate from RT30 / ILS COA-2026-ZFHGR0 (LOT-Z51-Z12) and from KLOW kit labels that also print LOT-Z51-Z12."
     },
     {
+      "lot_id": "RETATRUTIDE-Z51-Z12-RT20-EXISTING",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "retatrutide",
+      "name": "Retatrutide",
+      "strength": "20 mg lyophilized vial",
+      "kit_code": "RT20",
+      "kits_received": 2,
+      "vials_per_kit": 10,
+      "vials_received": 16,
+      "vials_on_hand": 16,
+      "label_code": "LUMI593-A19",
+      "label_lot": "",
+      "coa_lot": "Z51-Z12",
+      "coa_id": "2609049012",
+      "status": "in_stock",
+      "notes": "Physical count 2026-11-04: 26 Retatrutide 20 mg on hand. Sealed RT20 kit stays 10. Additional 16 vials on the same Freedom COA. Do not merge with RT30."
+    },
+    {
       "lot_id": "TIRZEPATIDE-CORV593-A09-TR20",
       "received_at": "2026-11-04",
       "timezone": "America/Los_Angeles",
@@ -92,13 +130,13 @@
       "kits_received": 2,
       "vials_per_kit": 10,
       "vials_received": 16,
-      "vials_on_hand": 16,
+      "vials_on_hand": 15,
       "label_code": "LUMI593-A09",
       "label_lot": "LOT-Z51-Z12",
       "coa_lot": "CORV593-A09",
       "coa_id": "2609030237",
       "status": "in_stock",
-      "notes": "Existing opened inventory counted from photo, same COA as the 5 sealed TR20 kits. One full tray (10) plus 6 vials in an opened tray = 16 on hand. Lid prints TR20, 20mg*10vials, LUMI593-A09, LOT-Z51-Z12."
+      "notes": "Existing opened inventory. Photo count was 16 (one full tray plus 6). Physical count 2026-11-04: 15 remaining, 65 total with the 5 sealed kits. Same COA as the sealed TR20 kits."
     },
     {
       "lot_id": "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10",
@@ -158,6 +196,25 @@
       "notes": "New receipt: 5 kits of 10 vials (50 × 1000 mg). Visible kit label prints LUMI593-A45 and LOT-Z51-Z12. James associated ILS Labs COA-2026-CUWB60 (lot LOT-2026-02) with this group. Same COA lot string LOT-2026-02 is on the Semax ILS COA — do not merge across SKUs. Kit product code was cropped out of the photo."
     },
     {
+      "lot_id": "NAD-LOT-2026-02-LOT-Z51-Z12-EXISTING",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "nad",
+      "name": "NAD+",
+      "strength": "1000 mg lyophilized vial",
+      "kit_code": "",
+      "kits_received": 2,
+      "vials_per_kit": 10,
+      "vials_received": 19,
+      "vials_on_hand": 19,
+      "label_code": "LUMI593-A45",
+      "label_lot": "LOT-Z51-Z12",
+      "coa_lot": "LOT-2026-02",
+      "coa_id": "COA-2026-CUWB60",
+      "status": "in_stock",
+      "notes": "Physical count 2026-11-04: 19 additional vials on the same ILS COA as the 5 sealed kits. Sealed receipt stays 50. Total NAD+ 69. Do not merge LOT-2026-02 with Semax."
+    },
+    {
       "lot_id": "GHK-CU-Z51-Z12-CU100",
       "received_at": "2026-11-04",
       "timezone": "America/Los_Angeles",
@@ -175,6 +232,44 @@
       "coa_id": "2609080766",
       "status": "in_stock",
       "notes": "Existing inventory counted from photo, not a sealed receipt. CU100, 100mg/vial, 10 vials/box. Two full trays (20 vials) plus 2 vials remaining in an opened tray = 22 on hand. James associated Freedom Diagnostics accession 2609080766 (lot Z51-Z12) with this stock. Z51-Z12 also appears on other SKUs — do not merge."
+    },
+    {
+      "lot_id": "MOTS-C-PHYSICAL-COUNT",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "mots-c",
+      "name": "MOTS-c",
+      "strength": "20 mg lyophilized vial",
+      "kit_code": "",
+      "kits_received": 1,
+      "vials_per_kit": 10,
+      "vials_received": 8,
+      "vials_on_hand": 8,
+      "label_code": "",
+      "label_lot": "",
+      "coa_lot": "",
+      "coa_id": "",
+      "status": "in_stock",
+      "notes": "Physical count 2026-11-04: 8 vials on hand. No COA supplied. Do not invent a lot or lab."
+    },
+    {
+      "lot_id": "SS-31-PHYSICAL-COUNT",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "ss-31",
+      "name": "SS-31",
+      "strength": "10 mg lyophilized vial",
+      "kit_code": "",
+      "kits_received": 1,
+      "vials_per_kit": 10,
+      "vials_received": 5,
+      "vials_on_hand": 5,
+      "label_code": "",
+      "label_lot": "",
+      "coa_lot": "",
+      "coa_id": "",
+      "status": "in_stock",
+      "notes": "Physical count 2026-11-04: 5 vials on hand. No COA supplied. Do not invent a lot or lab."
     }
   ],
   "coas": [
@@ -205,7 +300,8 @@
       "file": "wellness_agent/inventory/coa/CPC260728KLOW-Freedom-Diagnostics.jpg",
       "kit_photo": "wellness_agent/inventory/coa/CPC260728KLOW-kits.jpg",
       "associated_lot_ids": [
-        "KLOW-CPC260728KLOW-LOT-Z51-Z12"
+        "KLOW-CPC260728KLOW-LOT-Z51-Z12",
+        "KLOW-CPC260728KLOW-LOT-Z51-Z12-EXISTING"
       ]
     },
     {
@@ -268,7 +364,8 @@
       "file": "wellness_agent/inventory/coa/2609049012-Freedom-Diagnostics.jpg",
       "kit_photo": "wellness_agent/inventory/coa/2609049012-kits.jpg",
       "associated_lot_ids": [
-        "RETATRUTIDE-Z51-Z12-RT20"
+        "RETATRUTIDE-Z51-Z12-RT20",
+        "RETATRUTIDE-Z51-Z12-RT20-EXISTING"
       ]
     },
     {
@@ -367,7 +464,8 @@
       "file": "wellness_agent/inventory/coa/COA-2026-CUWB60-ILS-Labs.jpg",
       "kit_photo": "wellness_agent/inventory/coa/COA-2026-CUWB60-kits.jpg",
       "associated_lot_ids": [
-        "NAD-LOT-2026-02-LOT-Z51-Z12"
+        "NAD-LOT-2026-02-LOT-Z51-Z12",
+        "NAD-LOT-2026-02-LOT-Z51-Z12-EXISTING"
       ]
     },
     {
