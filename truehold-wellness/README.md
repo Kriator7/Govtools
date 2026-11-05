@@ -133,7 +133,7 @@ python -m wellness_agent receive-stock \
   --coa-file wellness_agent/inventory/coa/CPC260728KLOW-Freedom-Diagnostics.jpg
 ```
 
-KLOW kits are 10 vials. Five kits = 50 vials. Retatrutide and Tirzepatide kits are 10 vials. On-hand includes RT30 (30 mg) and RT20 (20 mg) as separate lots, plus TR20 Tirzepatide (20 mg). `/stock` does not collapse mixed strengths. `/stock` prints SKU on-hand plus lots and COAs.
+KLOW kits are 10 vials. Five kits = 50 vials. Retatrutide, Tirzepatide, and Semax kits are 10 vials. On-hand includes RT30 (30 mg) and RT20 (20 mg) as separate lots, plus TR20 Tirzepatide (20 mg) and SX10 Semax (10 mg). `/stock` does not collapse mixed strengths. `/stock` prints SKU on-hand plus lots and COAs.
 
 Telegram: `/menu` then **View PDF in Telegram** sends the sheet. Every PDF is written for the milligram vial in stock (molecule, testing data, risks, FDA status, reconstitution, and U-100 / 0.5 mL syringe marks). Mix math is checked in `wellness_agent/inventory/protocol.py` before a sheet is built. The bot still does not dose in chat.
 

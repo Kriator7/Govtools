@@ -2,6 +2,7 @@ from wellness_agent.cli import main
 from wellness_agent.inventory.lots import (
     KLOW_VIALS_PER_KIT,
     RETATRUTIDE_VIALS_PER_KIT,
+    SEMAX_VIALS_PER_KIT,
     TIRZEPATIDE_VIALS_PER_KIT,
     find_coa,
     find_lot,
@@ -23,6 +24,10 @@ def test_retatrutide_one_kit_is_ten_vials():
 
 def test_tirzepatide_five_kits_are_fifty_vials():
     assert 5 * TIRZEPATIDE_VIALS_PER_KIT == 50
+
+
+def test_semax_five_kits_are_fifty_vials():
+    assert 5 * SEMAX_VIALS_PER_KIT == 50
 
 
 def test_packaged_klow_receipt_keeps_coa():
@@ -129,6 +134,37 @@ def test_packaged_tirzepatide_receipt_keeps_coa():
     assert (COA_DIR / "2609030237-kits.jpg").is_file()
 
 
+def test_packaged_semax_receipt_keeps_coa():
+    data = load_packaged_lots()
+    lots = [row for row in data["lots"] if row.get("sku_id") == "semax"]
+    assert lots
+    lot = lots[0]
+    assert lot["kits_received"] == 5
+    assert lot["vials_received"] == 50
+    assert lot["vials_per_kit"] == 10
+    assert lot["kit_code"] == "SX10"
+    assert lot["label_code"] == "LUMI593-A52"
+    assert lot["label_lot"] == "LOT-Z51-Z12"
+    assert lot["strength"] == "10 mg lyophilized vial"
+    assert lot["coa_lot"] == "LOT-2026-02"
+    assert lot["coa_id"] == "COA-2026-2RQTIZ"
+    assert lot["lot_id"] == "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10"
+    klow = next(row for row in data["lots"] if row.get("sku_id") == "klow")
+    assert klow["label_lot"] == "LOT-Z51-Z12"
+    assert klow["lot_id"] != lot["lot_id"]
+    coa = next(row for row in data["coas"] if row.get("coa_id") == "COA-2026-2RQTIZ")
+    assert coa["lab"] == "ILS Labs"
+    assert coa["client"] == "Golden State Peps"
+    assert coa["purity_percent"] == 99.0
+    assert coa["mass_mg"] == 10.24
+    assert coa["search_code"] == "XU7ECRF9"
+    assert lot["lot_id"] in coa["associated_lot_ids"]
+    from wellness_agent.inventory.lots import COA_DIR
+
+    assert (COA_DIR / "COA-2026-2RQTIZ-ILS-Labs.jpg").is_file()
+    assert (COA_DIR / "COA-2026-2RQTIZ-kits.jpg").is_file()
+
+
 def test_receive_lot_records_kits_lots_and_coa(tmp_path):
     result = receive_lot(
         "klow",
@@ -224,6 +260,38 @@ def test_receive_lot_tirzepatide_five_kits_are_fifty_vials():
     assert load_stock()["products"]["tirzepatide"]["on_hand"] == 50
     assert lot["lot_id"] == lot_id_for(
         sku_id="tirzepatide", coa_lot="CORV593-A09", kit_code="TR20"
+    )
+
+
+def test_receive_lot_semax_five_kits_are_fifty_vials():
+    result = receive_lot(
+        "semax",
+        kits=5,
+        kit_code="SX10",
+        strength="10 mg lyophilized vial",
+        label_code="LUMI593-A52",
+        label_lot="LOT-Z51-Z12",
+        coa_lot="LOT-2026-02",
+        received_at="2026-11-04",
+        coa={
+            "coa_id": "COA-2026-2RQTIZ",
+            "lab": "ILS Labs",
+            "purity_percent": 99.0,
+            "mass_mg": 10.24,
+        },
+    )
+    lot = result["lot"]
+    assert lot["kits_received"] == 5
+    assert lot["vials_received"] == 50
+    assert lot["vials_per_kit"] == 10
+    assert lot["kit_code"] == "SX10"
+    assert lot["coa_id"] == "COA-2026-2RQTIZ"
+    assert load_stock()["products"]["semax"]["on_hand"] == 50
+    assert lot["lot_id"] == lot_id_for(
+        sku_id="semax",
+        coa_lot="LOT-2026-02",
+        label_lot="LOT-Z51-Z12",
+        kit_code="SX10",
     )
 
 

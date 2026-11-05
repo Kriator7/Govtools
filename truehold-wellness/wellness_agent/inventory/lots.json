@@ -80,6 +80,25 @@
       "coa_id": "2609030237",
       "status": "in_stock",
       "notes": "New receipt: 5 kits of 10 vials. Every kit label prints TR20, 20mg*10vials, LUMI593-A09. James associated Freedom Diagnostics accession 2609030237 (lot CORV593-A09) with this group. Label code LUMI593-A09 and COA lot CORV593-A09 are different strings; keep both."
+    },
+    {
+      "lot_id": "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "semax",
+      "name": "Semax",
+      "strength": "10 mg lyophilized vial",
+      "kit_code": "SX10",
+      "kits_received": 5,
+      "vials_per_kit": 10,
+      "vials_received": 50,
+      "vials_on_hand": 50,
+      "label_code": "LUMI593-A52",
+      "label_lot": "LOT-Z51-Z12",
+      "coa_lot": "LOT-2026-02",
+      "coa_id": "COA-2026-2RQTIZ",
+      "status": "in_stock",
+      "notes": "New receipt: 5 kits of 10 vials. Every kit label prints SX10, 10mg*10vials, 10 vials/box, LUMI593-A52, LOT-Z51-Z12. James associated ILS Labs COA-2026-2RQTIZ (lot LOT-2026-02) with this group. Kit lot LOT-Z51-Z12 also appears on KLOW labels and related Retatrutide lots — do not merge across SKUs."
     }
   ],
   "coas": [
@@ -202,6 +221,40 @@
       "kit_photo": "wellness_agent/inventory/coa/2609030237-kits.jpg",
       "associated_lot_ids": [
         "TIRZEPATIDE-CORV593-A09-TR20"
+      ]
+    },
+    {
+      "coa_id": "COA-2026-2RQTIZ",
+      "lot": "LOT-2026-02",
+      "sku_id": "semax",
+      "lab": "ILS Labs",
+      "lab_name": "ILS Laboratories",
+      "lab_url": "https://ils-lab.com",
+      "lab_address": "8222 Vickers St. Suite 106, San Diego, CA 92111",
+      "lab_phone": "(619) 329-3999",
+      "client": "Golden State Peps",
+      "accession": "COA-2026-2RQTIZ",
+      "search_code": "XU7ECRF9",
+      "verify_url": "https://portal.ils-lab.com",
+      "received": "2026-07-30",
+      "reported": "2026-08-11",
+      "product": "Semax - 10mg",
+      "labeled_content": "10mg",
+      "volume": "3mL",
+      "identity": "Confirmed",
+      "appearance": "Good",
+      "purity_percent": 99.0,
+      "mass_mg": 10.24,
+      "net_content_mg": {
+        "Semax": 10.24
+      },
+      "fentanyl_free": true,
+      "method": "Purity, Identity & Quantitation (HPLC)",
+      "principal_chemist": "Dr. Greg Kalyuzhny",
+      "file": "wellness_agent/inventory/coa/COA-2026-2RQTIZ-ILS-Labs.jpg",
+      "kit_photo": "wellness_agent/inventory/coa/COA-2026-2RQTIZ-kits.jpg",
+      "associated_lot_ids": [
+        "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10"
       ]
     }
   ]
