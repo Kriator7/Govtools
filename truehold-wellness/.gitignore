@@ -19,6 +19,8 @@ data/inbox_state.json
 data/email_seen.json
 data/sessions.json
 data/clients.json
+data/clients_roster.json
+data/stamp_log.jsonl
 data/stock.json
 data/sheet_messages.json
 data/team_hosts.json

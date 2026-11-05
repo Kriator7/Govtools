@@ -118,6 +118,8 @@ Matching PDFs overwrite `inventory/pdfs/`. The xlsx is stored as the live ledger
 python -m wellness_agent catalog
 python -m wellness_agent stock
 python -m wellness_agent lots
+python -m wellness_agent stamp
+python -m wellness_agent stamp-email --invoice-id THW-INV-EXAMPLE --dry-run
 python -m wellness_agent product klow
 python -m wellness_agent.inventory.build_pdfs
 python -m wellness_agent.inventory.build_workbook
@@ -134,6 +136,14 @@ python -m wellness_agent receive-stock \
 ```
 
 KLOW kits are 10 vials. Five kits = 50 vials. Retatrutide, Tirzepatide, Semax, NAD+, GHK-Cu, MOTS-c, and SS-31 kits are 10 vials. Physical counts (2026-11-04): KLOW 57, Retatrutide 26 × 20 mg plus 10 × 30 mg, Tirzepatide 65, Semax 52, NAD+ 69, GHK-Cu 22, MOTS-c 8, SS-31 5. MOTS-c and SS-31 have no COA yet. `/stock` does not collapse mixed strengths. `/stock` prints SKU on-hand plus lots and COAs.
+
+Each issued invoice (and each confirmed Telegram interest order) emails **trueholdwellness@gmail.com** a stamp of current inventory, lots, and the client list with every email and mobile on file. Missing text/email contacts are listed so reorder outreach can be collected. Run `stamp-email` after a paper/HUD invoice too.
+
+```bash
+python -m wellness_agent stamp-email --invoice-id THW-INV-20261105-001
+```
+
+SMTP uses `WELLNESS_SMTP_USERNAME` / `WELLNESS_SMTP_PASSWORD` (Gmail app password; [Google app passwords](https://support.google.com/accounts/answer/185833)). `WELLNESS_STAMP_TO` defaults to `trueholdwellness@gmail.com`. Without SMTP the stamp is still logged at `data/stamp_log.jsonl`. Client roster: `wellness_agent/inventory/clients_roster.json`.
 
 Telegram: `/menu` then **View PDF in Telegram** sends the sheet. Every PDF is written for the milligram vial in stock (molecule, testing data, risks, FDA status, reconstitution, and U-100 / 0.5 mL syringe marks). Mix math is checked in `wellness_agent/inventory/protocol.py` before a sheet is built. The bot still does not dose in chat.
 
