@@ -118,6 +118,25 @@
       "coa_id": "COA-2026-CUWB60",
       "status": "in_stock",
       "notes": "New receipt: 5 kits of 10 vials (50 × 1000 mg). Visible kit label prints LUMI593-A45 and LOT-Z51-Z12. James associated ILS Labs COA-2026-CUWB60 (lot LOT-2026-02) with this group. Same COA lot string LOT-2026-02 is on the Semax ILS COA — do not merge across SKUs. Kit product code was cropped out of the photo."
+    },
+    {
+      "lot_id": "GHK-CU-Z51-Z12-CU100",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "ghk-cu",
+      "name": "GHK-Cu",
+      "strength": "100 mg lyophilized vial",
+      "kit_code": "CU100",
+      "kits_received": 3,
+      "vials_per_kit": 10,
+      "vials_received": 22,
+      "vials_on_hand": 22,
+      "label_code": "",
+      "label_lot": "",
+      "coa_lot": "Z51-Z12",
+      "coa_id": "2609080766",
+      "status": "in_stock",
+      "notes": "Existing inventory counted from photo, not a sealed receipt. CU100, 100mg/vial, 10 vials/box. Two full trays (20 vials) plus 2 vials remaining in an opened tray = 22 on hand. James associated Freedom Diagnostics accession 2609080766 (lot Z51-Z12) with this stock. Z51-Z12 also appears on other SKUs — do not merge."
     }
   ],
   "coas": [
@@ -308,6 +327,37 @@
       "kit_photo": "wellness_agent/inventory/coa/COA-2026-CUWB60-kits.jpg",
       "associated_lot_ids": [
         "NAD-LOT-2026-02-LOT-Z51-Z12"
+      ]
+    },
+    {
+      "coa_id": "2609080766",
+      "lot": "Z51-Z12",
+      "sku_id": "ghk-cu",
+      "lab": "Freedom Diagnostics",
+      "lab_url": "https://freedomdiagnosticstesting.com",
+      "lab_email": "Admin@FreedomDiagnostics.net",
+      "client": "Amino Central",
+      "accession": "2609080766",
+      "search_code": "Amin2609080766",
+      "received": "2026-09-08",
+      "reported": "2026-09-09",
+      "product": "GHK-Cu 100mg",
+      "labeled_content": "100mg",
+      "identity": "Confirmed",
+      "identity_lcms": "GHK-Cu",
+      "appearance": "Blue Lyophilized Powder",
+      "purity_percent": 99.98,
+      "mass_mg": 102.52,
+      "net_content_mg": {
+        "GHK-Cu": 102.52
+      },
+      "fentanyl_free": true,
+      "method": "HPLC with UV detection coupled with mass spectrometry (LC-MS)",
+      "principal_chemist": "Alex Johnson",
+      "file": "wellness_agent/inventory/coa/2609080766-Freedom-Diagnostics.jpg",
+      "kit_photo": "wellness_agent/inventory/coa/2609080766-kits.jpg",
+      "associated_lot_ids": [
+        "GHK-CU-Z51-Z12-CU100"
       ]
     }
   ]

@@ -25,12 +25,14 @@ VIALS_PER_KIT = {
     "tirzepatide": 10,
     "semax": 10,
     "nad": 10,
+    "ghk-cu": 10,
 }
 KLOW_VIALS_PER_KIT = VIALS_PER_KIT["klow"]
 RETATRUTIDE_VIALS_PER_KIT = VIALS_PER_KIT["retatrutide"]
 TIRZEPATIDE_VIALS_PER_KIT = VIALS_PER_KIT["tirzepatide"]
 SEMAX_VIALS_PER_KIT = VIALS_PER_KIT["semax"]
 NAD_VIALS_PER_KIT = VIALS_PER_KIT["nad"]
+GHK_CU_VIALS_PER_KIT = VIALS_PER_KIT["ghk-cu"]
 
 
 def lots_path() -> Path:

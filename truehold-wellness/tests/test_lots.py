@@ -1,5 +1,6 @@
 from wellness_agent.cli import main
 from wellness_agent.inventory.lots import (
+    GHK_CU_VIALS_PER_KIT,
     KLOW_VIALS_PER_KIT,
     NAD_VIALS_PER_KIT,
     RETATRUTIDE_VIALS_PER_KIT,
@@ -33,6 +34,10 @@ def test_semax_five_kits_are_fifty_vials():
 
 def test_nad_five_kits_are_fifty_vials():
     assert 5 * NAD_VIALS_PER_KIT == 50
+
+
+def test_ghk_cu_kit_is_ten_vials():
+    assert GHK_CU_VIALS_PER_KIT == 10
 
 
 def test_packaged_klow_receipt_keeps_coa():
@@ -198,6 +203,36 @@ def test_packaged_nad_receipt_keeps_coa():
 
     assert (COA_DIR / "COA-2026-CUWB60-ILS-Labs.jpg").is_file()
     assert (COA_DIR / "COA-2026-CUWB60-kits.jpg").is_file()
+
+
+def test_packaged_ghk_cu_existing_inventory_keeps_coa():
+    data = load_packaged_lots()
+    lots = [row for row in data["lots"] if row.get("sku_id") == "ghk-cu"]
+    assert lots
+    lot = lots[0]
+    assert lot["kit_code"] == "CU100"
+    assert lot["kits_received"] == 3
+    assert lot["vials_received"] == 22
+    assert lot["vials_on_hand"] == 22
+    assert lot["vials_per_kit"] == 10
+    assert lot["strength"] == "100 mg lyophilized vial"
+    assert lot["coa_lot"] == "Z51-Z12"
+    assert lot["coa_id"] == "2609080766"
+    assert lot["lot_id"] == "GHK-CU-Z51-Z12-CU100"
+    reta20 = next(row for row in data["lots"] if row.get("kit_code") == "RT20")
+    assert reta20["coa_lot"] == "Z51-Z12"
+    assert reta20["lot_id"] != lot["lot_id"]
+    coa = next(row for row in data["coas"] if row.get("coa_id") == "2609080766")
+    assert coa["lab"] == "Freedom Diagnostics"
+    assert coa["client"] == "Amino Central"
+    assert coa["purity_percent"] == 99.98
+    assert coa["mass_mg"] == 102.52
+    assert coa["search_code"] == "Amin2609080766"
+    assert lot["lot_id"] in coa["associated_lot_ids"]
+    from wellness_agent.inventory.lots import COA_DIR
+
+    assert (COA_DIR / "2609080766-Freedom-Diagnostics.jpg").is_file()
+    assert (COA_DIR / "2609080766-kits.jpg").is_file()
 
 
 def test_receive_lot_records_kits_lots_and_coa(tmp_path):
