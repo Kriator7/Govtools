@@ -1,6 +1,7 @@
 from wellness_agent.cli import main
 from wellness_agent.inventory.lots import (
     KLOW_VIALS_PER_KIT,
+    NAD_VIALS_PER_KIT,
     RETATRUTIDE_VIALS_PER_KIT,
     SEMAX_VIALS_PER_KIT,
     TIRZEPATIDE_VIALS_PER_KIT,
@@ -28,6 +29,10 @@ def test_tirzepatide_five_kits_are_fifty_vials():
 
 def test_semax_five_kits_are_fifty_vials():
     assert 5 * SEMAX_VIALS_PER_KIT == 50
+
+
+def test_nad_five_kits_are_fifty_vials():
+    assert 5 * NAD_VIALS_PER_KIT == 50
 
 
 def test_packaged_klow_receipt_keeps_coa():
@@ -165,6 +170,36 @@ def test_packaged_semax_receipt_keeps_coa():
     assert (COA_DIR / "COA-2026-2RQTIZ-kits.jpg").is_file()
 
 
+def test_packaged_nad_receipt_keeps_coa():
+    data = load_packaged_lots()
+    lots = [row for row in data["lots"] if row.get("sku_id") == "nad"]
+    assert lots
+    lot = lots[0]
+    assert lot["kits_received"] == 5
+    assert lot["vials_received"] == 50
+    assert lot["vials_per_kit"] == 10
+    assert lot["label_code"] == "LUMI593-A45"
+    assert lot["label_lot"] == "LOT-Z51-Z12"
+    assert lot["strength"] == "1000 mg lyophilized vial"
+    assert lot["coa_lot"] == "LOT-2026-02"
+    assert lot["coa_id"] == "COA-2026-CUWB60"
+    assert lot["lot_id"] == "NAD-LOT-2026-02-LOT-Z51-Z12"
+    semax = next(row for row in data["lots"] if row.get("sku_id") == "semax")
+    assert semax["coa_lot"] == "LOT-2026-02"
+    assert semax["lot_id"] != lot["lot_id"]
+    coa = next(row for row in data["coas"] if row.get("coa_id") == "COA-2026-CUWB60")
+    assert coa["lab"] == "ILS Labs"
+    assert coa["client"] == "Golden State Peps"
+    assert coa["purity_percent"] == 98.67
+    assert coa["mass_mg"] == 1035.05
+    assert coa["search_code"] == "WHRDFFPN"
+    assert lot["lot_id"] in coa["associated_lot_ids"]
+    from wellness_agent.inventory.lots import COA_DIR
+
+    assert (COA_DIR / "COA-2026-CUWB60-ILS-Labs.jpg").is_file()
+    assert (COA_DIR / "COA-2026-CUWB60-kits.jpg").is_file()
+
+
 def test_receive_lot_records_kits_lots_and_coa(tmp_path):
     result = receive_lot(
         "klow",
@@ -292,6 +327,36 @@ def test_receive_lot_semax_five_kits_are_fifty_vials():
         coa_lot="LOT-2026-02",
         label_lot="LOT-Z51-Z12",
         kit_code="SX10",
+    )
+
+
+def test_receive_lot_nad_five_kits_are_fifty_vials():
+    result = receive_lot(
+        "nad",
+        kits=5,
+        strength="1000 mg lyophilized vial",
+        label_code="LUMI593-A45",
+        label_lot="LOT-Z51-Z12",
+        coa_lot="LOT-2026-02",
+        received_at="2026-11-04",
+        coa={
+            "coa_id": "COA-2026-CUWB60",
+            "lab": "ILS Labs",
+            "purity_percent": 98.67,
+            "mass_mg": 1035.05,
+        },
+    )
+    lot = result["lot"]
+    assert lot["kits_received"] == 5
+    assert lot["vials_received"] == 50
+    assert lot["vials_per_kit"] == 10
+    assert lot["coa_id"] == "COA-2026-CUWB60"
+    assert lot["name"] == "NAD+"
+    assert load_stock()["products"]["nad"]["on_hand"] == 50
+    assert lot["lot_id"] == lot_id_for(
+        sku_id="nad",
+        coa_lot="LOT-2026-02",
+        label_lot="LOT-Z51-Z12",
     )
 
 

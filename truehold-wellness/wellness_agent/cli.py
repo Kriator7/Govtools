@@ -73,7 +73,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--vials-per-kit",
         type=int,
         default=None,
-        help="Vials in each kit (KLOW, Retatrutide, Tirzepatide, and Semax default to 10)",
+        help="Vials in each kit (KLOW, Retatrutide, Tirzepatide, Semax, and NAD+ default to 10)",
     )
     receive.add_argument("--label-code", default="", help="Supplier code printed on the kit, e.g. LUMI593-A62")
     receive.add_argument("--label-lot", default="", help="Lot printed on the kit, e.g. LOT-Z51-Z12")

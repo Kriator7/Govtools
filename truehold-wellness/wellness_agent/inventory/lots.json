@@ -99,6 +99,25 @@
       "coa_id": "COA-2026-2RQTIZ",
       "status": "in_stock",
       "notes": "New receipt: 5 kits of 10 vials. Every kit label prints SX10, 10mg*10vials, 10 vials/box, LUMI593-A52, LOT-Z51-Z12. James associated ILS Labs COA-2026-2RQTIZ (lot LOT-2026-02) with this group. Kit lot LOT-Z51-Z12 also appears on KLOW labels and related Retatrutide lots — do not merge across SKUs."
+    },
+    {
+      "lot_id": "NAD-LOT-2026-02-LOT-Z51-Z12",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "nad",
+      "name": "NAD+",
+      "strength": "1000 mg lyophilized vial",
+      "kit_code": "",
+      "kits_received": 5,
+      "vials_per_kit": 10,
+      "vials_received": 50,
+      "vials_on_hand": 50,
+      "label_code": "LUMI593-A45",
+      "label_lot": "LOT-Z51-Z12",
+      "coa_lot": "LOT-2026-02",
+      "coa_id": "COA-2026-CUWB60",
+      "status": "in_stock",
+      "notes": "New receipt: 5 kits of 10 vials (50 × 1000 mg). Visible kit label prints LUMI593-A45 and LOT-Z51-Z12. James associated ILS Labs COA-2026-CUWB60 (lot LOT-2026-02) with this group. Same COA lot string LOT-2026-02 is on the Semax ILS COA — do not merge across SKUs. Kit product code was cropped out of the photo."
     }
   ],
   "coas": [
@@ -255,6 +274,40 @@
       "kit_photo": "wellness_agent/inventory/coa/COA-2026-2RQTIZ-kits.jpg",
       "associated_lot_ids": [
         "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10"
+      ]
+    },
+    {
+      "coa_id": "COA-2026-CUWB60",
+      "lot": "LOT-2026-02",
+      "sku_id": "nad",
+      "lab": "ILS Labs",
+      "lab_name": "ILS Laboratories",
+      "lab_url": "https://ils-lab.com",
+      "lab_address": "8222 Vickers St. Suite 106, San Diego, CA 92111",
+      "lab_phone": "(619) 329-3999",
+      "client": "Golden State Peps",
+      "accession": "COA-2026-CUWB60",
+      "search_code": "WHRDFFPN",
+      "verify_url": "https://portal.ils-lab.com",
+      "received": "2026-07-30",
+      "reported": "2026-08-12",
+      "product": "NAD+ - 1000mg",
+      "labeled_content": "1000mg",
+      "volume": "3mL",
+      "identity": "Confirmed",
+      "appearance": "Good",
+      "purity_percent": 98.67,
+      "mass_mg": 1035.05,
+      "net_content_mg": {
+        "NAD+": 1035.05
+      },
+      "fentanyl_free": true,
+      "method": "Purity, Identity & Quantitation (HPLC)",
+      "principal_chemist": "Dr. Greg Kalyuzhny",
+      "file": "wellness_agent/inventory/coa/COA-2026-CUWB60-ILS-Labs.jpg",
+      "kit_photo": "wellness_agent/inventory/coa/COA-2026-CUWB60-kits.jpg",
+      "associated_lot_ids": [
+        "NAD-LOT-2026-02-LOT-Z51-Z12"
       ]
     }
   ]
