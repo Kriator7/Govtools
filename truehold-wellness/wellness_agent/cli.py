@@ -109,6 +109,23 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Folder of Finder exports. Defaults to data/imports/legacy/",
     )
+    stamp = sub.add_parser(
+        "stamp",
+        help="Print the current inventory / lots / client stamp (TrueHold Wellness email body)",
+    )
+    stamp.add_argument("--invoice-id", default="", help="Invoice or order id stamped on the email")
+    stamp.add_argument("--reason", default="current-state")
+    stamp_email = sub.add_parser(
+        "stamp-email",
+        help="Email the inventory / lots / client stamp to trueholdwellness@gmail.com",
+    )
+    stamp_email.add_argument("--invoice-id", default="", help="Invoice or order id stamped on the email")
+    stamp_email.add_argument("--reason", default="invoice")
+    stamp_email.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Build and log the stamp but do not SMTP-send it",
+    )
     return parser
 
 
@@ -289,6 +306,28 @@ def main(argv: Sequence[str] | None = None) -> int:
         result = ingest_legacy(folder)
         sys.stdout.write(json.dumps(result, indent=2) + "\n")
         return 0
+    if args.command == "stamp":
+        from wellness_agent.stamp import format_stamp, stamp_payload
+
+        sys.stdout.write(format_stamp(stamp_payload(invoice_id=args.invoice_id, reason=args.reason)))
+        return 0
+    if args.command == "stamp-email":
+        from wellness_agent.stamp import send_stamp_email
+
+        result = send_stamp_email(
+            invoice_id=args.invoice_id,
+            reason=args.reason,
+            dry_run=args.dry_run,
+        )
+        sys.stdout.write(result["body"])
+        if result["status"] == "sent":
+            sys.stderr.write(f"sent: {result['to']}\n")
+            return 0
+        if result["status"] == "dry_run":
+            sys.stderr.write("dry-run: stamp built; email not sent\n")
+            return 0
+        sys.stderr.write(f"{result['status']}: {result.get('error') or 'email not sent'}\n")
+        return 0 if result["status"] == "queued_no_smtp" else 1
     alert = compose_alert(_trigger_from_args(args))
     if args.command == "compose":
         if args.json:

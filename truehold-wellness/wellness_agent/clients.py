@@ -63,6 +63,16 @@ def get_client(chat_id: str) -> dict[str, Any]:
     return dict(_load()["clients"].get(str(chat_id)) or {})
 
 
+def list_telegram_clients() -> list[dict[str, Any]]:
+    """Phone-book rows captured from Telegram. Email is not stored here."""
+    rows: list[dict[str, Any]] = []
+    for chat_id, entry in _load()["clients"].items():
+        if not isinstance(entry, dict):
+            continue
+        rows.append({**entry, "chat_id": str(chat_id)})
+    return rows
+
+
 def client_phone(chat_id: str) -> str | None:
     phone = str(get_client(chat_id).get("phone") or "").strip()
     return phone or None
