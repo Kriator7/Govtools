@@ -121,16 +121,21 @@ def test_packaged_tirzepatide_receipt_keeps_coa():
     data = load_packaged_lots()
     lots = [row for row in data["lots"] if row.get("sku_id") == "tirzepatide"]
     assert lots
-    lot = lots[0]
+    lot = next(row for row in lots if row.get("lot_id") == "TIRZEPATIDE-CORV593-A09-TR20")
     assert lot["kits_received"] == 5
     assert lot["vials_received"] == 50
     assert lot["vials_per_kit"] == 10
     assert lot["kit_code"] == "TR20"
     assert lot["label_code"] == "LUMI593-A09"
+    assert lot["label_lot"] == "LOT-Z51-Z12"
     assert lot["strength"] == "20 mg lyophilized vial"
     assert lot["coa_lot"] == "CORV593-A09"
     assert lot["coa_id"] == "2609030237"
-    assert lot["lot_id"] == "TIRZEPATIDE-CORV593-A09-TR20"
+    existing = next(row for row in lots if row.get("lot_id") == "TIRZEPATIDE-CORV593-A09-TR20-EXISTING")
+    assert existing["vials_on_hand"] == 16
+    assert existing["vials_received"] == 16
+    assert existing["coa_id"] == "2609030237"
+    assert existing["label_lot"] == "LOT-Z51-Z12"
     coa = next(row for row in data["coas"] if row.get("coa_id") == "2609030237")
     assert coa["lab"] == "Freedom Diagnostics"
     assert coa["client"] == "Corvinus Research"
@@ -138,10 +143,12 @@ def test_packaged_tirzepatide_receipt_keeps_coa():
     assert coa["search_code"] == "Corv2609030237"
     assert coa["fentanyl_free"] is True
     assert lot["lot_id"] in coa["associated_lot_ids"]
+    assert existing["lot_id"] in coa["associated_lot_ids"]
     from wellness_agent.inventory.lots import COA_DIR
 
     assert (COA_DIR / "2609030237-Freedom-Diagnostics.jpg").is_file()
     assert (COA_DIR / "2609030237-kits.jpg").is_file()
+    assert (COA_DIR / "2609030237-existing.jpg").is_file()
 
 
 def test_packaged_semax_receipt_keeps_coa():
