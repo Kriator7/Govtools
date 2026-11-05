@@ -120,6 +120,25 @@
       "notes": "New receipt: 5 kits of 10 vials. Every kit label prints SX10, 10mg*10vials, 10 vials/box, LUMI593-A52, LOT-Z51-Z12. James associated ILS Labs COA-2026-2RQTIZ (lot LOT-2026-02) with this group. Kit lot LOT-Z51-Z12 also appears on KLOW labels and related Retatrutide lots — do not merge across SKUs."
     },
     {
+      "lot_id": "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10-EXISTING",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "semax",
+      "name": "Semax",
+      "strength": "10 mg lyophilized vial",
+      "kit_code": "SX10",
+      "kits_received": 1,
+      "vials_per_kit": 10,
+      "vials_received": 2,
+      "vials_on_hand": 2,
+      "label_code": "LUMI593-A52",
+      "label_lot": "LOT-Z51-Z12",
+      "coa_lot": "LOT-2026-02",
+      "coa_id": "COA-2026-2RQTIZ",
+      "status": "in_stock",
+      "notes": "Existing inventory: 2 vials on hand, same COA as the 5 sealed SX10 kits. Do not treat these as leftover of the sealed 50."
+    },
+    {
       "lot_id": "NAD-LOT-2026-02-LOT-Z51-Z12",
       "received_at": "2026-11-04",
       "timezone": "America/Los_Angeles",
@@ -313,7 +332,8 @@
       "file": "wellness_agent/inventory/coa/COA-2026-2RQTIZ-ILS-Labs.jpg",
       "kit_photo": "wellness_agent/inventory/coa/COA-2026-2RQTIZ-kits.jpg",
       "associated_lot_ids": [
-        "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10"
+        "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10",
+        "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10-EXISTING"
       ]
     },
     {

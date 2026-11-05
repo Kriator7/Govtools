@@ -155,7 +155,7 @@ def test_packaged_semax_receipt_keeps_coa():
     data = load_packaged_lots()
     lots = [row for row in data["lots"] if row.get("sku_id") == "semax"]
     assert lots
-    lot = lots[0]
+    lot = next(row for row in lots if row.get("lot_id") == "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10")
     assert lot["kits_received"] == 5
     assert lot["vials_received"] == 50
     assert lot["vials_per_kit"] == 10
@@ -165,7 +165,10 @@ def test_packaged_semax_receipt_keeps_coa():
     assert lot["strength"] == "10 mg lyophilized vial"
     assert lot["coa_lot"] == "LOT-2026-02"
     assert lot["coa_id"] == "COA-2026-2RQTIZ"
-    assert lot["lot_id"] == "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10"
+    existing = next(row for row in lots if row.get("lot_id") == "SEMAX-LOT-2026-02-LOT-Z51-Z12-SX10-EXISTING")
+    assert existing["vials_on_hand"] == 2
+    assert existing["vials_received"] == 2
+    assert existing["coa_id"] == "COA-2026-2RQTIZ"
     klow = next(row for row in data["lots"] if row.get("sku_id") == "klow")
     assert klow["label_lot"] == "LOT-Z51-Z12"
     assert klow["lot_id"] != lot["lot_id"]
@@ -176,6 +179,7 @@ def test_packaged_semax_receipt_keeps_coa():
     assert coa["mass_mg"] == 10.24
     assert coa["search_code"] == "XU7ECRF9"
     assert lot["lot_id"] in coa["associated_lot_ids"]
+    assert existing["lot_id"] in coa["associated_lot_ids"]
     from wellness_agent.inventory.lots import COA_DIR
 
     assert (COA_DIR / "COA-2026-2RQTIZ-ILS-Labs.jpg").is_file()
