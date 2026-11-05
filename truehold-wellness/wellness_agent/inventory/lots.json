@@ -12,6 +12,7 @@
       "sku_id": "klow",
       "name": "KLOW",
       "strength": "80 mg lyophilized vial",
+      "kit_code": "",
       "kits_received": 5,
       "vials_per_kit": 10,
       "vials_received": 50,
@@ -22,6 +23,25 @@
       "coa_id": "CPC260728KLOW",
       "status": "in_stock",
       "notes": "New receipt: 5 kits of 10 vials. Box labels print LUMI593-A62 and LOT-Z51-Z12 on every kit. James associated Freedom Diagnostics COA CPC260728KLOW with this entire group. Label lot and COA lot are different strings; keep both."
+    },
+    {
+      "lot_id": "RETATRUTIDE-LOT-Z51-Z12",
+      "received_at": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "sku_id": "retatrutide",
+      "name": "Retatrutide",
+      "strength": "30 mg lyophilized vial",
+      "kit_code": "RT30",
+      "kits_received": 1,
+      "vials_per_kit": 10,
+      "vials_received": 10,
+      "vials_on_hand": 10,
+      "label_code": "LUMI593-A20",
+      "label_lot": "",
+      "coa_lot": "LOT-Z51-Z12",
+      "coa_id": "COA-2026-ZFHGR0",
+      "status": "in_stock",
+      "notes": "New receipt: 1 kit of 10 vials. Kit label prints RT30, 30mg*10vials, LUMI593-A20. James associated ILS Labs COA-2026-ZFHGR0 (batch LOT-Z51-Z12) with this kit. Physical vials are 30 mg; the shop listing is still 20 mg. LOT-Z51-Z12 also appears on KLOW kit labels as a different SKU — do not merge."
     }
   ],
   "coas": [
@@ -53,6 +73,39 @@
       "kit_photo": "wellness_agent/inventory/coa/CPC260728KLOW-kits.jpg",
       "associated_lot_ids": [
         "KLOW-CPC260728KLOW-LOT-Z51-Z12"
+      ]
+    },
+    {
+      "coa_id": "COA-2026-ZFHGR0",
+      "lot": "LOT-Z51-Z12",
+      "sku_id": "retatrutide",
+      "lab": "ILS Labs",
+      "lab_name": "ILS Laboratories",
+      "lab_url": "https://ils-lab.com",
+      "lab_address": "8222 Vickers St. Suite 106, San Diego, CA 92111",
+      "lab_phone": "(619) 329-3999",
+      "client": "RC8/50 Lab",
+      "accession": "COA-2026-ZFHGR0",
+      "search_code": "TEESK66G",
+      "verify_url": "https://portal.ils-lab.com/verify/qEhu1GVDZc8HOKKO",
+      "received": "2026-08-12",
+      "reported": "2026-08-17",
+      "product": "Retatrutide - 30mg",
+      "labeled_content": "30mg",
+      "identity": "Confirmed",
+      "appearance": "Good",
+      "purity_percent": 99.73,
+      "mass_mg": 31.38,
+      "net_content_mg": {
+        "Retatrutide": 31.38
+      },
+      "fentanyl_free": true,
+      "method": "Purity, Identity & Quantitation (HPLC)",
+      "principal_chemist": "Dr. Greg Kalyuzhny",
+      "file": "wellness_agent/inventory/coa/COA-2026-ZFHGR0-ILS-Labs.jpg",
+      "kit_photo": "wellness_agent/inventory/coa/COA-2026-ZFHGR0-kits.jpg",
+      "associated_lot_ids": [
+        "RETATRUTIDE-LOT-Z51-Z12"
       ]
     }
   ]

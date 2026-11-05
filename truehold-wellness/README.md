@@ -133,7 +133,7 @@ python -m wellness_agent receive-stock \
   --coa-file wellness_agent/inventory/coa/CPC260728KLOW-Freedom-Diagnostics.jpg
 ```
 
-KLOW kits are 10 vials. Five kits = 50 vials. `/stock` prints SKU on-hand plus lots and COAs.
+KLOW kits are 10 vials. Five kits = 50 vials. Retatrutide kits are 10 vials (this receipt is physical 30 mg RT30; the shop listing is still 20 mg). `/stock` prints SKU on-hand plus lots and COAs.
 
 Telegram: `/menu` then **View PDF in Telegram** sends the sheet. Every PDF is written for the milligram vial in stock (molecule, testing data, risks, FDA status, reconstitution, and U-100 / 0.5 mL syringe marks). Mix math is checked in `wellness_agent/inventory/protocol.py` before a sheet is built. The bot still does not dose in chat.
 

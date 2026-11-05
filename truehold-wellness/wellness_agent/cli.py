@@ -73,11 +73,18 @@ def _build_parser() -> argparse.ArgumentParser:
         "--vials-per-kit",
         type=int,
         default=None,
-        help="Vials in each kit (KLOW defaults to 10)",
+        help="Vials in each kit (KLOW and Retatrutide default to 10)",
     )
     receive.add_argument("--label-code", default="", help="Supplier code printed on the kit, e.g. LUMI593-A62")
     receive.add_argument("--label-lot", default="", help="Lot printed on the kit, e.g. LOT-Z51-Z12")
+    receive.add_argument("--kit-code", default="", help="Product code on the kit, e.g. RT30")
+    receive.add_argument(
+        "--strength",
+        default="",
+        help="Physical vial strength if different from the shop listing, e.g. '30 mg lyophilized vial'",
+    )
     receive.add_argument("--coa-lot", required=True, help="Lot on the Certificate of Analysis")
+    receive.add_argument("--coa-id", default="", help="COA identifier if different from --coa-lot")
     receive.add_argument("--coa-file", default="", help="Path to the stored COA image or PDF")
     receive.add_argument("--received-at", default=None, help="Receipt date YYYY-MM-DD")
     receive.add_argument("--notes", default="")
@@ -192,7 +199,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         from wellness_agent.catalog import UnknownProductError
         from wellness_agent.inventory.lots import receive_lot
 
-        coa = {"file": args.coa_file} if args.coa_file else None
+        coa: dict | None = {}
+        if args.coa_file:
+            coa["file"] = args.coa_file
+        if args.coa_id:
+            coa["coa_id"] = args.coa_id
+        if not coa:
+            coa = None
         try:
             result = receive_lot(
                 args.sku,
@@ -201,6 +214,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 vials_per_kit=args.vials_per_kit,
                 label_code=args.label_code,
                 label_lot=args.label_lot,
+                kit_code=args.kit_code,
+                strength=args.strength,
                 coa_lot=args.coa_lot,
                 received_at=args.received_at,
                 notes=args.notes,

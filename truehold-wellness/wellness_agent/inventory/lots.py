@@ -19,7 +19,12 @@ INVENTORY_DIR = Path(__file__).resolve().parent
 PACKAGED_LOTS_PATH = INVENTORY_DIR / "lots.json"
 COA_DIR = INVENTORY_DIR / "coa"
 
-KLOW_VIALS_PER_KIT = 10
+VIALS_PER_KIT = {
+    "klow": 10,
+    "retatrutide": 10,
+}
+KLOW_VIALS_PER_KIT = VIALS_PER_KIT["klow"]
+RETATRUTIDE_VIALS_PER_KIT = VIALS_PER_KIT["retatrutide"]
 
 
 def lots_path() -> Path:
@@ -126,6 +131,8 @@ def receive_lot(
     vials_per_kit: int | None = None,
     label_code: str = "",
     label_lot: str = "",
+    kit_code: str = "",
+    strength: str = "",
     coa_lot: str,
     received_at: str | None = None,
     notes: str = "",
@@ -136,7 +143,7 @@ def receive_lot(
     item = find_product(sku)
     per_kit = _positive_int(vials_per_kit, "vials_per_kit")
     if per_kit is None:
-        per_kit = KLOW_VIALS_PER_KIT if item["id"] == "klow" else 1
+        per_kit = VIALS_PER_KIT.get(item["id"], 1)
     kit_count = _positive_int(kits, "kits")
     vial_count = _positive_int(vials, "vials")
     if kit_count is None and vial_count is None:
@@ -199,7 +206,8 @@ def receive_lot(
         "timezone": "America/Los_Angeles",
         "sku_id": item["id"],
         "name": item["name"],
-        "strength": item.get("vial") or "",
+        "strength": (strength or item.get("vial") or "").strip(),
+        "kit_code": str(kit_code or "").strip(),
         "kits_received": kit_count,
         "vials_per_kit": per_kit,
         "vials_received": vial_count,
@@ -254,14 +262,18 @@ def format_lots() -> str:
         kits = row.get("kits_received")
         vials = row.get("vials_on_hand")
         received = row.get("vials_received")
-        lines.append(
-            f"• {row.get('name')} {row.get('lot_id')} — "
-            f"{kits} kits / {received} vials received, {vials} on hand"
-        )
-        lines.append(
-            f"  label {row.get('label_code') or '—'} / {row.get('label_lot') or '—'}; "
-            f"COA lot {row.get('coa_lot') or '—'}"
-        )
+        kit_word = "kit" if kits == 1 else "kits"
+        heading = f"• {row.get('name')} {row.get('lot_id')} — "
+        heading += f"{kits} {kit_word} / {received} vials received, {vials} on hand"
+        if row.get("strength"):
+            heading += f" ({row['strength']})"
+        lines.append(heading)
+        kit_bits = []
+        if row.get("kit_code"):
+            kit_bits.append(str(row["kit_code"]))
+        kit_bits.append(f"label {row.get('label_code') or '—'} / {row.get('label_lot') or '—'}")
+        kit_bits.append(f"COA lot {row.get('coa_lot') or '—'}")
+        lines.append("  " + "; ".join(kit_bits))
         coa = coas.get(row.get("coa_id")) or {}
         purity = coa.get("purity_percent")
         file_name = coa.get("file") or ""
