@@ -235,6 +235,19 @@ def retrieve(query: str, *, limit: int = 6) -> list[dict[str, Any]]:
             )
         ):
             score += 6
+        if row["id"] == "policy-delivery" and any(
+            part in needle
+            for part in (
+                "delivery",
+                "deliver",
+                "fee",
+                "pickup",
+                "250",
+                "vials",
+                "invoice",
+            )
+        ):
+            score += 6
         if score:
             scored.append((score, row))
     scored.sort(key=lambda item: (-item[0], item[1]["id"]))

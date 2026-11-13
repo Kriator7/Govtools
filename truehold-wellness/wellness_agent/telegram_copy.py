@@ -2,6 +2,7 @@
 
 from urllib.parse import quote
 
+from wellness_agent.delivery import HELP as DELIVERY_HELP
 from wellness_agent.discounts import COLLEGE_HELP
 from wellness_agent.identity import REQUIRED_USERNAME
 
@@ -74,6 +75,7 @@ CUSTOMER_HELP = (
     "/schedule — talk to the TrueHold team\n"
     "/help — this message\n"
     f"{SERVICE_POLICY} Educational only. {CALL_AND_DOCS}.\n"
+    f"{DELIVERY_HELP}\n"
     f"{PAYMENT_COPY}\n"
     f"{COLLEGE_HELP}\n"
     "This bot is not realtor-agent / @PirateEye_bot."
@@ -117,6 +119,7 @@ SCHEDULE = (
     "\n"
     "<b>Prep</b>\n"
     "Las Vegas residents only · dry vials only\n"
+    f"{DELIVERY_HELP}\n"
     "\n"
     "<b>Pay</b>\n"
     "Zelle on the confirmation call · debit on the website\n"

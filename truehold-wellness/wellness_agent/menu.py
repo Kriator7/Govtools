@@ -25,6 +25,7 @@ from wellness_agent.inventory.build_agent import agent_path, crew_path, ensure_h
 from wellness_agent.inventory.build_brand import logo_path, service_path
 from wellness_agent.inventory.build_cards import card_path, ensure_cards
 from wellness_agent.reflex import fire_reflex
+from wellness_agent.delivery import STAFF_DELIVERY_LINE, TELEGRAM_SMALL_PRINT, customer_delivery_note
 from wellness_agent.discounts import customer_discount_line, staff_discount_line
 from wellness_agent.session_store import (
     discount_code,
@@ -298,6 +299,37 @@ def info_sheet_keyboard(product_id: str, host: dict[str, Any] | None = None) -> 
             [_button(BUY_BACK, f"w:tile:{product_id}", style=tone)],
             [_button(BUY_MENU, "w:menu", style=tone)],
         ]
+    )
+
+
+def qty_step_caption(product: dict[str, Any]) -> str:
+    from html import escape
+
+    return (
+        f"<b>Order · 1 of 2</b>\n"
+        f"How many vials of {escape(str(product['name']))}?\n"
+        "Dry vials only.\n"
+        "\n"
+        f"{TELEGRAM_SMALL_PRINT}\n"
+        "\n"
+        "Tap the top button for 1 vial."
+    )
+
+
+def ask_step_caption(product: dict[str, Any], qty: str) -> str:
+    from html import escape
+
+    return (
+        f"<b>Order · 2 of 2</b>\n"
+        f"{escape(qty)}× {escape(str(product['name']))} · {escape(str(product['vial']))}\n"
+        "\n"
+        "How should we get it to you?\n"
+        "Prep and pickup: Las Vegas residents.\n"
+        "Shipping: dry vials only.\n"
+        "\n"
+        f"{TELEGRAM_SMALL_PRINT}\n"
+        "\n"
+        "Tap the top button for local prep."
     )
 
 
@@ -633,8 +665,6 @@ def _remember_team_return(chat_id: str, sku: str = "", qty: str = "") -> None:
 
 def _go_back(telegram, chat_id: str) -> dict[str, Any]:
     """Leave the current card. Do not edit the Team portrait into an order step."""
-    from html import escape
-
     nav = nav_return(chat_id) or {}
     screen = str(nav.get("screen") or "")
     sku = str(nav.get("product_id") or "")
@@ -650,16 +680,7 @@ def _go_back(telegram, chat_id: str) -> dict[str, Any]:
             telegram,
             chat_id,
             product,
-            (
-                f"<b>Order · 2 of 2</b>\n"
-                f"{escape(qty)}× {escape(str(product['name']))} · {escape(str(product['vial']))}\n"
-                "\n"
-                "How should we get it to you?\n"
-                "Prep and pickup: Las Vegas residents.\n"
-                "Shipping: dry vials only.\n"
-                "\n"
-                "Tap the top button for local prep."
-            ),
+            ask_step_caption(product, qty),
             fulfill_keyboard(product["id"], qty, current_host(chat_id)),
         )
         return {"ok": True, "action": "ask", "chat_id": chat_id, "product": sku, "qty": qty}
@@ -674,13 +695,7 @@ def _go_back(telegram, chat_id: str) -> dict[str, Any]:
             telegram,
             chat_id,
             product,
-            (
-                f"<b>Order · 1 of 2</b>\n"
-                f"How many vials of {escape(str(product['name']))}?\n"
-                "Dry vials only.\n"
-                "\n"
-                "Tap the top button for 1 vial."
-            ),
+            qty_step_caption(product),
             qty_keyboard(product["id"], current_host(chat_id)),
         )
         return {"ok": True, "action": "qty", "chat_id": chat_id, "product": sku}
@@ -787,6 +802,8 @@ def _place_interest_order(
     except Exception as exc:
         inventory_line = f"{inventory_line} Workbook update skipped: {exc}."
     staff_detail = f"{detail}\n{phone_line_for_staff(chat_id)}\nFulfillment: {staff_how}\n{inventory_line}"
+    if fulfillment in {"prep"}:
+        staff_detail = f"{staff_detail}\n{STAFF_DELIVERY_LINE}"
     if discount_staff:
         staff_detail = f"{staff_detail}\n{discount_staff}"
     result = fire_reflex(
@@ -798,6 +815,9 @@ def _place_interest_order(
     set_pending_order(chat_id, None, None)
     host = current_host(chat_id)
     confirm = CUSTOMER_CONFIRM.format(detail=detail)
+    delivery_note = customer_delivery_note(fulfillment)
+    if delivery_note:
+        confirm = f"{confirm}\n{delivery_note}"
     if discount_note:
         confirm = f"{confirm}\n{discount_note}"
     _clear_inline_keyboard(telegram, str(chat_id), _callback_message_id(query))
@@ -964,42 +984,23 @@ def handle_menu_callback(query: dict[str, Any], telegram) -> dict[str, Any]:
         send_prep_card(telegram, chat_id, product)
         return {"ok": True, "action": "prep", "chat_id": chat_id, "product": product["id"]}
     if action == "qty":
-        from html import escape
-
         set_nav_return(chat_id, screen="tile", product_id=product["id"])
         _show_buy_step(
             telegram,
             chat_id,
             product,
-            (
-                f"<b>Order · 1 of 2</b>\n"
-                f"How many vials of {escape(str(product['name']))}?\n"
-                "Dry vials only.\n"
-                "\n"
-                "Tap the top button for 1 vial."
-            ),
+            qty_step_caption(product),
             qty_keyboard(product["id"], current_host(chat_id)),
             query,
         )
         return {"ok": True, "action": "qty", "chat_id": chat_id, "product": product["id"]}
     if action == "ask" and qty in {"1", "2", "3"}:
-        from html import escape
-
         set_nav_return(chat_id, screen="qty", product_id=product["id"], qty=qty)
         _show_buy_step(
             telegram,
             chat_id,
             product,
-            (
-                f"<b>Order · 2 of 2</b>\n"
-                f"{escape(qty)}× {escape(str(product['name']))} · {escape(str(product['vial']))}\n"
-                "\n"
-                "How should we get it to you?\n"
-                "Prep and pickup: Las Vegas residents.\n"
-                "Shipping: dry vials only.\n"
-                "\n"
-                "Tap the top button for local prep."
-            ),
+            ask_step_caption(product, qty),
             fulfill_keyboard(product["id"], qty, current_host(chat_id)),
             query,
         )

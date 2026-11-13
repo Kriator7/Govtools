@@ -23,7 +23,13 @@
       "id": "policy-sales",
       "title": "Sales and discounts",
       "kind": "policy",
-      "text": "College students get 10% off with discount code ADPILV2026. Send that code in this Telegram chat; the team applies it on the confirmation call. The floor team never invents any other sale. If no approved promo is on file besides ADPILV2026, there is no extra deal."
+      "text": "College students get 10% off with discount code ADPILV2026. Send that code in this Telegram chat; the team applies it on the confirmation call. The floor team never invents any other sale. If no approved promo is on file besides ADPILV2026, there is no extra deal. Free local delivery at $250+ is a standing fulfillment rule, not a promo code."
+    },
+    {
+      "id": "policy-delivery",
+      "title": "Local delivery",
+      "kind": "policy",
+      "text": "Local Las Vegas delivery is $20. Merchandise of $250.00 or more includes free local delivery — two vials usually does it. Pickup has no delivery fee. Dry-vial shipping is quoted on the confirmation call and is not this $20 local fee. The team applies the waiver on the invoice from the confirmed merchandise amount. The floor team does not invent SKU prices."
     },
     {
       "id": "policy-no-dose",

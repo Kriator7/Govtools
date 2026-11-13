@@ -81,6 +81,36 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Folder of Finder exports. Defaults to data/imports/legacy/",
     )
+    invoice = sub.add_parser(
+        "invoice",
+        help=(
+            "Print a payment invoice from a supplied merchandise subtotal. "
+            "Never invents SKU prices. Local delivery is $20, free at $250+."
+        ),
+    )
+    invoice.add_argument(
+        "--subtotal",
+        required=True,
+        help="Merchandise subtotal in USD from the confirmation call. Do not invent this.",
+    )
+    invoice.add_argument(
+        "--fulfillment",
+        default="delivery",
+        choices=("delivery", "prep", "pickup", "ship"),
+        help="delivery/prep charges the $20 local fee unless merchandise is $250+.",
+    )
+    invoice.add_argument("--invoice-id", default="", help="Optional invoice id printed on the form")
+    invoice.add_argument(
+        "--detail",
+        default="Merchandise",
+        help="Line description. Do not put an invented SKU price here.",
+    )
+    invoice.add_argument("--html", action="store_true", help="Print HTML instead of plain text")
+    invoice.add_argument(
+        "--out",
+        default=None,
+        help="Write the invoice to this path instead of stdout",
+    )
     return parser
 
 
@@ -216,6 +246,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             folder = PACKAGE_ROOT / folder
         result = ingest_legacy(folder)
         sys.stdout.write(json.dumps(result, indent=2) + "\n")
+        return 0
+    if args.command == "invoice":
+        from pathlib import Path
+
+        from wellness_agent.invoice import format_invoice_html, format_invoice_text, quote_invoice
+
+        try:
+            quote = quote_invoice(
+                merchandise_subtotal=args.subtotal,
+                fulfillment=args.fulfillment,
+                invoice_id=args.invoice_id,
+                detail=args.detail,
+            )
+        except Exception as exc:
+            sys.stderr.write(f"error: {exc}\n")
+            return 1
+        body = format_invoice_html(quote) if args.html else format_invoice_text(quote)
+        if args.out:
+            path = Path(args.out)
+            path.write_text(body, encoding="utf-8")
+            sys.stderr.write(f"wrote {path}\n")
+            return 0
+        sys.stdout.write(body)
         return 0
     alert = compose_alert(_trigger_from_args(args))
     if args.command == "compose":

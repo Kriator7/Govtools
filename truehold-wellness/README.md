@@ -56,7 +56,11 @@ Live mode calls `getMe` and refuses `@PirateEye_bot` and the deleted `@Npeppers_
 6. Local Las Vegas: **Zelle is best** (details on the confirmation call). Debit card instead of Zelle: **Pay by debit card on the site**.
 7. Phone is asked only after an order (or `/schedule`). Telegram cannot expose a phone unless the client shares it (**Share my phone number** or type it) so the team can call to confirm, consult, and complete required documentation.
 8. A confirmed interest order **decrements on-hand inventory** (when Inventory.on_hand is set) and appends a row to the working `trueholdwellness-orders.xlsx` ledger, same as the old agent.
-9. **Prep and local delivery are for Las Vegas residents only.** Shipping is **dry (lyophilized) vials only** — not reconstituted product.
+9. **Prep and local delivery are for Las Vegas residents only.** Local delivery is **$20**, and **merchandise of $250 or more includes free delivery** (two vials usually does it). Pickup is free. Shipping is **dry (lyophilized) vials only** — not reconstituted product. The invoice prints that rule in small print. Staff apply it from the confirmed merchandise amount — the bot does not invent SKU prices.
+    ```bash
+    python -m wellness_agent invoice --subtotal 180 --fulfillment delivery
+    python -m wellness_agent invoice --subtotal 250 --fulfillment delivery --html
+    ```
 10. Staff are notified with the number (or a note that it is missing) plus the inventory adjustment. The customer gets a short confirmation plus the PDF in Telegram.
 
 Public BotFather commands are only `/start` `/menu` `/schedule` `/help`. `/inbox` is not in the customer menu.

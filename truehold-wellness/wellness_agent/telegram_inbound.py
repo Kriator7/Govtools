@@ -16,6 +16,7 @@ from wellness_agent.clients import (
     save_client_phone,
 )
 from wellness_agent.compose import compose_alert, format_alert
+from wellness_agent.delivery import customer_delivery_note
 from wellness_agent.discounts import (
     COLLEGE_THANKS,
     customer_discount_line,
@@ -389,6 +390,9 @@ def handle_telegram_update(payload: dict, telegram) -> dict:
         )
         host = current_host(chat_id)
         confirm = CUSTOMER_CONFIRM.format(detail=detail)
+        extra_delivery = customer_delivery_note("prep")
+        if extra_delivery:
+            confirm = f"{confirm}\n{extra_delivery}"
         extra_customer = customer_discount_line(discount_code(chat_id))
         if extra_customer:
             confirm = f"{confirm}\n{extra_customer}"
