@@ -107,9 +107,12 @@ def test_qty_and_fulfill_edit_the_same_product_card():
     assert edited[-1]["message_id"] == "22"
     assert "1 of 2" in edited[-1]["caption"]
     assert "Las Vegas · we call" not in edited[-1]["caption"]
+    assert "two vials usually does it" in edited[-1]["caption"]
     ask = handle_menu_callback(_tap("w:ask:nad:1"), tg)
     assert ask["action"] == "ask"
-    assert "2 of 2" in [item["caption"] for item in tg.sent if item.get("edited")][-1]
+    ask_caption = [item["caption"] for item in tg.sent if item.get("edited")][-1]
+    assert "2 of 2" in ask_caption
+    assert "two vials usually does it" in ask_caption
     rows = [item["reply_markup"]["inline_keyboard"] for item in tg.sent if item.get("edited")][-1]
     assert rows[0][0]["text"] == BUY_PREP
 

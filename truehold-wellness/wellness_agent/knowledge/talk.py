@@ -20,6 +20,7 @@ from wellness_agent.greetings import (
     is_fasting_request,
     is_herb_request,
 )
+from wellness_agent.delivery import POLICY as DELIVERY_POLICY
 from wellness_agent.discounts import COLLEGE_POLICY, extract_code
 from wellness_agent.knowledge import active_promo, pick_snippet, retrieve, seed_approved_knowledge
 from wellness_agent.knowledge.house import (
@@ -70,6 +71,12 @@ def reply(
         return TalkReply(text=body, pose="wave", source="seed-hello")
     if is_creed_request(text):
         return _creed_reply(host, text)
+    if _is_delivery_question(lowered):
+        body = DELIVERY_POLICY
+        extra = _promo_line(chat_id, sprinkle=False)
+        if extra:
+            body = f"{body}\n\n{extra}"
+        return TalkReply(text=_signed(host, body), pose="present", source="seed-delivery")
     if extract_code(text) or _is_discount_question(lowered):
         body = COLLEGE_POLICY
         extra = _promo_line(chat_id, sprinkle=False)
@@ -174,6 +181,17 @@ def _is_discount_question(lowered: str) -> bool:
     )
 
 
+def _is_delivery_question(lowered: str) -> bool:
+    return bool(
+        re.search(
+            r"(delivery.{0,24}free|free.{0,24}delivery|delivery fee|"
+            r"local delivery|\$20.{0,24}deliver|deliver.{0,24}\$20|"
+            r"\$250|over \$250|250\s*\+|two vials usually)",
+            lowered,
+        )
+    )
+
+
 def _promo_line(chat_id: str, *, sprinkle: bool) -> str:
     promo = active_promo()
     if not promo:
@@ -186,7 +204,10 @@ def _promo_line(chat_id: str, *, sprinkle: bool) -> str:
 def _llm_reply(message: str, hits: list[dict[str, Any]], host: dict[str, Any]) -> TalkReply | None:
     context = "\n\n".join(f"[{row['kind']}] {row['title']}: {row['text']}" for row in hits) or "No extra snippets."
     promo = active_promo()
-    standing = f"Approved standing discount: {COLLEGE_POLICY}"
+    standing = (
+        f"Approved standing discount: {COLLEGE_POLICY} "
+        f"Approved standing fulfillment: {DELIVERY_POLICY}"
+    )
     extra = (
         f"Approved promotion: {promo['headline']} — {promo['body']}"
         if promo
@@ -213,7 +234,8 @@ def _llm_reply(message: str, hits: list[dict[str, Any]], host: dict[str, Any]) -
         "The floor team is backed by over 50 years of combined clinical, medical, and surgical experience. "
         "Use ONLY the approved context. If it is not there, say you will fetch a person via Team "
         "and offer the tap-menu. Never give dosing, reconstitution, injection, or medical advice. "
-        "Never invent products, prices, or sales other than the approved college code ADPILV2026 (10% off). "
+        "Never invent products, prices, or sales other than the approved college code ADPILV2026 (10% off) "
+        "and the standing local-delivery rule ($20, free at $250+; two vials usually does it). "
         "Never include http links. "
         "Las Vegas residents, dry vials only, educational only. Under 500 characters."
     )
