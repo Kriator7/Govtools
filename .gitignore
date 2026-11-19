@@ -8,6 +8,14 @@ dist/
 build/
 .env
 .DS_Store
+cardano-preprod-demo/bin/
+cardano-preprod-demo/ipc/
+cardano-preprod-demo/keys/*.skey
+cardano-preprod-demo/keys/*.vkey
+cardano-preprod-demo/keys/*.addr
+cardano-preprod-demo/keys/tx.raw
+cardano-preprod-demo/keys/tx.signed
+
 mr_north/data/hourly.heartbeat.json
 mr_north/data/last_hourly.json
 mr_north/data/telegram_chat.json
