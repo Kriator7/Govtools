@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cardano Preprod payment</title>
+  <style>
+    :root {
+      --bg: #0f1720;
+      --panel: #182230;
+      --ink: #e8eef6;
+      --muted: #9aa8b8;
+      --line: #2a3a4c;
+      --good: #3dd68c;
+      --wait: #e0b34d;
+      --bad: #e15d5d;
+      --btn: #3d7ea6;
+      --btn-off: #3a4756;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    main {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+    h1 { font-size: 1.6rem; margin: 0 0 6px; }
+    p.lede { color: var(--muted); margin: 0 0 24px; }
+    .grid { display: grid; gap: 16px; }
+    @media (min-width: 800px) {
+      .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 18px 18px 16px;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    h2 { font-size: 1.05rem; margin: 0 0 12px; }
+    .row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    .row:last-child { border-bottom: 0; }
+    .k { color: var(--muted); flex: 0 0 auto; }
+    .v { font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; flex: 1 1 8rem; min-width: 0; }
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .good { background: #1d4b38; color: var(--good); }
+    .wait { background: #4a3b16; color: var(--wait); }
+    .bad { background: #4a2222; color: var(--bad); }
+    .bar { height: 10px; background: #243140; border-radius: 6px; overflow: hidden; margin: 10px 0 4px; }
+    .bar > span { display: block; height: 100%; background: var(--wait); width: 0; }
+    .bar.ready > span { background: var(--good); }
+    label { display: block; color: var(--muted); font-size: 13px; margin: 10px 0 4px; }
+    input {
+      width: 100%;
+      background: #101820;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+    button {
+      margin-top: 14px;
+      width: 100%;
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font: 600 14px/1.3 inherit;
+      color: #fff;
+      background: var(--btn);
+      cursor: pointer;
+      white-space: normal;
+    }
+    button:disabled {
+      background: var(--btn-off);
+      color: #9aa8b8;
+      cursor: not-allowed;
+      pointer-events: none;
+      overflow: visible;
+      text-overflow: clip;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #101820;
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 12px;
+      color: #c5d0dc;
+      min-height: 3.5em;
+    }
+    .note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Cardano Preprod payment</h1>
+    <p class="lede">Local node socket only. Network magic 1. No Blockfrost key.</p>
+    <div class="grid">
+      <section>
+        <h2>Node status <span id="ready-pill" class="pill wait">checking</span></h2>
+        <div class="bar" id="bar"><span id="bar-fill"></span></div>
+        <div class="row"><span class="k">Sync</span><span class="v" id="sync">—</span></div>
+        <div class="row"><span class="k">Network</span><span class="v" id="network">preprod / magic 1</span></div>
+        <div class="row"><span class="k">Compose</span><span class="v" id="compose">—</span></div>
+        <div class="row"><span class="k">Socket</span><span class="v" id="socket">—</span></div>
+        <div class="row"><span class="k">Era / epoch / slot</span><span class="v" id="chain">—</span></div>
+        <div class="row"><span class="k">Block hash</span><span class="v" id="hash">—</span></div>
+        <div class="row"><span class="k">Provider</span><span class="v" id="provider">local-node-socket</span></div>
+        <p class="note" id="error"></p>
+      </section>
+      <section>
+        <h2>Send ADA</h2>
+        <p class="note" id="wallet">Demo address loads after the node socket answers.</p>
+        <form id="send-form">
+          <label for="destination">Destination (addr_test…)</label>
+          <input id="destination" name="destination" autocomplete="off" placeholder="addr_test1…">
+          <label for="amount">Amount (ADA)</label>
+          <input id="amount" name="amount" type="number" step="0.000001" min="0" value="1">
+          <button id="send-btn" type="submit" disabled>Send disabled until Preprod is ready</button>
+        </form>
+        <pre id="result">Waiting for node status.</pre>
+      </section>
+    </div>
+  </main>
+  <script>
+    const pill = document.getElementById("ready-pill");
+    const bar = document.getElementById("bar");
+    const fill = document.getElementById("bar-fill");
+    const sendBtn = document.getElementById("send-btn");
+    const result = document.getElementById("result");
+
+    function setPill(kind, text) {
+      pill.className = "pill " + kind;
+      pill.textContent = text;
+    }
+
+    async function refreshStatus() {
+      const res = await fetch("/api/status", { cache: "no-store" });
+      const data = await res.json();
+      const progress = data.syncProgress == null ? null : Number(data.syncProgress);
+      document.getElementById("sync").textContent =
+        progress == null ? (data.error || "unavailable") : progress.toFixed(2) + "%";
+      fill.style.width = progress == null ? "0%" : Math.max(0, Math.min(progress, 100)) + "%";
+      bar.classList.toggle("ready", Boolean(data.ready));
+      document.getElementById("network").textContent =
+        (data.network || "preprod") + " / magic " + (data.networkMagic ?? 1);
+      const nodeRunning = data.compose && data.compose.nodeRunning;
+      document.getElementById("compose").textContent = nodeRunning
+        ? "cardano-preprod-demo / node running"
+        : (data.compose && data.compose.error) || "node not running";
+      document.getElementById("socket").textContent =
+        (data.socketExists ? "up · " : "missing · ") + (data.socketPath || "");
+      const tip = data.tip || {};
+      document.getElementById("chain").textContent = data.tip
+        ? [tip.era, "epoch " + tip.epoch, "slot " + tip.slot, "block " + tip.block].join(" · ")
+        : "—";
+      document.getElementById("hash").textContent = tip.hash || "—";
+      document.getElementById("provider").textContent =
+        (data.provider || "local-node-socket") + (data.blockfrost ? " + blockfrost" : " · blockfrost off");
+      document.getElementById("error").textContent = data.error || "";
+      if (data.ready) {
+        setPill("good", "Preprod ready");
+        sendBtn.disabled = false;
+        sendBtn.textContent = "Send ADA via local node";
+      } else if (data.socketExists || nodeRunning) {
+        setPill("wait", "syncing");
+        sendBtn.disabled = true;
+        sendBtn.textContent = "Send disabled until Preprod is ready";
+      } else {
+        setPill("bad", "node down");
+        sendBtn.disabled = true;
+        sendBtn.textContent = "Send disabled until Preprod is ready";
+      }
+      return data;
+    }
+
+    async function refreshWallet() {
+      const res = await fetch("/api/wallet", { cache: "no-store" });
+      const data = await res.json();
+      if (data.address) {
+        const ada = Number(data.ada);
+        const funded = data.funded ? " · " + ada.toLocaleString(undefined, { maximumFractionDigits: 6 }) + " tADA" : " · unfunded";
+        document.getElementById("wallet").textContent =
+          "From " + data.address + (data.utxoError ? " · UTxO query waiting on the node" : funded);
+      } else if (data.error) {
+        document.getElementById("wallet").textContent = data.error;
+      }
+    }
+
+    document.getElementById("send-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (sendBtn.disabled) return;
+      sendBtn.disabled = true;
+      result.textContent = "Submitting through the local node socket…";
+      try {
+        const res = await fetch("/api/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            destination: document.getElementById("destination").value,
+            amount: document.getElementById("amount").value,
+          }),
+        });
+        const data = await res.json();
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        result.textContent = String(err);
+      }
+      await refreshStatus();
+    });
+
+    async function tick() {
+      try {
+        await refreshStatus();
+        await refreshWallet();
+      } catch (err) {
+        setPill("bad", "gui error");
+        document.getElementById("error").textContent = String(err);
+      }
+    }
+    tick();
+    setInterval(tick, 5000);
+  </script>
+</body>
+</html>
