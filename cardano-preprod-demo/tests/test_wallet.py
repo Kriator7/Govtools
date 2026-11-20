@@ -4,7 +4,12 @@ from pathlib import Path
 from subprocess import CompletedProcess
 
 from payment_app.node import NodeClient
-from payment_app.wallet import ensure_demo_wallet, utxo_lovelace
+from payment_app.wallet import (
+    WALLET_LETTER_NAME,
+    ensure_demo_wallet,
+    utxo_lovelace,
+    write_wallet_letter,
+)
 
 
 def test_builds_preprod_base_address(tmp_path: Path) -> None:
@@ -43,6 +48,15 @@ def test_builds_preprod_base_address(tmp_path: Path) -> None:
     wallet = ensure_demo_wallet(client, tmp_path)
     assert wallet["address"] == "addr_test1qabc"
     assert wallet["stakeAddress"] == "stake_test1abc"
+    letter = tmp_path / "keys" / WALLET_LETTER_NAME
+    assert letter.exists()
+    assert wallet["walletLetterFile"] == str(letter)
+    text = letter.read_text(encoding="utf-8")
+    assert "network=preprod" in text
+    assert "networkMagic=1" in text
+    assert "addr_test1qabc" in text
+    assert "===== payment.skey =====" in text
+    assert "--mainnet" not in text
     joined = "\n".join(" ".join(c) for c in calls)
     assert "address key-gen" in joined
     assert "stake-address key-gen" in joined
@@ -79,6 +93,31 @@ def test_upgrades_enterprise_address_to_base(tmp_path: Path) -> None:
     client = NodeClient(socket_path=socket, cli_path="/opt/cardano-cli", runner=runner)
     wallet = ensure_demo_wallet(client, tmp_path)
     assert wallet["address"] == "addr_test1qbase"
+
+
+def test_write_wallet_letter_copies_key_files(tmp_path: Path) -> None:
+    keys = tmp_path / "keys"
+    keys.mkdir()
+    (keys / "payment.addr").write_text("addr_test1qletter", encoding="utf-8")
+    (keys / "stake.addr").write_text("stake_test1letter", encoding="utf-8")
+    (keys / "payment.skey").write_text("PAYMENT-SKEY-MATERIAL", encoding="utf-8")
+    (keys / "payment.vkey").write_text("PAYMENT-VKEY-MATERIAL", encoding="utf-8")
+    (keys / "stake.skey").write_text("STAKE-SKEY-MATERIAL", encoding="utf-8")
+    (keys / "stake.vkey").write_text("STAKE-VKEY-MATERIAL", encoding="utf-8")
+    letter = write_wallet_letter(keys)
+    assert letter.name == "wallet-letter.txt"
+    text = letter.read_text(encoding="utf-8")
+    assert "addr_test1qletter" in text
+    assert "PAYMENT-SKEY-MATERIAL" in text
+    assert "STAKE-SKEY-MATERIAL" in text
+    assert letter.stat().st_mode & 0o777 == 0o600
+
+
+def test_gitignore_covers_wallet_letter() -> None:
+    ignore = Path(__file__).resolve().parents[2] / ".gitignore"
+    text = ignore.read_text(encoding="utf-8")
+    assert "cardano-preprod-demo/keys/wallet-letter.txt" in text
+    assert "cardano-preprod-demo/keys/*.skey" in text
 
 
 def test_utxo_lovelace_sums_ada_only() -> None:

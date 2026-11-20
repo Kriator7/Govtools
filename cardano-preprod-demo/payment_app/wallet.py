@@ -32,6 +32,57 @@ def _is_enterprise_test_address(address: str) -> bool:
     return address.startswith("addr_test1v")
 
 
+WALLET_LETTER_NAME = "wallet-letter.txt"
+
+
+def wallet_letter_path(root: Path | None = None) -> Path:
+    return keys_dir(root) / WALLET_LETTER_NAME
+
+
+def write_wallet_letter(directory: Path) -> Path:
+    """Write a local wallet letter with addresses and key-file contents.
+
+    The letter stays in keys/wallet-letter.txt (mode 0600, gitignored).
+    Signing keys are never returned over the HTTP API.
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+    names = (
+        "payment.addr",
+        "stake.addr",
+        "payment.vkey",
+        "stake.vkey",
+        "payment.skey",
+        "stake.skey",
+    )
+    lines = [
+        "Cardano Preprod wallet letter",
+        "network=preprod",
+        "networkMagic=1",
+        "sources=https://docs.cardano.org/cardano-testnets/getting-started",
+        f"directory={directory.resolve()}",
+        "",
+        "This file is the wallet letter. Keep it with the key files.",
+        "Do not commit it. Do not copy it to artifacts or chat.",
+        "",
+    ]
+    for name in names:
+        path = directory / name
+        lines.append(f"file.{name}={path.resolve() if path.exists() else 'MISSING'}")
+    lines.append("")
+    for name in names:
+        path = directory / name
+        lines.append(f"===== {name} =====")
+        if path.exists():
+            lines.append(path.read_text(encoding="utf-8").rstrip("\n"))
+        else:
+            lines.append("MISSING")
+        lines.append("")
+    letter = directory / WALLET_LETTER_NAME
+    letter.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    letter.chmod(0o600)
+    return letter
+
+
 def ensure_demo_wallet(client: NodeClient, root: Path | None = None) -> dict[str, str]:
     directory = keys_dir(root)
     vkey = directory / "payment.vkey"
@@ -104,6 +155,7 @@ def ensure_demo_wallet(client: NodeClient, root: Path | None = None) -> dict[str
     reward = _read_text(stake_addr)
     if reward and not reward.startswith("stake_test"):
         raise NodeError("stake.addr is not a Preprod stake_test address")
+    letter = write_wallet_letter(directory)
     return {
         "address": address,
         "stakeAddress": reward,
@@ -113,6 +165,7 @@ def ensure_demo_wallet(client: NodeClient, root: Path | None = None) -> dict[str
         "stakeSigningKeyFile": str(stake_skey),
         "addressFile": str(addr),
         "stakeAddressFile": str(stake_addr),
+        "walletLetterFile": str(letter),
     }
 
 

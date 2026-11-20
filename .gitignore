@@ -13,6 +13,7 @@ cardano-preprod-demo/ipc/
 cardano-preprod-demo/keys/*.skey
 cardano-preprod-demo/keys/*.vkey
 cardano-preprod-demo/keys/*.addr
+cardano-preprod-demo/keys/wallet-letter.txt
 cardano-preprod-demo/keys/tx.raw
 cardano-preprod-demo/keys/tx.signed
 

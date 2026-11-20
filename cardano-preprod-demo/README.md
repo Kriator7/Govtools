@@ -68,6 +68,7 @@ python3 -m pytest
 The demo wallet is a Preprod **base address** (payment + stake keys), built with
 `bash scripts/create_wallet.sh` from the [testnet getting-started](https://docs.cardano.org/cardano-testnets/getting-started)
 commands (`--testnet-magic 1`). Fund it from the [Preprod faucet](https://docs.cardano.org/cardano-testnets/tools/faucet)
-(`Environment: Preprod Testnet`, action `Receive test ADA`). Signing keys stay
-in `keys/` and are not committed. Unused tADA should be returned to the faucet
+(`Environment: Preprod Testnet`, action `Receive test ADA`). The wallet letter
+with addresses and keys is `keys/wallet-letter.txt` (gitignored, mode 0600).
+See `keys/WHERE-IS-THE-WALLET.md`. Unused tADA should be returned to the faucet
 address published on that page.
