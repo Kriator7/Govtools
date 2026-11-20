@@ -62,8 +62,16 @@ def test_send_uses_node_socket_not_blockfrost(tmp_path: Path) -> None:
             (tmp_path / "keys" / "payment.vkey").write_text("vkey", encoding="utf-8")
             (tmp_path / "keys" / "payment.skey").write_text("skey", encoding="utf-8")
             return CompletedProcess(args, 0, stdout="", stderr="")
+        if "stake-address key-gen" in cmd:
+            (tmp_path / "keys").mkdir(exist_ok=True)
+            (tmp_path / "keys" / "stake.vkey").write_text("svkey", encoding="utf-8")
+            (tmp_path / "keys" / "stake.skey").write_text("sskey", encoding="utf-8")
+            return CompletedProcess(args, 0, stdout="", stderr="")
+        if "stake-address build" in cmd:
+            (tmp_path / "keys" / "stake.addr").write_text("stake_test1from", encoding="utf-8")
+            return CompletedProcess(args, 0, stdout="", stderr="")
         if "address build" in cmd:
-            (tmp_path / "keys" / "payment.addr").write_text("addr_test1from", encoding="utf-8")
+            (tmp_path / "keys" / "payment.addr").write_text("addr_test1qfrom", encoding="utf-8")
             return CompletedProcess(args, 0, stdout="", stderr="")
         if args[1:3] == ["query", "utxo"]:
             return CompletedProcess(

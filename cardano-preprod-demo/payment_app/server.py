@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 from payment_app.node import NodeClient, NodeError, NodeNotReady, default_root, status_payload
 from payment_app.send import send_ada, send_error_payload
-from payment_app.wallet import ensure_demo_wallet
+from payment_app.wallet import ensure_demo_wallet, utxo_lovelace
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -64,10 +64,15 @@ class PaymentHandler(BaseHTTPRequestHandler):
                     utxos = client.query_utxo(wallet["address"])
                 except (NodeError, OSError) as exc:
                     utxo_error = str(exc)
+                lovelace = utxo_lovelace(utxos)
                 self._send_json(
                     {
                         "address": wallet["address"],
+                        "stakeAddress": wallet.get("stakeAddress") or None,
                         "utxos": utxos,
+                        "lovelace": lovelace,
+                        "ada": lovelace / 1_000_000,
+                        "funded": lovelace > 0,
                         "utxoError": utxo_error,
                         "blockfrost": False,
                     }

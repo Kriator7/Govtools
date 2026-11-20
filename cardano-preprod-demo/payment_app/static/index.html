@@ -33,19 +33,21 @@
     p.lede { color: var(--muted); margin: 0 0 24px; }
     .grid { display: grid; gap: 16px; }
     @media (min-width: 800px) {
-      .grid { grid-template-columns: 1.2fr 0.8fr; }
+      .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     }
     section {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 10px;
       padding: 18px 18px 16px;
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
     h2 { font-size: 1.05rem; margin: 0 0 12px; }
-    .row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+    .row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
     .row:last-child { border-bottom: 0; }
-    .k { color: var(--muted); }
-    .v { font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; }
+    .k { color: var(--muted); flex: 0 0 auto; }
+    .v { font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; flex: 1 1 8rem; min-width: 0; }
     .pill {
       display: inline-block;
       border-radius: 999px;
@@ -190,8 +192,10 @@
       const res = await fetch("/api/wallet", { cache: "no-store" });
       const data = await res.json();
       if (data.address) {
+        const ada = Number(data.ada);
+        const funded = data.funded ? " · " + ada.toLocaleString(undefined, { maximumFractionDigits: 6 }) + " tADA" : " · unfunded";
         document.getElementById("wallet").textContent =
-          "From " + data.address + (data.utxoError ? " · UTxO query waiting on the node" : "");
+          "From " + data.address + (data.utxoError ? " · UTxO query waiting on the node" : funded);
       } else if (data.error) {
         document.getElementById("wallet").textContent = data.error;
       }
