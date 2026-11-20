@@ -9,6 +9,7 @@
 # Preprod networkMagic 1 from the image's shelley-genesis.json.
 #
 # NETWORK is hardcoded to preprod. Do not default this file to mainnet.
+# Fast-sync this volume with scripts/mithril_bootstrap.sh (release-preprod Mithril).
 
 name: cardano-preprod-demo
 

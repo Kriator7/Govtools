@@ -11,9 +11,13 @@ disabled until `syncProgress` is `100.00`. There is no Blockfrost path.
 3. Preprod configs compatible with node 11.1.3: [Cardano Operations Book — Pre-production](https://book.world.dev.cardano.org/env-preprod.html)
 4. Release + checksums: [cardano-node 11.1.3](https://github.com/IntersectMBO/cardano-node/releases/tag/11.1.3) (`sha256sums.txt`)
 5. Tip query: `cardano-cli query tip --testnet-magic 1 --socket-path <socket>`
+6. Mithril bootstrap: [Getting started — bootstrap a Cardano node](https://mithril.network/doc/manual/getting-started/bootstrap-cardano-node)
+7. Preprod aggregator: `https://aggregator.release-preprod.api.mithril.network/aggregator`
+8. Preprod vkeys: [IntersectMBO/mithril `mithril-infra/configuration/release-preprod`](https://github.com/IntersectMBO/mithril/tree/main/mithril-infra/configuration/release-preprod)
 
 `NETWORK` is hardcoded to `preprod` in `docker-compose.yml`. Do not point this
-stack at mainnet.
+stack at mainnet. Genesis replay from slot 0 is slow even on Preprod; use the
+Mithril snapshot before expecting `syncProgress` `100.00`.
 
 Pinned images:
 
@@ -36,6 +40,17 @@ bash scripts/up.sh
 2. Installs `cardano-cli` from the 11.1.3 tarball after sha256 verification.
 3. Queries tip on magic 1.
 4. Serves the payment GUI at `http://127.0.0.1:8787`.
+
+Fast-sync the persistent volume from the official **release-preprod** Mithril
+snapshot (includes ancillary ledger files; client distribution `2642.0`):
+
+```bash
+bash scripts/mithril_bootstrap.sh
+```
+
+That script refuses mainnet aggregators, checks `protocolMagicId=1` before
+replacing `cardano-preprod-node-db`, then restarts the node. Sending stays
+disabled until `query tip --testnet-magic 1` reports `syncProgress` `100.00`.
 
 Tip only:
 
