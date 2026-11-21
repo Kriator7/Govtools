@@ -90,16 +90,27 @@ class BlsSnapshot:
     source: str = BLS_TIMESERIES_URL
 
 
-def _float(raw: str) -> float:
-    return float(str(raw).replace(",", ""))
+def _parse_value(raw: Any) -> float | None:
+    """Parse a BLS numeric field. Official API uses '-' when a print is unavailable."""
+    text = str(raw if raw is not None else "").strip().replace(",", "")
+    if not text or text in {"-", ".", "N/A", "NA"}:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        return None
 
 
-def _latest_two_and_yoy(points: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None]:
+def _latest_two_and_yoy(
+    points: list[dict[str, Any]],
+) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None]:
     ordered = sorted(
-        points,
+        (row for row in points if _parse_value(row.get("value")) is not None),
         key=lambda row: (str(row.get("year") or ""), str(row.get("period") or "")),
         reverse=True,
     )
+    if not ordered:
+        raise ValueError("series has no numeric BLS prints")
     latest = ordered[0]
     previous = ordered[1] if len(ordered) > 1 else None
     yoy = None
@@ -158,7 +169,13 @@ def fetch_snapshot(
         points = list((row or {}).get("data") or [])
         if not points:
             continue
-        latest, previous, yoy = _latest_two_and_yoy(points)
+        try:
+            latest, previous, yoy = _latest_two_and_yoy(points)
+        except ValueError:
+            continue
+        value = _parse_value(latest.get("value"))
+        if value is None:
+            continue
         print_ = SeriesPrint(
             series_id=meta["id"],
             label=meta["label"],
@@ -166,9 +183,9 @@ def fetch_snapshot(
             year=str(latest.get("year") or ""),
             period=str(latest.get("period") or ""),
             period_name=str(latest.get("periodName") or latest.get("period") or ""),
-            value=_float(str(latest.get("value"))),
-            previous_value=_float(str(previous.get("value"))) if previous else None,
-            yoy_value=_float(str(yoy.get("value"))) if yoy else None,
+            value=value,
+            previous_value=_parse_value(previous.get("value")) if previous else None,
+            yoy_value=_parse_value(yoy.get("value")) if yoy else None,
         )
         prints.append(print_)
         fingerprint_parts.append(

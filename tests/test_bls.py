@@ -89,6 +89,81 @@ def test_fetch_snapshot_builds_official_prints():
     assert "peptide" not in text.lower()
 
 
+def test_fetch_snapshot_skips_dash_placeholder_prints():
+    """BLS returns '-' for unavailable periods (often year-ago October)."""
+
+    def opener(request, timeout=30):
+        payload = {
+            "status": "REQUEST_SUCCEEDED",
+            "message": [],
+            "Results": {
+                "series": [
+                    {
+                        "seriesID": "LNS14000000",
+                        "data": [
+                            {
+                                "year": "2026",
+                                "period": "M10",
+                                "periodName": "October",
+                                "value": "4.1",
+                            },
+                            {
+                                "year": "2026",
+                                "period": "M09",
+                                "periodName": "September",
+                                "value": "4.2",
+                            },
+                            {
+                                "year": "2025",
+                                "period": "M10",
+                                "periodName": "October",
+                                "value": "-",
+                            },
+                        ],
+                    },
+                    {
+                        "seriesID": "CUUR0000SA0",
+                        "data": [
+                            {
+                                "year": "2026",
+                                "period": "M10",
+                                "periodName": "October",
+                                "value": "337.511",
+                            },
+                            {
+                                "year": "2026",
+                                "period": "M09",
+                                "periodName": "September",
+                                "value": "336.940",
+                            },
+                            {
+                                "year": "2025",
+                                "period": "M10",
+                                "periodName": "October",
+                                "value": "-",
+                            },
+                        ],
+                    },
+                ]
+            },
+        }
+        return _FakeResponse(payload)
+
+    snapshot = fetch_snapshot(opener=opener)
+    by_id = {row.series_id: row for row in snapshot.prints}
+    assert by_id["LNS14000000"].value == 4.1
+    assert by_id["LNS14000000"].previous_value == 4.2
+    assert by_id["LNS14000000"].yoy_value is None
+    assert by_id["CUUR0000SA0"].value == 337.511
+    assert by_id["CUUR0000SA0"].previous_value == 336.940
+    assert by_id["CUUR0000SA0"].yoy_value is None
+    text = format_breakdown(snapshot)
+    assert "4.1%" in text
+    assert "337.511" in text
+    cpi_line = next(line for line in text.splitlines() if "CPI-U all items (not SA)" in line)
+    assert "y/y" not in cpi_line
+
+
 def test_format_breakdown_marks_unchanged_hour():
     snapshot = BlsSnapshot(
         fetched_at=datetime(2026, 8, 20, 16, 0, tzinfo=timezone.utc),
