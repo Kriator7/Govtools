@@ -81,3 +81,7 @@ _Avoid_: payer, Telegram chat
 **Local working copy**:
 The Govtools tree on the WD_BLACK Agent databank used to build Wellness on this Mac. Cursor Cloud VMs are not this copy.
 _Avoid_: scratch clone, /workspace/project
+
+**Demo invoice**:
+A test-only invoice printed in demo mode. Tax is zero. It is not live, not paid, and does not move on-hand.
+_Avoid_: paid invoice, live invoice
