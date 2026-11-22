@@ -9,7 +9,7 @@ A person TrueHold Wellness has issued an invoice to for peptide use.
 _Avoid_: Customer, Telegram visitor, interest-order contact
 
 **THW-###**:
-The stable identifier of a Client, assigned when their first invoice is issued.
+The stable identifier of a Client, minted automatically when an invoice introduces a name the Client sheet does not have.
 _Avoid_: Telegram chat id, phone as id
 
 **Interest-order contact**:
