@@ -31,9 +31,13 @@ _Avoid_: purchase, checkout
 _Alias_: _place_interest_order
 
 **Lot**:
-A specific manufactured batch of a peptide. A confirmed invoice assigns a lot to a Client.
+A specific manufactured batch of a peptide. A paid invoice assigns a lot to a Client.
 _Avoid_: SKU, on-hand
 
 **COA**:
 The Certificate of Analysis for a lot, kept with the Client assignment so we know which clients received which peptide.
 _Avoid_: locked information sheet
+
+**Paid invoice**:
+An invoice marked paid. That is when on-hand is removed and lot and COA are assigned to the Client.
+_Avoid_: draft invoice, issued unpaid invoice
