@@ -2,7 +2,9 @@
   "tracker": {
     "drive_folder": "https://drive.google.com/drive/folders/1aX9HPNuM66H_fFsBPw99oIrFz_Z_w0BC",
     "lots_sheet": "https://docs.google.com/spreadsheets/d/1tYJT_-DKGpkZSJy0c-JJwh6VYFi2fKKMa3QzoCK9OII/edit",
-    "coa_sheet": "https://docs.google.com/spreadsheets/d/1yHIt1AVUeundzL0y7TLipX4ZlL95ZVfvY3Vy_MUImkM/edit"
+    "coa_sheet": "https://docs.google.com/spreadsheets/d/1yHIt1AVUeundzL0y7TLipX4ZlL95ZVfvY3Vy_MUImkM/edit",
+    "clients_sheet": "https://docs.google.com/spreadsheets/d/1niUSQktI__cWVPCzMGl-w2FAKmzABY1adV13b3sY9Qc/edit",
+    "logs_sheet": "https://docs.google.com/spreadsheets/d/1z4-vTqZVTITlJqteSaPqw5LT7aq0gKCUZXKF_LYkuU8/edit"
   },
   "lots": [
     {

@@ -1,0 +1,61 @@
+{
+  "as_of": "2026-11-05",
+  "timezone": "America/Los_Angeles",
+  "purpose": "Reorder contact list. Collect missing mobile (text) and email. Do not invent contacts.",
+  "clients": [
+    {
+      "client_id": "THW-VAUGHN",
+      "name": "Vaughn Heyer",
+      "aliases": ["Vaughn"],
+      "email": "vheyer77@gmail.com",
+      "email_alt": "v5@dronevideophotographyllc.com",
+      "phone": "",
+      "sms": "",
+      "las_vegas_resident": true,
+      "area": "Las Vegas, NV (Burkholder / Racetrack area)",
+      "last_purchase": "2 × Tirzepatide 10 mg vials",
+      "last_purchase_date": "2026-08-14",
+      "due_for": "Reorder outreach — collect mobile for text",
+      "contact_gaps": ["phone", "sms"],
+      "status": "client",
+      "source": "Gmail to trueholdwellness@gmail.com 2026-08-14; CardanoMint invoice CM-2025-BC-001",
+      "notes": "Confirmed THW purchase. Current on-hand Tirzepatide is 20 mg; the Aug 14 sale was recorded as 10 mg. Email is on file. Mobile/text is not."
+    },
+    {
+      "client_id": "THW-STACY",
+      "name": "Stacy Deguerra",
+      "aliases": ["Stacy Degurrera", "Stacy"],
+      "email": "",
+      "email_alt": "",
+      "phone": "",
+      "sms": "",
+      "las_vegas_resident": null,
+      "area": "",
+      "last_purchase": "KLOW / CLO protocol (2 rounds as of 2026-11-04 consult; 3 remaining per that consult)",
+      "last_purchase_date": "",
+      "due_for": "Tirzepatide weekly (weight loss) — collect email and mobile before outreach",
+      "contact_gaps": ["email", "phone", "sms"],
+      "status": "client",
+      "source": "Zoom attendee listed as Stacy Deguerra, 2026-11-04 TrueHOLD consult",
+      "notes": "Need text and email for reorder. Name spelling on Zoom is Deguerra; prior lookup used Degurrera. Do not invent contact."
+    },
+    {
+      "client_id": "THW-JUSTIN-HUGHES",
+      "name": "Justin Hughes",
+      "aliases": [],
+      "email": "justin@justinhughesfightandfitness.com",
+      "email_alt": "",
+      "phone": "",
+      "sms": "",
+      "las_vegas_resident": true,
+      "area": "Las Vegas, NV",
+      "last_purchase": "",
+      "last_purchase_date": "",
+      "due_for": "Confirm whether he is a THW client; collect mobile if yes",
+      "contact_gaps": ["phone", "sms", "purchase"],
+      "status": "prospect",
+      "source": "Gmail peptide thread 2025-11-27",
+      "notes": "Email on file. No completed TrueHold Wellness purchase on the tracker. Do not treat as a confirmed client."
+    }
+  ]
+}

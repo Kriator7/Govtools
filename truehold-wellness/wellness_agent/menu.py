@@ -795,6 +795,15 @@ def _place_interest_order(
         exclude_chats={str(chat_id)},
         require_destination=False,
     )
+    try:
+        from wellness_agent.stamp import stamp_after_invoice
+
+        stamp_after_invoice(
+            invoice_id=f"THW-TG-{chat_id}-{product['id']}-{qty}",
+            reason="telegram-interest-order",
+        )
+    except Exception as exc:
+        staff_detail = f"{staff_detail}\nStamp email skipped: {exc}."
     set_pending_order(chat_id, None, None)
     host = current_host(chat_id)
     confirm = CUSTOMER_CONFIRM.format(detail=detail)
