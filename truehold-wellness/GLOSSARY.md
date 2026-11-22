@@ -61,3 +61,7 @@ _Avoid_: notes, peptide use
 **12-month plan**:
 The Client's roadmap on the Client tracker. Each purchase updates this plan.
 _Avoid_: peptide use row
+
+**Check-in**:
+An agent message to the Client one week before they are due to reorder: how they feel, improvement, concerns, questions, and a free consult offer.
+_Avoid_: payment request
