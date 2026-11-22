@@ -44,8 +44,20 @@ _Avoid_: draft invoice, issued unpaid invoice
 
 **Peptide use**:
 A record that a Client received one peptide line: lot, COA, paid invoice, and date. One paid invoice with two peptides is two rows, same Client name and THW-###.
-_Avoid_: health app, interest order
+_Avoid_: interest order, 12-month plan
 
 **Connection**:
 A way to reach a Client: email, phone, Telegram, or similar. Connections attach to the Client; they are not the Client's identity.
 _Avoid_: Client name, THW-###
+
+**Client tracker**:
+The app that holds a Client's chief complaint, body measurements, 12-month plan, connections, and peptide use history.
+_Avoid_: clients.json, peptide-use-only sheet
+
+**Chief complaint**:
+The Client's primary reason for working with TrueHold Wellness, stored on the Client tracker.
+_Avoid_: notes, peptide use
+
+**12-month plan**:
+The Client's roadmap on the Client tracker. Each purchase updates this plan.
+_Avoid_: peptide use row
