@@ -20,3 +20,7 @@ _Avoid_: Client, customer
 The workbook sheet that is the record of Clients. Other sheets reference it; they do not store a second copy of the person.
 _Avoid_: clients.json, invoice roster
 _Alias_: Clients
+
+**Client name**:
+The unique name of a Client on the Client sheet. An invoice carries this name to find the row.
+_Avoid_: customer_name, Telegram username
