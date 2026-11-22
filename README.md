@@ -12,6 +12,20 @@ Never put the Wellness token in `realtor-agent/` or `mr_north/`. Never put the r
 
 These three agents are **protected business infrastructure**. CI fails if one is deleted unless two different people complete `.github/DELETE_AGENT_CONFIRMATION.json`. See [`PROTECTED_AGENTS.md`](PROTECTED_AGENTS.md).
 
+## Grill with Docs
+
+Before implementing a fuzzy plan, run `/grill-with-docs`. The agent reads this repo and the matching glossary, asks **one decision at a time** with a recommended answer, and writes settled terms to `GLOSSARY.md` and hard trade-offs to `docs/adr/` (per product when the change lives in that folder).
+
+Skill: [`.agents/skills/grill-with-docs/SKILL.md`](.agents/skills/grill-with-docs/SKILL.md). Map: [`GLOSSARY-MAP.md`](GLOSSARY-MAP.md). Helper:
+
+```bash
+python scripts/grill_docs.py map
+python scripts/grill_docs.py resolve --path truehold-wellness
+python scripts/grill_docs.py check
+```
+
+Do not implement until the interview confirms a shared understanding. Spec, tickets, and code come after.
+
 ## Mr North (TrueHold crypto)
 
 When any Mr North alert fires, the outbound message and JSON payload also include the current geopolitical / market catalyst briefing:
