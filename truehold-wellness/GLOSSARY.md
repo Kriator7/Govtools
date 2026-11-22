@@ -67,5 +67,5 @@ An agent message to the Client one week before they are due to reorder: how they
 _Avoid_: payment request
 
 **Reorder due**:
-One month after the invoice was marked paid. Unpaid invoices do not start this clock. Check-in is one week before this date.
+One month after the Client's latest paid invoice. A newer payment resets the clock. Unpaid invoices do not start it. Check-in is one week before this date.
 _Avoid_: interest order date, invoice issue date
