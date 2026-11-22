@@ -43,5 +43,5 @@ An invoice marked paid. That is when on-hand is removed and lot and COA are assi
 _Avoid_: draft invoice, issued unpaid invoice
 
 **Peptide use**:
-A record that a Client received a peptide: lot, COA, paid invoice, and date. History accumulates; a later purchase does not overwrite an earlier row.
+A record that a Client received one peptide line: lot, COA, paid invoice, and date. One paid invoice with two peptides is two rows, same Client name and THW-###.
 _Avoid_: health app, interest order
