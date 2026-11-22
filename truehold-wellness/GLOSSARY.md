@@ -41,3 +41,7 @@ _Avoid_: locked information sheet
 **Paid invoice**:
 An invoice marked paid. That is when on-hand is removed and lot and COA are assigned to the Client.
 _Avoid_: draft invoice, issued unpaid invoice
+
+**Peptide use**:
+A record that a Client received a peptide: lot, COA, paid invoice, and date. Other sheets reference the Client; they do not copy a second person.
+_Avoid_: health app, interest order
