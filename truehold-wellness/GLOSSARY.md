@@ -6,4 +6,4 @@ Order/inbox workflow on @THWellness_bot
 
 **Client**:
 A person TrueHold Wellness has documented as using its peptides.
-_Avoid_: Customer, Telegram visitor, interest-order contact
+_Avoid_: Customer, Telegram visitor, interest-order contact, invoice roster
