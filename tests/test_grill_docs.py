@@ -69,6 +69,7 @@ def test_root_glossary_is_vocabulary_not_a_spec():
     assert "Protected agent" in terms
     assert "Grill with Docs" in terms
     assert "TrueHold Wellness" in terms
+    assert "Desktop Jarvis" in terms
     assert "implementation detail" not in terms["Grill with Docs"]["definition"].lower()
     assert not check_glossary(ROOT / "GLOSSARY.md")
 
@@ -78,7 +79,9 @@ def test_existing_adr_is_the_product_split():
     text = adr.read_text(encoding="utf-8")
     assert text.startswith("# Three independent products")
     assert "do not share Telegram bots" in text
-    assert next_adr_number(ROOT / "docs" / "adr") == 2
+    jarvis = ROOT / "docs" / "adr" / "0002-desktop-jarvis-stays-outside-this-repository.md"
+    assert "Do not clone it into this repo" in jarvis.read_text(encoding="utf-8")
+    assert next_adr_number(ROOT / "docs" / "adr") == 3
 
 
 def test_upsert_term_creates_and_replaces(tmp_path: Path):
@@ -140,7 +143,7 @@ def test_check_and_cli_map_pass_on_the_repo(capsys):
     resolved = capsys.readouterr().out
     assert resolved.startswith("truehold-wellness\t")
     assert main(["next-adr", "--context", "govtools"]) == 0
-    assert capsys.readouterr().out.startswith("0002\t")
+    assert capsys.readouterr().out.startswith("0003\t")
 
 
 def test_stock_fact_is_readable_so_grilling_can_look_it_up():
