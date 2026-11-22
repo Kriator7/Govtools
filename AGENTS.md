@@ -9,6 +9,11 @@ bots, databases, application code, or domain language.
 | Realtor acquisition | `realtor-agent/` | @PirateEye_bot |
 | TrueHold Wellness | `truehold-wellness/` | @THWellness_bot |
 
+**Desktop Jarvis** (FatihMakes Mark-LVII) is not a fourth row. It is a
+separate Mac project. Do not clone it into this repository, do not add it
+to `GLOSSARY-MAP.md`, and do not mix it with the Wellness Client tracker.
+On the Mac it belongs at `/Volumes/WD_BLACK/Agent databank/projects/Jarvis`.
+
 Read `GLOSSARY.md` and `GLOSSARY-MAP.md` before naming things. Protected
 agents cannot be deleted without two human confirmations (`PROTECTED_AGENTS.md`).
 

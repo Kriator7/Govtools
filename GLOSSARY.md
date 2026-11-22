@@ -26,3 +26,7 @@ _Avoid_: PirateEye when naming the product folder
 **TrueHold Wellness**:
 The order and inbox product. Telegram identity is @THWellness_bot.
 _Avoid_: THW bot, Npeppers
+
+**Desktop Jarvis**:
+The FatihMakes Mark-LVII desktop assistant. It is a separate Mac project, not a Govtools product and not the Wellness Client tracker.
+_Avoid_: Client tracker, TrueHold Wellness, Govtools

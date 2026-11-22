@@ -15,3 +15,4 @@ glossary the moment they resolve.
 
 - **None across products.** These agents do not share Telegram bots, databases, or application code.
 - **Govtools repo → all three**: repo-wide protection and Grill with Docs live at the root; product terms stay in the product glossary.
+- **Desktop Jarvis is not a context here.** FatihMakes Mark-LVII lives on the Mac at `projects/Jarvis`, not in this git tree and not in TrueHold Wellness.
