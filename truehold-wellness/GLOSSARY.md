@@ -43,7 +43,7 @@ An invoice marked paid. That is when on-hand is removed and lot and COA are assi
 _Avoid_: draft invoice, issued unpaid invoice
 
 **Peptide use**:
-A record that a Client received one peptide line: lot, COA, paid invoice, and date. One paid invoice with two peptides is two rows, same Client name and THW-###.
+A record that a Receiving Client received one peptide line: lot, COA, paid invoice, and date. One paid invoice with two peptides is two rows.
 _Avoid_: interest order, 12-month plan
 
 **Connection**:
@@ -73,3 +73,7 @@ _Avoid_: interest order date, invoice issue date
 **Supply months**:
 How long a paid invoice covers for the Client named on it. Default is one month. Staff may rarely set two months, for example travel.
 _Avoid_: interest order duration
+
+**Receiving Client**:
+The Client a peptide line is for. Defaults to the invoice Client name. A friend vial names someone else.
+_Avoid_: payer, Telegram chat
