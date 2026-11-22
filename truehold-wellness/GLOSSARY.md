@@ -24,3 +24,16 @@ _Alias_: Clients
 **Client name**:
 The unique name that identifies a Client on the Client sheet. Invoices and other sheets use this name to find the person.
 _Avoid_: customer_name, Telegram username, THW-###
+
+**Interest order**:
+A request to buy a peptide before an invoice. It confirms the peptide is available; it does not remove inventory.
+_Avoid_: purchase, checkout
+_Alias_: _place_interest_order
+
+**Lot**:
+A specific manufactured batch of a peptide. A confirmed invoice assigns a lot to a Client.
+_Avoid_: SKU, on-hand
+
+**COA**:
+The Certificate of Analysis for a lot, kept with the Client assignment so we know which clients received which peptide.
+_Avoid_: locked information sheet
