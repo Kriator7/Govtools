@@ -1,3 +1,3 @@
-# Client is a person, not a Telegram chat
+# Client is a documented peptide user, not a Telegram chat
 
-Wellness currently keys clients.json by Telegram chat_id. We decided a Client is a person; chats and invoices attach to them. Chat-keyed identity cannot represent one person with two chats, or an invoice client with no Telegram yet.
+Wellness currently keys clients.json by Telegram chat_id and asks for a phone so staff can confirm, consult, and complete required documentation. A Client is someone we have documented as using our peptides, not a chat, a phone share, or an interest-order contact. Chat-keyed identity cannot represent that person, including two chats or an invoice roster row with no Telegram.
