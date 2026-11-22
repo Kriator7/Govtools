@@ -65,3 +65,7 @@ _Avoid_: peptide use row
 **Check-in**:
 An agent message to the Client one week before they are due to reorder: how they feel, improvement, concerns, questions, and a free consult offer.
 _Avoid_: payment request
+
+**Reorder due**:
+One month after the invoice was marked paid. Unpaid invoices do not start this clock. Check-in is one week before this date.
+_Avoid_: interest order date, invoice issue date
