@@ -120,6 +120,7 @@ python -m wellness_agent stock
 python -m wellness_agent lots
 python -m wellness_agent stamp
 python -m wellness_agent stamp-email --invoice-id THW-INV-EXAMPLE --dry-run
+python -m wellness_agent daily-report --dry-run
 python -m wellness_agent product klow
 python -m wellness_agent.inventory.build_pdfs
 python -m wellness_agent.inventory.build_workbook
@@ -143,7 +144,15 @@ Each issued invoice (and each confirmed Telegram interest order) emails **trueho
 python -m wellness_agent stamp-email --invoice-id THW-INV-20261105-001
 ```
 
-SMTP uses `WELLNESS_SMTP_USERNAME` / `WELLNESS_SMTP_PASSWORD` (Gmail app password; [Google app passwords](https://support.google.com/accounts/answer/185833)). `WELLNESS_STAMP_TO` defaults to `trueholdwellness@gmail.com`. Without SMTP the stamp is still logged at `data/stamp_log.jsonl`. Client roster: `wellness_agent/inventory/clients_roster.json`.
+A **daily** copy of the same stamp goes to **trueholdcrypto@gmail.com** at 07:00 Pacific (`15 15 * * *` UTC during PST). Durable cron is GitHub Action `.github/workflows/wellness-daily-report.yml`. GitHub only runs scheduled workflows on **main** after merge ([GitHub schedule events](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule)).
+
+```bash
+python -m wellness_agent daily-report --dry-run
+python -m wellness_agent daily-report
+python -m wellness_agent stamp-email --to trueholdcrypto@gmail.com --reason daily-report
+```
+
+SMTP uses `WELLNESS_SMTP_USERNAME` / `WELLNESS_SMTP_PASSWORD` (Gmail app password; [Google app passwords](https://support.google.com/accounts/answer/185833)). `WELLNESS_STAMP_TO` defaults to `trueholdwellness@gmail.com`. `WELLNESS_DAILY_REPORT_TO` defaults to `trueholdcrypto@gmail.com`. Without SMTP the stamp is still logged at `data/stamp_log.jsonl`. Client roster: `wellness_agent/inventory/clients_roster.json`.
 
 Telegram: `/menu` then **View PDF in Telegram** sends the sheet. Every PDF is written for the milligram vial in stock (molecule, testing data, risks, FDA status, reconstitution, and U-100 / 0.5 mL syringe marks). Mix math is checked in `wellness_agent/inventory/protocol.py` before a sheet is built. The bot still does not dose in chat.
 

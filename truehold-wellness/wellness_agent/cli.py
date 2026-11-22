@@ -117,14 +117,33 @@ def _build_parser() -> argparse.ArgumentParser:
     stamp.add_argument("--reason", default="current-state")
     stamp_email = sub.add_parser(
         "stamp-email",
-        help="Email the inventory / lots / client stamp to trueholdwellness@gmail.com",
+        help="Email the inventory / lots / client stamp (default trueholdwellness@gmail.com)",
     )
     stamp_email.add_argument("--invoice-id", default="", help="Invoice or order id stamped on the email")
     stamp_email.add_argument("--reason", default="invoice")
     stamp_email.add_argument(
+        "--to",
+        default="",
+        help="Override recipient (invoice stamps default to trueholdwellness@gmail.com)",
+    )
+    stamp_email.add_argument(
         "--dry-run",
         action="store_true",
         help="Build and log the stamp but do not SMTP-send it",
+    )
+    daily_report = sub.add_parser(
+        "daily-report",
+        help="Email the daily inventory / lots / client report to trueholdcrypto@gmail.com",
+    )
+    daily_report.add_argument(
+        "--to",
+        default="",
+        help="Override recipient (default trueholdcrypto@gmail.com)",
+    )
+    daily_report.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Build and log the report but do not SMTP-send it",
     )
     return parser
 
@@ -317,6 +336,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         result = send_stamp_email(
             invoice_id=args.invoice_id,
             reason=args.reason,
+            to=args.to,
             dry_run=args.dry_run,
         )
         sys.stdout.write(result["body"])
@@ -325,6 +345,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         if result["status"] == "dry_run":
             sys.stderr.write("dry-run: stamp built; email not sent\n")
+            return 0
+        sys.stderr.write(f"{result['status']}: {result.get('error') or 'email not sent'}\n")
+        return 0 if result["status"] == "queued_no_smtp" else 1
+    if args.command == "daily-report":
+        from wellness_agent.stamp import send_daily_report
+
+        result = send_daily_report(to=args.to, dry_run=args.dry_run)
+        sys.stdout.write(result["body"])
+        if result["status"] == "sent":
+            sys.stderr.write(f"sent: {result['to']}\n")
+            return 0
+        if result["status"] == "dry_run":
+            sys.stderr.write("dry-run: daily report built; email not sent\n")
             return 0
         sys.stderr.write(f"{result['status']}: {result.get('error') or 'email not sent'}\n")
         return 0 if result["status"] == "queued_no_smtp" else 1

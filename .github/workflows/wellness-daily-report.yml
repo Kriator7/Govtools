@@ -1,0 +1,47 @@
+name: wellness-daily-report
+
+# Daily inventory / lots / client stamp to trueholdcrypto@gmail.com.
+# GitHub only runs `schedule` on the default branch (main).
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
+# 15 15 * * * UTC ≈ 07:15 America/Los_Angeles during PST.
+on:
+  schedule:
+    - cron: "15 15 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: wellness-daily-report
+  cancel-in-progress: true
+
+jobs:
+  daily-report:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: truehold-wellness
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Require Wellness SMTP
+        env:
+          WELLNESS_SMTP_USERNAME: ${{ secrets.WELLNESS_SMTP_USERNAME }}
+          WELLNESS_SMTP_PASSWORD: ${{ secrets.WELLNESS_SMTP_PASSWORD }}
+        run: |
+          if [ -z "$WELLNESS_SMTP_USERNAME" ] || [ -z "$WELLNESS_SMTP_PASSWORD" ]; then
+            echo "Set repository secrets WELLNESS_SMTP_USERNAME and WELLNESS_SMTP_PASSWORD." >&2
+            echo "Use a Gmail app password: https://support.google.com/accounts/answer/185833" >&2
+            exit 1
+          fi
+      - name: Install truehold-wellness
+        run: python -m pip install -e .
+      - name: Email daily report to TrueHold Crypto
+        env:
+          WELLNESS_SMTP_USERNAME: ${{ secrets.WELLNESS_SMTP_USERNAME }}
+          WELLNESS_SMTP_PASSWORD: ${{ secrets.WELLNESS_SMTP_PASSWORD }}
+          WELLNESS_STAMP_FROM: ${{ secrets.WELLNESS_SMTP_USERNAME }}
+          WELLNESS_DAILY_REPORT_TO: trueholdcrypto@gmail.com
+        run: python -m wellness_agent daily-report

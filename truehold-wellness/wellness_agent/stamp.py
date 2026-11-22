@@ -20,10 +20,12 @@ from wellness_agent.envfile import PACKAGE_ROOT
 from wellness_agent.telegram_copy import TEAM_EMAIL
 
 PACIFIC = ZoneInfo("America/Los_Angeles")
+CRYPTO_EMAIL = "trueholdcrypto@gmail.com"
 PACKAGED_ROSTER_PATH = (
     Path(__file__).resolve().parent / "inventory" / "clients_roster.json"
 )
 STAMP_TO_ENV = "WELLNESS_STAMP_TO"
+DAILY_TO_ENV = "WELLNESS_DAILY_REPORT_TO"
 STAMP_FROM_ENV = "WELLNESS_STAMP_FROM"
 SMTP_HOST_ENV = "WELLNESS_SMTP_HOST"
 SMTP_PORT_ENV = "WELLNESS_SMTP_PORT"
@@ -53,8 +55,19 @@ def pacific_now() -> datetime:
     return datetime.now(tz=PACIFIC)
 
 
-def stamp_subject(*, when: datetime | None = None, invoice_id: str = "") -> str:
+def _stamp_destination(*, to: str = "", reason: str = "") -> str:
+    if to.strip():
+        return to.strip()
+    if reason == "daily-report":
+        return (os.environ.get(DAILY_TO_ENV, CRYPTO_EMAIL) or CRYPTO_EMAIL).strip() or CRYPTO_EMAIL
+    return (os.environ.get(STAMP_TO_ENV, TEAM_EMAIL) or TEAM_EMAIL).strip() or TEAM_EMAIL
+
+
+def stamp_subject(*, when: datetime | None = None, invoice_id: str = "", reason: str = "") -> str:
     stamp = (when or pacific_now()).strftime("%Y-%m-%d %H:%M %Z")
+    if reason == "daily-report":
+        day = (when or pacific_now()).strftime("%Y-%m-%d")
+        return f"TrueHold Wellness daily report — inventory, lots, clients {day} ({stamp})"
     if invoice_id:
         return f"TrueHold Wellness invoice stamp {invoice_id} — inventory, lots, clients {stamp}"
     return f"TrueHold Wellness current state — inventory, lots, clients {stamp}"
@@ -131,7 +144,7 @@ def _telegram_clients() -> list[dict[str, Any]]:
     return extras
 
 
-def stamp_payload(*, invoice_id: str = "", reason: str = "") -> dict[str, Any]:
+def stamp_payload(*, invoice_id: str = "", reason: str = "", to: str = "") -> dict[str, Any]:
     from wellness_agent.inventory.lots import load_lots, load_packaged_lots
     from wellness_agent.stock import load_stock
 
@@ -149,12 +162,16 @@ def stamp_payload(*, invoice_id: str = "", reason: str = "") -> dict[str, Any]:
         if not str(row.get("email") or "").strip() or not str(row.get("phone") or row.get("sms") or "").strip()
     ]
     return {
-        "kind": "truehold-wellness-invoice-stamp",
+        "kind": (
+            "truehold-wellness-daily-report"
+            if (reason or "") == "daily-report"
+            else "truehold-wellness-invoice-stamp"
+        ),
         "generated_at": when.isoformat(),
         "timezone": "America/Los_Angeles",
         "invoice_id": invoice_id or "",
         "reason": reason or "current-state",
-        "to": os.environ.get(STAMP_TO_ENV, TEAM_EMAIL),
+        "to": _stamp_destination(to=to, reason=reason or "current-state"),
         "tracker": lots_state.get("tracker") or {},
         "sku_totals": [
             {"name": name, "strength": strength, "vials_on_hand": count}
@@ -194,7 +211,11 @@ def format_stamp(payload: dict[str, Any] | None = None) -> str:
         f"Generated: {when} (America/Los_Angeles)",
         f"Invoice / event: {invoice}",
         f"Reason: {reason}",
-        f"This email is the confirmation copy. It stamps current inventory, lots, and the client list.",
+        (
+            "This is the daily TrueHold Crypto copy of current inventory, lots, and the client list."
+            if reason == "daily-report"
+            else "This email is the confirmation copy. It stamps current inventory, lots, and the client list."
+        ),
         "",
         "ACTION: Collect mobile (text) and email for every client who is missing them so we can contact them for reorder.",
         "",
@@ -296,6 +317,7 @@ def append_stamp_log(payload: dict[str, Any], *, status: str) -> Path:
             if payload.get("generated_at")
             else None,
             invoice_id=str(payload.get("invoice_id") or ""),
+            reason=str(payload.get("reason") or ""),
         ),
     }
     with path.open("a", encoding="utf-8") as handle:
@@ -322,19 +344,24 @@ def send_stamp_email(
     *,
     invoice_id: str = "",
     reason: str = "",
+    to: str = "",
     dry_run: bool = False,
     opener: Any = None,
 ) -> dict[str, Any]:
-    """Build the stamp and email trueholdwellness@gmail.com when SMTP is configured.
+    """Build the stamp and email it when SMTP is configured.
+
+    Invoice stamps default to trueholdwellness@gmail.com. Daily reports default
+    to trueholdcrypto@gmail.com.
 
     SMTP: https://developers.google.com/workspace/gmail/imap/imap-smtp
     App passwords: https://support.google.com/accounts/answer/185833
     """
-    payload = stamp_payload(invoice_id=invoice_id, reason=reason)
+    payload = stamp_payload(invoice_id=invoice_id, reason=reason, to=to)
     body = format_stamp(payload)
     subject = stamp_subject(
         when=datetime.fromisoformat(payload["generated_at"]),
         invoice_id=invoice_id,
+        reason=reason,
     )
     destination = str(payload["to"] or TEAM_EMAIL)
     sender = os.environ.get(STAMP_FROM_ENV, os.environ.get(SMTP_USER_ENV, TEAM_EMAIL)).strip() or TEAM_EMAIL
@@ -395,3 +422,24 @@ def _smtp_send(settings: dict[str, Any], message: EmailMessage) -> None:
 def stamp_after_invoice(*, invoice_id: str, reason: str = "invoice") -> dict[str, Any]:
     """Standard operation: stamp current inventory/lots/clients after an invoice or order."""
     return send_stamp_email(invoice_id=invoice_id, reason=reason, dry_run=False)
+
+
+def daily_report_id(*, when: datetime | None = None) -> str:
+    day = (when or pacific_now()).strftime("%Y%m%d")
+    return f"THW-DAILY-{day}"
+
+
+def send_daily_report(*, dry_run: bool = False, to: str = "", opener: Any = None) -> dict[str, Any]:
+    """Email the current inventory/lots/client stamp to TrueHold Crypto once a day."""
+    when = pacific_now()
+    destination = (
+        to
+        or os.environ.get(DAILY_TO_ENV, CRYPTO_EMAIL)
+    ).strip() or CRYPTO_EMAIL
+    return send_stamp_email(
+        invoice_id=daily_report_id(when=when),
+        reason="daily-report",
+        to=destination,
+        dry_run=dry_run,
+        opener=opener,
+    )

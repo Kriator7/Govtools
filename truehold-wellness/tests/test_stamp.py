@@ -3,7 +3,9 @@ from email.message import EmailMessage
 
 from wellness_agent.cli import main
 from wellness_agent.stamp import (
+    CRYPTO_EMAIL,
     format_stamp,
+    send_daily_report,
     send_stamp_email,
     stamp_payload,
     stamp_subject,
@@ -194,3 +196,53 @@ def test_confirmed_order_writes_stamp_log(tmp_path):
     assert "telegram-interest-order" in log
     assert "queued_no_smtp" in log
     assert "Pat" in format_stamp()
+
+
+def test_daily_report_defaults_to_trueholdcrypto(tmp_path):
+    _write_lots(tmp_path)
+    _write_roster(tmp_path)
+    payload = stamp_payload(reason="daily-report")
+    assert payload["to"] == CRYPTO_EMAIL
+    assert payload["kind"] == "truehold-wellness-daily-report"
+    text = format_stamp(payload)
+    assert "daily TrueHold Crypto copy" in text
+    assert "daily report" in stamp_subject(reason="daily-report")
+
+
+def test_stamp_email_to_override(tmp_path):
+    _write_lots(tmp_path)
+    _write_roster(tmp_path)
+    payload = stamp_payload(invoice_id="THW-INV-TO", reason="invoice", to=CRYPTO_EMAIL)
+    assert payload["to"] == CRYPTO_EMAIL
+
+
+def test_daily_report_cli_dry_run(tmp_path, capsys):
+    _write_lots(tmp_path)
+    _write_roster(tmp_path)
+    assert main(["daily-report", "--dry-run"]) == 0
+    captured = capsys.readouterr()
+    assert "TrueHold Wellness — inventory / lots / client stamp" in captured.out
+    assert "daily report built" in captured.err
+    log = (tmp_path / "stamp_log.jsonl").read_text(encoding="utf-8")
+    assert "THW-DAILY-" in log
+    assert "trueholdcrypto@gmail.com" in log
+
+
+def test_daily_report_sends_via_smtp(tmp_path, monkeypatch):
+    _write_lots(tmp_path)
+    _write_roster(tmp_path)
+    monkeypatch.setenv("WELLNESS_SMTP_USERNAME", "cardanomint@gmail.com")
+    monkeypatch.setenv("WELLNESS_SMTP_PASSWORD", "app-password")
+    monkeypatch.setenv("WELLNESS_SMTP_FROM", "cardanomint@gmail.com")
+    sent: list[EmailMessage] = []
+
+    def fake_send(settings, message):
+        sent.append(message)
+
+    result = send_daily_report(opener=fake_send)
+    assert result["delivered"] is True
+    assert result["to"] == CRYPTO_EMAIL
+    assert sent[0]["To"] == CRYPTO_EMAIL
+    assert "daily report" in sent[0]["Subject"]
+    assert "KLOW-TEST" in sent[0].get_content()
+    assert "Vaughn Heyer" in sent[0].get_content()

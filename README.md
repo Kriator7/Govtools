@@ -46,6 +46,8 @@ bash mr_north/scripts/keep_hourly.sh
 
 Soul / timer contract: [`mr_north/SOUL.md`](mr_north/SOUL.md). Durable cron is GitHub Action `.github/workflows/mr-north-hourly.yml` (`7 * * * *` UTC). GitHub only runs scheduled workflows on **main** after merge. Set repository secrets `NORTH_TELEGRAM_BOT_TOKEN` and `NORTH_TELEGRAM_CHAT_ID`. BLS API: https://www.bls.gov/developers/api_signature.htm — Telegram: https://core.telegram.org/bots/api#sendmessage
 
+TrueHold Wellness also emails a daily inventory / lots / client stamp to **trueholdcrypto@gmail.com**. Durable cron: `.github/workflows/wellness-daily-report.yml` (`15 15 * * *` UTC ≈ 07:15 PT in PST). Set repository secrets `WELLNESS_SMTP_USERNAME` and `WELLNESS_SMTP_PASSWORD` ([Gmail app passwords](https://support.google.com/accounts/answer/185833)). Invoice stamps still go to `trueholdwellness@gmail.com`.
+
 ## Realtor Property Acquisition (@PirateEye_bot)
 
 Self-contained in [`realtor-agent/`](realtor-agent/). Not TrueHold Wellness.
