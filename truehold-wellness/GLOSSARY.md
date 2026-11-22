@@ -15,3 +15,8 @@ _Avoid_: Telegram chat id, phone as id
 **Interest-order contact**:
 A person who has a confirmed interest order but has not yet been issued a peptide invoice.
 _Avoid_: Client, customer
+
+**Client sheet**:
+The workbook sheet that is the record of Clients. Other sheets reference it; they do not store a second copy of the person.
+_Avoid_: clients.json, invoice roster
+_Alias_: Clients
