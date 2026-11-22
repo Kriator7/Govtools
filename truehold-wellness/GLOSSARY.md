@@ -67,5 +67,9 @@ An agent message to the Client one week before they are due to reorder: how they
 _Avoid_: payment request
 
 **Reorder due**:
-One month after the Client's latest paid invoice. A newer payment resets the clock. Unpaid invoices do not start it. Check-in is one week before this date.
+Supply months after the Client's latest paid invoice that counts as their own supply. A newer such payment resets the clock. Check-in is one week before this date.
 _Avoid_: interest order date, invoice issue date
+
+**Supply months**:
+How long a paid invoice covers for the Client named on it. Default is one month. Staff may rarely set two months, for example travel.
+_Avoid_: interest order duration
