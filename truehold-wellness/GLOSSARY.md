@@ -77,3 +77,7 @@ _Avoid_: interest order duration
 **Receiving Client**:
 The Client a peptide line is for. Defaults to the invoice Client name. A friend vial names someone else.
 _Avoid_: payer, Telegram chat
+
+**Local working copy**:
+The Govtools tree on the WD_BLACK Agent databank used to build Wellness on this Mac. Cursor Cloud VMs are not this copy.
+_Avoid_: scratch clone, /workspace/project

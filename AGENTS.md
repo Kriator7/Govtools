@@ -26,3 +26,13 @@ document a fuzzy plan **before implementation**, follow
 5. Do not implement until the user confirms a shared understanding.
 
 Helpers: `python scripts/grill_docs.py map|resolve|check|upsert-term|write-adr`.
+
+## Local hardware and WD_BLACK
+
+Durable work lives on the Mac with WD_BLACK mounted, not on a Cursor Cloud
+VM. The working copy of this repo is
+`/Volumes/WD_BLACK/Agent databank/projects/Govtools` (sandbox:
+`/opt/agent-databank/projects/Govtools`). Check the databank with
+`python3 /opt/oh-tools/agent_databank.py --check` before writing. If the
+check fails, stop. Do not copy Govtools onto this Cloud VM disk and call
+that the working copy.
