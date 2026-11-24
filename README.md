@@ -1,12 +1,13 @@
 # Govtools
 
-This repository holds **three independent products**. They do not share Telegram bots, databases, or application code.
+This repository holds **four independent products**. They do not share Telegram bots, databases, or application code.
 
 | Product | Company / job | Telegram | Folder |
 | --- | --- | --- | --- |
 | Mr North | TrueHold **crypto** alerts + hourly BLS | **@Mr_North_bot** | [`mr_north/`](mr_north/) |
 | Realtor acquisition | Property matching for one Nevada realtor | **@PirateEye_bot** | [`realtor-agent/`](realtor-agent/) |
 | TrueHold Wellness | Order-email workflow | **@THWellness_bot** | [`truehold-wellness/`](truehold-wellness/) |
+| JARVIS Mark VII | Executive assistant, schedules, and memory | none | [`jarvis/`](jarvis/) |
 
 Never put the Wellness token in `realtor-agent/` or `mr_north/`. Never put the realtor token in `truehold-wellness/` or `mr_north/`. Live `getMe` must return `@Mr_North_bot`, `@THWellness_bot`, or `@PirateEye_bot` for that package.
 
@@ -71,6 +72,10 @@ python -m pytest
 ```
 
 Telegram: **@THWellness_bot** (`/start`, `/inbox`, `/catalog`, `/product`, `/order`). Live `getMe` must return `THWellness_bot`. Inventory PDFs live in `truehold-wellness/wellness_agent/inventory/pdfs/`.
+
+## JARVIS Mark VII
+
+Isolated from the three Telegram agents. n8n is the scheduler, PostgreSQL stores records, and Qdrant keeps personal, business, and confidential collections separate. Schedules stay disabled until their sources and a notification channel are verified. Details: [`jarvis/README.md`](jarvis/README.md).
 
 ## Tests
 

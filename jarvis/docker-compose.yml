@@ -1,0 +1,37 @@
+# Lab stack for a machine that cannot see the house n8n on 127.0.0.1:15678.
+# Image pin: n8nio/n8n:2.3.2
+# https://github.com/n8n-io/n8n/blob/master/docker/images/n8n/README.md
+# Do not publish these ports. Do not point this file at the Mac house volume.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - ${JARVIS_POSTGRES_ENV:?set JARVIS_POSTGRES_ENV to a chmod 600 file}
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.5
+    ports:
+      - "127.0.0.1:6333:6333"
+
+  n8n:
+    image: n8nio/n8n:2.3.2
+    ports:
+      - "127.0.0.1:15680:5678"
+    environment:
+      GENERIC_TIMEZONE: America/Los_Angeles
+      TZ: America/Los_Angeles
+      N8N_PROTOCOL: http
+      N8N_SECURE_COOKIE: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      WEBHOOK_URL: http://127.0.0.1:15680/
+    volumes:
+      - jarvis-n8n-data:/home/node/.n8n
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  jarvis-n8n-data:
