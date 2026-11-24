@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JARVIS Mark VII</title>
+<style>
+  :root { color-scheme: dark; --bg:#10141c; --panel:#1a2130; --ink:#e7edf5; --muted:#9aa8bd; --line:#2c3850; --ok:#1f8a4c; --wait:#a97820; --bad:#a33b3b; --off:#5c6b82; }
+  body { margin:0; font:15px/1.45 "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:20px 24px 8px; }
+  h1 { margin:0; font-size:22px; font-weight:650; }
+  p.note { color:var(--muted); margin:6px 0 0; }
+  nav { display:flex; gap:8px; flex-wrap:wrap; padding:12px 24px; }
+  button, select, input, textarea { font:inherit; color:var(--ink); background:#121826; border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+  button { cursor:pointer; }
+  main { display:grid; grid-template-columns:1fr; gap:14px; padding:0 24px 32px; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  h2 { margin:0 0 10px; font-size:16px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:var(--off); }
+  .CONNECTED { background:var(--ok); }
+  .DISCONNECTED { background:var(--off); }
+  .FAILED { background:var(--bad); }
+  .PENDING { background:var(--wait); }
+  form { display:grid; gap:8px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  textarea { min-height:70px; }
+  .muted { color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>JARVIS Mark VII</h1>
+  <p class="note" id="clock">Checking live status…</p>
+</header>
+<nav>
+  <button data-show="services">Services</button>
+  <button data-show="tasks">Schedules</button>
+  <button data-show="history">History</button>
+  <button data-show="memory">Memory</button>
+  <button data-show="approvals">Approvals</button>
+  <button data-show="health">Health</button>
+</nav>
+<main>
+  <section id="services">
+    <h2>Connected services</h2>
+    <table id="service-table"><tbody></tbody></table>
+  </section>
+  <section id="tasks">
+    <h2>Scheduled tasks</h2>
+    <p class="muted">New schedules are stored disabled. The six initial automations stay off until their sources, an operator approval, and a verified notification channel exist.</p>
+    <p id="task-error" class="muted"></p>
+    <form id="task-form">
+      <div class="row">
+        <input name="name" placeholder="Task name" required />
+        <input name="cron" placeholder="30 7 * * *" required />
+        <select name="tool" id="tool-select"></select>
+        <button type="submit">Create disabled task</button>
+      </div>
+    </form>
+    <h2>Upcoming executions</h2>
+    <div id="upcoming"></div>
+    <table id="task-table"><tbody></tbody></table>
+  </section>
+  <section id="history">
+    <h2>Execution history</h2>
+    <table id="history-table"><tbody></tbody></table>
+    <h2>Failed workflow alerts</h2>
+    <table id="failure-table"><tbody></tbody></table>
+  </section>
+  <section id="memory">
+    <h2>Persistent memory</h2>
+    <p class="muted">Confidential memories stay out of this list. Search them only by choosing that collection.</p>
+    <form id="memory-form">
+      <div class="row">
+        <select name="collection"><option>personal</option><option>business</option><option>confidential</option></select>
+        <input name="project" placeholder="Project" />
+        <input name="title" placeholder="Title" required />
+      </div>
+      <textarea name="body" placeholder="What should be remembered" required></textarea>
+      <button type="submit">Remember</button>
+    </form>
+    <form id="memory-search" class="row">
+      <input name="query" placeholder="Search" required />
+      <select name="collection"><option value="">personal and business</option><option>personal</option><option>business</option><option>confidential</option></select>
+      <button type="submit">Search</button>
+    </form>
+    <div id="memory-list"></div>
+  </section>
+  <section id="approvals">
+    <h2>Pending approvals</h2>
+    <div id="approval-list"></div>
+  </section>
+  <section id="health">
+    <h2>System health</h2>
+    <pre id="health-box"></pre>
+  </section>
+</main>
+<script>
+const pill = (status) => {
+  const cls = status === "PENDING AUTHORIZATION" ? "PENDING" : status;
+  return `<span class="pill ${cls}">${status}</span>`;
+};
+async function getJSON(url, options) {
+  const response = await fetch(url, options);
+  return response.json();
+}
+async function loadStatus() {
+  const status = await getJSON("/api/status");
+  document.getElementById("clock").textContent =
+    `Timezone ${status.timezone}. Store: ${status.store_backend || "unavailable"}. ${status.store_error || "Statuses below were probed just now."}`;
+  const body = document.querySelector("#service-table tbody");
+  body.innerHTML = (status.integrations || []).map((item) =>
+    `<tr><td>${item.name}</td><td>${pill(item.status)}</td><td>${item.detail}<div class="muted">${item.action || ""}</div><div class="muted">${item.checked_at}</div></td></tr>`
+  ).join("");
+  document.getElementById("health-box").textContent = JSON.stringify(status, null, 2);
+}
+async function loadTools() {
+  const payload = await getJSON("/api/tools");
+  const select = document.getElementById("tool-select");
+  select.innerHTML = payload.tools.map((tool) => `<option value="${tool.name}">${tool.name}</option>`).join("");
+  select.value = "list_tasks";
+}
+async function loadTasks() {
+  const payload = await getJSON("/api/tasks");
+  const upcoming = await getJSON("/api/upcoming");
+  document.getElementById("upcoming").innerHTML = upcoming.upcoming.length
+    ? `<ul>${upcoming.upcoming.map((item) => `<li>${item.name}: ${item.next_run}</li>`).join("")}</ul>`
+    : `<p class="muted">No enabled schedule has an upcoming run.</p>`;
+  const rows = (payload.data && payload.data.tasks) || [];
+  document.querySelector("#task-table tbody").innerHTML = rows.map((task) =>
+    `<tr><td>${task.name}<div class="muted">${task.cron || ""} · ${task.tool}</div><div class="muted">${(task.blockers || []).join("; ")}</div></td>
+     <td>${task.enabled ? '<span class="pill CONNECTED">enabled</span>' : '<span class="pill DISCONNECTED">disabled</span>'}</td>
+     <td>
+       <button data-run="${task.id}">Run now</button>
+       <button data-pause="${task.id}">Pause</button>
+       <button data-resume="${task.id}">Resume</button>
+     </td></tr>`
+  ).join("");
+}
+async function loadHistory() {
+  const history = await getJSON("/api/executions");
+  const failures = await getJSON("/api/failures");
+  const draw = (rows) => rows.map((row) =>
+    `<tr><td>${row.started_at}</td><td>${row.tool}</td><td>${row.ok ? "ok" : "error"}</td><td>${row.execution_status}</td></tr>`
+  ).join("");
+  document.querySelector("#history-table tbody").innerHTML = draw((history.data && history.data.executions) || []);
+  document.querySelector("#failure-table tbody").innerHTML = draw((failures.data && failures.data.executions) || []) || `<tr><td class="muted">No failed executions recorded.</td></tr>`;
+}
+async function loadMemory() {
+  const payload = await getJSON("/api/memory");
+  const rows = [...(payload.personal || []), ...(payload.business || [])];
+  document.getElementById("memory-list").innerHTML = rows.map((item) =>
+    `<p><strong>${item.title}</strong> · ${item.collection}${item.project ? " · " + item.project : ""}<br>${item.body}</p>`
+  ).join("") || `<p class="muted">No personal or business memories yet.</p>`;
+}
+async function loadApprovals() {
+  const payload = await getJSON("/api/approvals");
+  const rows = payload.approvals || [];
+  document.getElementById("approval-list").innerHTML = rows.map((item) =>
+    `<p>${item.action} · ${item.status} · ${item.id}
+      ${item.status === "pending" ? `<button data-approve="${item.id}">Approve</button> <button data-reject="${item.id}">Reject</button>` : ""}
+    </p>`
+  ).join("") || `<p class="muted">No approvals.</p>`;
+}
+document.getElementById("task-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(event.target);
+  const result = await getJSON("/api/tasks", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({
+    name: form.get("name"), cron: form.get("cron"), tool: form.get("tool"), arguments: {}
+  })});
+  document.getElementById("task-error").textContent = result.ok ? "Stored disabled." : ((result.error && result.error.message) + " " + (result.error && result.error.action));
+  if (result.ok) event.target.reset();
+  document.getElementById("tool-select").value = "list_tasks";
+  await loadTasks();
+});
+document.getElementById("memory-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(event.target);
+  await getJSON("/api/memory", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(Object.fromEntries(form.entries()))});
+  event.target.reset();
+  await loadMemory();
+});
+document.getElementById("memory-search").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(event.target);
+  const args = {query: form.get("query")};
+  if (form.get("collection")) args.collection = form.get("collection");
+  const result = await getJSON("/api/tools/call", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({tool:"search_knowledge", arguments: args})});
+  const matches = (result.data && result.data.matches) || [];
+  document.getElementById("memory-list").innerHTML = `<p class="muted">Retrieval: ${result.data.retrieval}. Semantic: ${result.data.semantic}.</p>` +
+    matches.map((item) => `<p><strong>${item.title}</strong> · ${item.collection}<br>${item.body}</p>`).join("");
+});
+document.body.addEventListener("click", async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+  const run = target.dataset.run;
+  const pause = target.dataset.pause;
+  const resume = target.dataset.resume;
+  const approve = target.dataset.approve;
+  const reject = target.dataset.reject;
+  let action = null;
+  if (run) action = await getJSON(`/api/tasks/${run}/run`, {method:"POST"});
+  if (pause) action = await getJSON(`/api/tasks/${pause}/pause`, {method:"POST"});
+  if (resume) action = await getJSON(`/api/tasks/${resume}/resume`, {method:"POST"});
+  if (action) {
+    document.getElementById("task-error").textContent = action.ok
+      ? `Finished ${action.tool} with schedule_enabled=${action.data && action.data.schedule_enabled}.`
+      : `${action.error.message} ${action.error.action}`;
+  }
+  if (approve || reject) {
+    const id = approve || reject;
+    await getJSON(`/api/approvals/${id}/decide`, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({status: approve ? "approved" : "rejected"})});
+    await loadApprovals();
+  }
+  if (run || pause || resume) {
+    await loadTasks();
+    await loadHistory();
+  }
+});
+document.querySelectorAll("nav button").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.getElementById(button.dataset.show).scrollIntoView({behavior:"smooth"});
+  });
+});
+Promise.all([loadStatus(), loadTools(), loadTasks(), loadHistory(), loadMemory(), loadApprovals()]);
+</script>
+</body>
+</html>

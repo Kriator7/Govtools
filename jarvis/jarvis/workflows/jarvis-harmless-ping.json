@@ -1,0 +1,79 @@
+{
+  "name": "JARVIS Harmless Ping",
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Los_Angeles",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "nodes": [
+    {
+      "id": "harmless-schedule",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "15 4 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "harmless-set",
+      "name": "Ping",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        300
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ping-status",
+              "name": "status",
+              "value": "ok",
+              "type": "string"
+            },
+            {
+              "id": "ping-name",
+              "name": "workflow",
+              "value": "jarvis-harmless-ping",
+              "type": "string"
+            },
+            {
+              "id": "ping-effects",
+              "name": "side_effects",
+              "value": "none",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Ping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
