@@ -1,0 +1,28 @@
+{
+  "product": "Nod",
+  "vendor": "n8n GmbH",
+  "note": "Nod is its own app. It is not the n8n AI Assistant.",
+  "source_repo": "https://github.com/n8n-io/nod",
+  "pinned_commit": "4178ac0f7e712dd3c1e392e0161aec81af8beb64",
+  "pinned_date": "2026-11-27",
+  "license": "Apache-2.0",
+  "docs": {
+    "what_is_nod": "https://nod.n8n.io/docs/get-started/what-is-nod/",
+    "self_host": "https://nod.n8n.io/docs/deploy/self-host/",
+    "mac_mini": "https://nod.n8n.io/docs/deploy/mac-mini/",
+    "configuration": "https://nod.n8n.io/docs/deploy/configuration/",
+    "local_models": "https://nod.n8n.io/docs/connect/local-models/",
+    "channels": "https://nod.n8n.io/docs/use/channels/",
+    "server_operations": "https://nod.n8n.io/docs/deploy/server-operations/",
+    "setup_sh": "https://github.com/n8n-io/nod/blob/4178ac0f7e712dd3c1e392e0161aec81af8beb64/deployment/self-host/setup.sh",
+    "compose_yaml": "https://github.com/n8n-io/nod/blob/4178ac0f7e712dd3c1e392e0161aec81af8beb64/deployment/self-host/compose.yaml",
+    "env_example": "https://github.com/n8n-io/nod/blob/4178ac0f7e712dd3c1e392e0161aec81af8beb64/deployment/self-host/.env.example"
+  },
+  "house": {
+    "source_checkout": "~/openhands-local/var/nod/source",
+    "compose_dir": "~/openhands-local/var/nod/source/deployment/self-host",
+    "backup_parent": "~/openhands-local/var/nod/backups",
+    "listen": "http://127.0.0.1:4310",
+    "model": "house Ollama via host.docker.internal:11434/v1"
+  }
+}

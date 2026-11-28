@@ -1,16 +1,17 @@
 # Govtools
 
-This repository holds **three independent products**. They do not share Telegram bots, databases, or application code.
+This repository holds **three independent business products** plus a **self-hosted only** overlay for n8n Nod. The business products do not share Telegram bots, databases, or application code. Nod is not one of them.
 
 | Product | Company / job | Telegram | Folder |
 | --- | --- | --- | --- |
 | Mr North | TrueHold **crypto** alerts + hourly BLS | **@Mr_North_bot** | [`mr_north/`](mr_north/) |
 | Realtor acquisition | Property matching for one Nevada realtor | **@PirateEye_bot** | [`realtor-agent/`](realtor-agent/) |
 | TrueHold Wellness | Order-email workflow | **@THWellness_bot** | [`truehold-wellness/`](truehold-wellness/) |
+| Nod | Personal assistant overlay (**self-hosted only**) | New bot, never the three above | [`nod/`](nod/) |
 
-Never put the Wellness token in `realtor-agent/` or `mr_north/`. Never put the realtor token in `truehold-wellness/` or `mr_north/`. Live `getMe` must return `@Mr_North_bot`, `@THWellness_bot`, or `@PirateEye_bot` for that package.
+Never put the Wellness token in `realtor-agent/` or `mr_north/`. Never put the realtor token in `truehold-wellness/` or `mr_north/`. Live `getMe` must return `@Mr_North_bot`, `@THWellness_bot`, or `@PirateEye_bot` for that package. Nod must not reuse those tokens.
 
-These three agents are **protected business infrastructure**. CI fails if one is deleted unless two different people complete `.github/DELETE_AGENT_CONFIRMATION.json`. See [`PROTECTED_AGENTS.md`](PROTECTED_AGENTS.md).
+These three agents are **protected business infrastructure**. CI fails if one is deleted unless two different people complete `.github/DELETE_AGENT_CONFIRMATION.json`. See [`PROTECTED_AGENTS.md`](PROTECTED_AGENTS.md). Nod is not a protected business agent.
 
 ## Mr North (TrueHold crypto)
 
@@ -72,9 +73,21 @@ python -m pytest
 
 Telegram: **@THWellness_bot** (`/start`, `/inbox`, `/catalog`, `/product`, `/order`). Live `getMe` must return `THWellness_bot`. Inventory PDFs live in `truehold-wellness/wellness_agent/inventory/pdfs/`.
 
+## Nod (self-hosted only)
+
+n8n Nod is a personal assistant with its own workspace and browser. Official intro: [What is Nod](https://nod.n8n.io/docs/get-started/what-is-nod/). It is **not** the n8n AI Assistant.
+
+House policy lives in [`nod/`](nod/): loopback `127.0.0.1:4310`, SSH tunnel, house Ollama via `host.docker.internal`, analytics off, new Telegram bot only. Do not run it on a Cursor cloud VM. Do not start the Docker stack without an explicit **yes**.
+
+```bash
+python scripts/check_nod_house.py
+```
+
+Install steps: [`nod/README.md`](nod/README.md). Pinned upstream: [`n8n-io/nod@4178ac0f7e712dd3c1e392e0161aec81af8beb64`](https://github.com/n8n-io/nod/commit/4178ac0f7e712dd3c1e392e0161aec81af8beb64).
+
 ## Tests
 
-Root pytest is **Mr North only**:
+Root pytest is **Mr North plus the Nod house overlay**:
 
 ```bash
 python -m pytest
